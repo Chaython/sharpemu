@@ -1838,49 +1838,56 @@ public sealed partial class DirectExecutionBackend
 		{
 			return false;
 		}
-		if (_disableImportLoopGuard || _importLoopGuardSeconds <= 0)
+		// The signature rings and pattern-hit counters are shared by every
+		// concurrent executor; the whole check runs under the gate so a
+		// racing writer can never leave a torn pattern in the rings (a
+		// corrupted window could falsely force-exit a healthy guest).
+		lock (_importLoopGuardGate)
 		{
-			return false;
-		}
-		if (entry.IsLoopGuardBoundary)
-		{
-			ResetImportLoopPattern();
-			return false;
-		}
-		var value = entry.NidHash;
-		RecordImportLoopSignature(value, returnRip, BuildImportLoopSignature(value, returnRip, arg0, arg1));
-		// The O(period x repeats) pattern scan is a boot/hang watchdog, not a
-		// steady-state feature; sampling every 256th dispatch keeps its cost
-		// off the hot path while still tripping within a couple of thousand
-		// dispatches of a genuine import loop.
-		if ((dispatchIndex & 0xFF) != 0)
-		{
-			return false;
-		}
-		if (!HasRepeatingImportLoopPattern())
-		{
-			if (_importLoopPatternHits > 0)
+			if (_disableImportLoopGuard || _importLoopGuardSeconds <= 0)
 			{
-				_importLoopPatternHits--;
+				return false;
 			}
-			if (_importLoopPatternHits == 0)
+			if (entry.IsLoopGuardBoundary)
 			{
-				_importLoopPatternStartTimestamp = 0;
+				ResetImportLoopPattern();
+				return false;
 			}
-			return false;
-		}
-		if (_importLoopPatternStartTimestamp == 0)
-		{
-			_importLoopPatternStartTimestamp = Stopwatch.GetTimestamp();
-		}
-		_importLoopPatternHits++;
-		if (_importLoopPatternHits < 6)
-		{
-			return false;
-		}
+			var value = entry.NidHash;
+			RecordImportLoopSignature(value, returnRip, BuildImportLoopSignature(value, returnRip, arg0, arg1));
+			// The O(period x repeats) pattern scan is a boot/hang watchdog, not a
+			// steady-state feature; sampling every 256th dispatch keeps its cost
+			// off the hot path while still tripping within a couple of thousand
+			// dispatches of a genuine import loop.
+			if ((dispatchIndex & 0xFF) != 0)
+			{
+				return false;
+			}
+			if (!HasRepeatingImportLoopPattern())
+			{
+				if (_importLoopPatternHits > 0)
+				{
+					_importLoopPatternHits--;
+				}
+				if (_importLoopPatternHits == 0)
+				{
+					_importLoopPatternStartTimestamp = 0;
+				}
+				return false;
+			}
+			if (_importLoopPatternStartTimestamp == 0)
+			{
+				_importLoopPatternStartTimestamp = Stopwatch.GetTimestamp();
+			}
+			_importLoopPatternHits++;
+			if (_importLoopPatternHits < 6)
+			{
+				return false;
+			}
 
-		var elapsedTicks = Stopwatch.GetTimestamp() - _importLoopPatternStartTimestamp;
-		return elapsedTicks >= (long)(_importLoopGuardSeconds * Stopwatch.Frequency);
+			var elapsedTicks = Stopwatch.GetTimestamp() - _importLoopPatternStartTimestamp;
+			return elapsedTicks >= (long)(_importLoopGuardSeconds * Stopwatch.Frequency);
+		}
 	}
 
 	internal static bool IsImportLoopGuardBoundary(string nid) =>
@@ -1895,12 +1902,17 @@ public sealed partial class DirectExecutionBackend
 			"0V5nU-Z6t4U" or // sceKernelGetProcessTime
 			"aI6lQW5v57k";   // sceKernelGetProcessTimeCounter
 
-	private void ResetImportLoopPattern()
+	// Internal for the concurrency stress tests; safe to call from any
+	// thread (reentrant under _importLoopGuardGate).
+	internal void ResetImportLoopPattern()
 	{
-		_importLoopPatternHits = 0;
-		_importLoopPatternStartTimestamp = 0;
-		_importLoopSignatureCount = 0;
-		_importLoopSignatureWriteIndex = 0;
+		lock (_importLoopGuardGate)
+		{
+			_importLoopPatternHits = 0;
+			_importLoopPatternStartTimestamp = 0;
+			_importLoopSignatureCount = 0;
+			_importLoopSignatureWriteIndex = 0;
+		}
 	}
 
 	private static int GetImportLoopGuardSeconds()
@@ -1920,19 +1932,34 @@ public sealed partial class DirectExecutionBackend
 		return num ^ nidHash * 11400714819323198485uL ^ num2;
 	}
 
-	private void RecordImportLoopSignature(ulong nidHash, ulong returnRip, ulong signature)
+	// Internal for the concurrency stress tests; safe to call from any
+	// thread (reentrant under _importLoopGuardGate).
+	internal void RecordImportLoopSignature(ulong nidHash, ulong returnRip, ulong signature)
 	{
-		_importLoopSignatures[_importLoopSignatureWriteIndex] = signature;
-		_importLoopNidHashes[_importLoopSignatureWriteIndex] = nidHash;
-		_importLoopReturnRips[_importLoopSignatureWriteIndex] = returnRip;
-		_importLoopSignatureWriteIndex = (_importLoopSignatureWriteIndex + 1) % _importLoopSignatures.Length;
-		if (_importLoopSignatureCount < _importLoopSignatures.Length)
+		lock (_importLoopGuardGate)
 		{
-			_importLoopSignatureCount++;
+			_importLoopSignatures[_importLoopSignatureWriteIndex] = signature;
+			_importLoopNidHashes[_importLoopSignatureWriteIndex] = nidHash;
+			_importLoopReturnRips[_importLoopSignatureWriteIndex] = returnRip;
+			_importLoopSignatureWriteIndex = (_importLoopSignatureWriteIndex + 1) % _importLoopSignatures.Length;
+			if (_importLoopSignatureCount < _importLoopSignatures.Length)
+			{
+				_importLoopSignatureCount++;
+			}
 		}
 	}
 
-	private bool HasRepeatingImportLoopPattern()
+	// Internal for the concurrency stress tests; safe to call from any
+	// thread (reentrant under _importLoopGuardGate).
+	internal bool HasRepeatingImportLoopPattern()
+	{
+		lock (_importLoopGuardGate)
+		{
+			return HasRepeatingImportLoopPatternLocked();
+		}
+	}
+
+	private bool HasRepeatingImportLoopPatternLocked()
 	{
 		int num = _importLoopSignatureCount;
 		if (num < 96)
@@ -2044,71 +2071,106 @@ public sealed partial class DirectExecutionBackend
 		return string.Equals(nid, "j4ViWNHEgww", StringComparison.Ordinal) && !_logStrlenImports;
 	}
 
-	private void TrackDistinctImportNid(string nid)
+	// Internal for the concurrency stress tests; safe to call from any
+	// thread (the distinct-NID ring is shared by all guest executors).
+	internal void TrackDistinctImportNid(string nid)
 	{
-		if (string.IsNullOrWhiteSpace(nid) || string.Equals(_lastDistinctImportNid, nid, StringComparison.Ordinal))
+		if (string.IsNullOrWhiteSpace(nid))
 		{
 			return;
 		}
-		_lastDistinctImportNid = nid;
-		_distinctImportNidHistory[_distinctImportNidHistoryWriteIndex] = nid;
-		_distinctImportNidHistoryWriteIndex = (_distinctImportNidHistoryWriteIndex + 1) % _distinctImportNidHistory.Length;
-		if (_distinctImportNidHistoryCount < _distinctImportNidHistory.Length)
+
+		lock (_importNidHistoryGate)
 		{
-			_distinctImportNidHistoryCount++;
+			if (string.Equals(_lastDistinctImportNid, nid, StringComparison.Ordinal))
+			{
+				return;
+			}
+
+			_lastDistinctImportNid = nid;
+			_distinctImportNidHistory[_distinctImportNidHistoryWriteIndex] = nid;
+			_distinctImportNidHistoryWriteIndex = (_distinctImportNidHistoryWriteIndex + 1) % _distinctImportNidHistory.Length;
+			if (_distinctImportNidHistoryCount < _distinctImportNidHistory.Length)
+			{
+				_distinctImportNidHistoryCount++;
+			}
 		}
 	}
 
-	private void TrackStrlenPrelude(string nid, long dispatchIndex, ulong returnRip)
+	// Internal for the concurrency stress tests; safe to call from any
+	// thread (shares _importNidHistoryGate with the distinct-NID ring).
+	internal void TrackStrlenPrelude(string nid, long dispatchIndex, ulong returnRip)
 	{
+		int burstCount;
 		if (!string.Equals(nid, "j4ViWNHEgww", StringComparison.Ordinal))
 		{
-			_consecutiveStrlenImports = 0;
-			_strlenPreludeLogged = false;
+			lock (_importNidHistoryGate)
+			{
+				_consecutiveStrlenImports = 0;
+				_strlenPreludeLogged = false;
+			}
 			return;
 		}
-		_consecutiveStrlenImports++;
-		if (_strlenPreludeLogged || _consecutiveStrlenImports < 24)
+
+		lock (_importNidHistoryGate)
 		{
-			return;
+			_consecutiveStrlenImports++;
+			burstCount = _consecutiveStrlenImports;
+			if (_strlenPreludeLogged || _consecutiveStrlenImports < 24)
+			{
+				return;
+			}
+
+			_strlenPreludeLogged = true;
 		}
-		_strlenPreludeLogged = true;
+
 		List<string> list = GetRecentDistinctImportPrelude(maxCount: 5, skipNid: "j4ViWNHEgww");
 		if (list.Count == 0)
 		{
-			Console.Error.WriteLine($"[LOADER][WARNING] Import#{dispatchIndex}: detected strlen burst (count={_consecutiveStrlenImports}) ret=0x{returnRip:X16}; no prelude NIDs recorded.");
+			Console.Error.WriteLine($"[LOADER][WARNING] Import#{dispatchIndex}: detected strlen burst (count={burstCount}) ret=0x{returnRip:X16}; no prelude NIDs recorded.");
 			return;
 		}
-		Console.Error.WriteLine($"[LOADER][WARNING] Import#{dispatchIndex}: detected strlen burst (count={_consecutiveStrlenImports}) ret=0x{returnRip:X16}; last5_nids={string.Join(" -> ", list)}");
+		Console.Error.WriteLine($"[LOADER][WARNING] Import#{dispatchIndex}: detected strlen burst (count={burstCount}) ret=0x{returnRip:X16}; last5_nids={string.Join(" -> ", list)}");
 	}
 
-	private List<string> GetRecentDistinctImportPrelude(int maxCount, string skipNid)
+	// Internal for the concurrency stress tests; safe to call from any
+	// thread. Collects the distinct NIDs under the gate, then resolves
+	// export names outside it.
+	internal List<string> GetRecentDistinctImportPrelude(int maxCount, string skipNid)
 	{
-		List<string> list = new List<string>(maxCount);
-		if (maxCount <= 0 || _distinctImportNidHistoryCount == 0)
+		List<string> distinct = new List<string>(maxCount);
+		lock (_importNidHistoryGate)
 		{
-			return list;
+			if (maxCount > 0 && _distinctImportNidHistoryCount > 0)
+			{
+				HashSet<string> hashSet = new HashSet<string>(StringComparer.Ordinal);
+				for (int i = 0; i < _distinctImportNidHistoryCount && distinct.Count < maxCount; i++)
+				{
+					int num = _distinctImportNidHistoryWriteIndex - 1 - i;
+					while (num < 0)
+					{
+						num += _distinctImportNidHistory.Length;
+					}
+					string text = _distinctImportNidHistory[num % _distinctImportNidHistory.Length];
+					if (string.IsNullOrWhiteSpace(text) || string.Equals(text, skipNid, StringComparison.Ordinal) || !hashSet.Add(text))
+					{
+						continue;
+					}
+					distinct.Add(text);
+				}
+			}
 		}
-		HashSet<string> hashSet = new HashSet<string>(StringComparer.Ordinal);
-		for (int i = 0; i < _distinctImportNidHistoryCount && list.Count < maxCount; i++)
+
+		List<string> list = new List<string>(distinct.Count);
+		foreach (string text2 in distinct)
 		{
-			int num = _distinctImportNidHistoryWriteIndex - 1 - i;
-			while (num < 0)
+			if (_moduleManager.TryGetExport(text2, out ExportedFunction export))
 			{
-				num += _distinctImportNidHistory.Length;
-			}
-			string text = _distinctImportNidHistory[num % _distinctImportNidHistory.Length];
-			if (string.IsNullOrWhiteSpace(text) || string.Equals(text, skipNid, StringComparison.Ordinal) || !hashSet.Add(text))
-			{
-				continue;
-			}
-			if (_moduleManager.TryGetExport(text, out ExportedFunction export))
-			{
-				list.Add($"{export.LibraryName}:{export.Name}({text})");
+				list.Add($"{export.LibraryName}:{export.Name}({text2})");
 			}
 			else
 			{
-				list.Add(text);
+				list.Add(text2);
 			}
 		}
 		list.Reverse();

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 using SharpEmu.HLE;
+using SharpEmu.Libs.Network;
 using System.Buffers.Binary;
 using System.Collections.Concurrent;
 using System.Threading;
@@ -23,9 +24,16 @@ public static partial class KernelMemoryCompatExports
     private const int F_GETFL = 3;
     private const int F_SETFL = 4;
 
+    // O_NONBLOCK (FreeBSD numbering used by the PS4/PS5 libc); the only status
+    // flag fcntl tracks, and only for libSceNet socket descriptors.
+    private const int O_NONBLOCK = 0x0004;
+
     // poll event bits.
     private const short POLLIN = 0x0001;
     private const short POLLOUT = 0x0004;
+
+    // sizeof(fd_set) on the PS4/PS5 libc: 1024 descriptors, one bit each.
+    private const int SelectFdSetBytes = 128;
 
     // AIO request state (SCE_KERNEL_AIO_STATE_*).
     private const uint AioStateCompleted = 3;
@@ -442,13 +450,41 @@ public static partial class KernelMemoryCompatExports
                 return (int)OrbisGen2Result.ORBIS_GEN2_OK;
 
             case F_GETFD:
-            case F_GETFL:
-                // No close-on-exec / status flags are tracked; report cleared.
+                // No close-on-exec flags are tracked; report cleared.
                 ctx[CpuRegister.Rax] = 0;
                 return (int)OrbisGen2Result.ORBIS_GEN2_OK;
 
+            case F_GETFL:
+                // The only status flag tracked anywhere is a socket's
+                // O_NONBLOCK (libSceNet sockets are born non-blocking); regular
+                // files report no flags.
+                if (NetExports.IsSocketDescriptor(fd) &&
+                    NetExports.TryGetSocketBlocking(fd, out var nonBlocking) &&
+                    !nonBlocking)
+                {
+                    ctx[CpuRegister.Rax] = unchecked((ulong)O_NONBLOCK);
+                }
+                else
+                {
+                    ctx[CpuRegister.Rax] = 0;
+                }
+
+                return (int)OrbisGen2Result.ORBIS_GEN2_OK;
+
             case F_SETFD:
+                ctx[CpuRegister.Rax] = 0;
+                return (int)OrbisGen2Result.ORBIS_GEN2_OK;
+
             case F_SETFL:
+                // F_SETFL is the POSIX way games toggle O_NONBLOCK; mirror the
+                // bit onto the managed socket's blocking mode. Anything else in
+                // the argument (access-mode bits cannot change post-open) is
+                // accepted and ignored.
+                if (NetExports.IsSocketDescriptor(fd))
+                {
+                    _ = NetExports.TrySetSocketBlocking(fd, (argument & O_NONBLOCK) == 0);
+                }
+
                 ctx[CpuRegister.Rax] = 0;
                 return (int)OrbisGen2Result.ORBIS_GEN2_OK;
 
@@ -459,8 +495,9 @@ public static partial class KernelMemoryCompatExports
     }
 
     // ---- poll / select ----
-    // Regular files are always ready for both read and write, so report every
-    // requested descriptor as immediately ready.
+    // Regular files are always ready for both read and write, so non-socket
+    // descriptors are reported immediately ready; libSceNet socket descriptors
+    // get their live readiness from NetExports instead.
 
     [SysAbiExport(Nid = "ku7D4q1Y9PI", ExportName = "poll",
         Target = Generation.Gen4 | Generation.Gen5, LibraryName = "libKernel")]
@@ -485,8 +522,23 @@ public static partial class KernelMemoryCompatExports
                 break;
             }
 
+            var fd = BinaryPrimitives.ReadInt32LittleEndian(buffer);
             var events = BinaryPrimitives.ReadInt16LittleEndian(buffer[4..]);
-            var revents = (short)(events & (POLLIN | POLLOUT));
+            short revents;
+            if (fd >= 0 && NetExports.IsSocketDescriptor(fd))
+            {
+                // Live socket readiness (POLLERR/POLLNVAL included), so a
+                // poll-driven game loop observes data, connect completion and
+                // peer hangups as they happen instead of spinning on "ready".
+                revents = NetExports.ComputeSocketPollEvents(fd, events);
+            }
+            else
+            {
+                // Regular (and unknown) descriptors: always ready, matching the
+                // non-blocking file model this backend exposes.
+                revents = (short)(events & (POLLIN | POLLOUT));
+            }
+
             BinaryPrimitives.WriteInt16LittleEndian(buffer[6..], revents);
             if (revents != 0)
             {
@@ -504,11 +556,89 @@ public static partial class KernelMemoryCompatExports
         Target = Generation.Gen4 | Generation.Gen5, LibraryName = "libKernel")]
     public static int PosixSelect(CpuContext ctx)
     {
-        // nfds in Rdi; the fd_sets are left as-is (all reported ready) and the
-        // ready count returned is nfds so callers proceed without blocking.
+        // select(nfds, readfds, writefds, errorfds, timeout): fd_sets are
+        // 1024-bit bitmaps. Socket descriptors report live readiness through
+        // NetExports; regular files stay unconditionally ready. The timeout is
+        // not waited out (nothing here can block the guest thread), so a select
+        // over only-idle sockets returns 0 rather than sleeping.
         var nfds = unchecked((int)ctx[CpuRegister.Rdi]);
-        ctx[CpuRegister.Rax] = unchecked((ulong)Math.Max(nfds, 0));
+        if (nfds <= 0)
+        {
+            ctx[CpuRegister.Rax] = 0;
+            return (int)OrbisGen2Result.ORBIS_GEN2_OK;
+        }
+
+        var readSetAddress = ctx[CpuRegister.Rsi];
+        var writeSetAddress = ctx[CpuRegister.Rdx];
+        var errorSetAddress = ctx[CpuRegister.Rcx];
+        Span<byte> readSet = stackalloc byte[SelectFdSetBytes];
+        Span<byte> writeSet = stackalloc byte[SelectFdSetBytes];
+        Span<byte> errorSet = stackalloc byte[SelectFdSetBytes];
+        var haveReadSet = readSetAddress != 0 && ctx.Memory.TryRead(readSetAddress, readSet);
+        var haveWriteSet = writeSetAddress != 0 && ctx.Memory.TryRead(writeSetAddress, writeSet);
+        var haveErrorSet = errorSetAddress != 0 && ctx.Memory.TryRead(errorSetAddress, errorSet);
+
+        var ready = 0;
+        for (var fd = 0; fd < nfds && fd < SelectFdSetBytes * 8; fd++)
+        {
+            var byteIndex = fd >> 3;
+            var bitMask = (byte)(1 << (fd & 7));
+            var wantedRead = haveReadSet && (readSet[byteIndex] & bitMask) != 0;
+            var wantedWrite = haveWriteSet && (writeSet[byteIndex] & bitMask) != 0;
+            var wantedError = haveErrorSet && (errorSet[byteIndex] & bitMask) != 0;
+            if (!wantedRead && !wantedWrite && !wantedError)
+            {
+                continue;
+            }
+
+            if (NetExports.IsSocketDescriptor(fd) &&
+                NetExports.TryGetSocketReadiness(fd, out var readable, out var writable, out var error))
+            {
+                wantedRead &= readable;
+                wantedWrite &= writable;
+                wantedError &= error;
+            }
+            // Non-socket descriptors stay reported ready (files never block).
+
+            if (wantedRead || wantedWrite || wantedError)
+            {
+                ready++;
+            }
+
+            SetFdBit(readSet, byteIndex, bitMask, wantedRead);
+            SetFdBit(writeSet, byteIndex, bitMask, wantedWrite);
+            SetFdBit(errorSet, byteIndex, bitMask, wantedError);
+        }
+
+        if (haveReadSet)
+        {
+            _ = ctx.Memory.TryWrite(readSetAddress, readSet);
+        }
+
+        if (haveWriteSet)
+        {
+            _ = ctx.Memory.TryWrite(writeSetAddress, writeSet);
+        }
+
+        if (haveErrorSet)
+        {
+            _ = ctx.Memory.TryWrite(errorSetAddress, errorSet);
+        }
+
+        ctx[CpuRegister.Rax] = unchecked((ulong)ready);
         return (int)OrbisGen2Result.ORBIS_GEN2_OK;
+    }
+
+    private static void SetFdBit(Span<byte> set, int byteIndex, byte bitMask, bool setBit)
+    {
+        if (setBit)
+        {
+            set[byteIndex] |= bitMask;
+        }
+        else
+        {
+            set[byteIndex] &= (byte)~bitMask;
+        }
     }
 
     // ---- Asynchronous I/O (executed synchronously) ----

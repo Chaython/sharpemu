@@ -198,6 +198,9 @@ public static class KernelEventQueueCompatExports
                         OutCountAddress),
                 WaitCompletion.Deleted =>
                     (int)OrbisGen2Result.ORBIS_GEN2_ERROR_DELETED,
+                _ when OutCountAddress != 0 &&
+                    !TryWriteUInt32(Ctx, OutCountAddress, 0) =>
+                    (int)OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT,
                 _ => (int)OrbisGen2Result.ORBIS_GEN2_ERROR_TIMED_OUT,
             };
 
@@ -614,57 +617,70 @@ public static class KernelEventQueueCompatExports
         }
 
         var waiterId = Interlocked.Increment(ref _nextEventQueueWaiterId);
-        if (timeoutAddress == 0)
-        {
-            var requestedBlock = GuestThreadExecution.RequestCurrentThreadBlock(
-                ctx,
-                "sceKernelWaitEqueue",
-                state.WakeKey,
-                new EqueueWaiter
-                {
-                    Ctx = ctx,
-                    State = state,
-                    EventsAddress = eventsAddress,
-                    EventCapacity = eventCapacity,
-                    OutCountAddress = outCountAddress,
-                    WaiterId = waiterId,
-                });
-            if (requestedBlock)
+        // Block cooperatively, mirroring KernelWaitSema/KernelWaitEventFlag:
+        // a timed wait parks the GUEST thread with a deadline instead of
+        // Monitor.Wait-ing on the calling host thread, so the scheduler keeps
+        // pumping other guest threads. The scheduler readies an expired
+        // waiter WITHOUT running the wake predicate; EqueueWaiter.Resume then
+        // maps the still-waiting state to TIMED_OUT (writing 0 delivered
+        // events, like the host fallback below).
+        var deadline = timeoutAddress != 0
+            ? GuestThreadExecution.ComputeDeadlineTimestamp(
+                TimeSpan.FromMicroseconds(timeoutUsec))
+            : 0;
+        var requestedBlock = GuestThreadExecution.RequestCurrentThreadBlock(
+            ctx,
+            "sceKernelWaitEqueue",
+            state.WakeKey,
+            new EqueueWaiter
             {
-                var wakeAfterRegistration = false;
-                lock (_eventQueueGate)
-                {
-                    wakeAfterRegistration =
-                        !IsLiveEventQueueLocked(state) ||
-                        HasPendingEventsLocked(state.Handle);
-                }
-
-                if (wakeAfterRegistration)
-                {
-                    WakeEventQueue(
-                        state,
-                        _logEqueue
-                            ? "source=post-registration-state-check"
-                            : null);
-                }
-
-                if (_logEqueue)
-                {
-                    TraceEventQueue(
-                        ctx,
-                        "wait-block",
-                        handle,
-                        $"generation={state.Generation} waiter={waiterId} " +
-                        $"capacity={eventCapacity} timeout=infinite " +
-                        $"events=0x{eventsAddress:X16} out_count=0x{outCountAddress:X16}");
-                }
-                return (int)OrbisGen2Result.ORBIS_GEN2_OK;
+                Ctx = ctx,
+                State = state,
+                EventsAddress = eventsAddress,
+                EventCapacity = eventCapacity,
+                OutCountAddress = outCountAddress,
+                WaiterId = waiterId,
+            },
+            deadline);
+        if (requestedBlock)
+        {
+            var wakeAfterRegistration = false;
+            lock (_eventQueueGate)
+            {
+                wakeAfterRegistration =
+                    !IsLiveEventQueueLocked(state) ||
+                    HasPendingEventsLocked(state.Handle);
             }
+
+            if (wakeAfterRegistration)
+            {
+                WakeEventQueue(
+                    state,
+                    _logEqueue
+                        ? "source=post-registration-state-check"
+                        : null);
+            }
+
+            if (_logEqueue)
+            {
+                TraceEventQueue(
+                    ctx,
+                    "wait-block",
+                    handle,
+                    $"generation={state.Generation} waiter={waiterId} " +
+                    $"capacity={eventCapacity} " +
+                    $"timeout={(timeoutAddress == 0 ? "infinite" : $"{timeoutUsec}us")} " +
+                    $"events=0x{eventsAddress:X16} out_count=0x{outCountAddress:X16}");
+            }
+            return (int)OrbisGen2Result.ORBIS_GEN2_OK;
         }
 
         if (timeoutAddress != 0)
         {
-            var deadline = Environment.TickCount64 +
+            // Non-cooperative caller (host thread): bounded Monitor.Wait loop
+            // under the queue gate until an event lands, the queue is deleted,
+            // or the deadline passes.
+            var deadlineMs = Environment.TickCount64 +
                 Math.Max(
                     1L,
                     (long)Math.Min(
@@ -675,7 +691,7 @@ public static class KernelEventQueueCompatExports
                 while (IsLiveEventQueueLocked(state) &&
                        !HasPendingEventsLocked(handle))
                 {
-                    var remaining = deadline - Environment.TickCount64;
+                    var remaining = deadlineMs - Environment.TickCount64;
                     if (remaining <= 0)
                     {
                         break;

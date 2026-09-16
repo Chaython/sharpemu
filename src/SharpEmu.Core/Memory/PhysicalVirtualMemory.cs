@@ -972,6 +972,33 @@ public sealed unsafe class PhysicalVirtualMemory : IVirtualMemory, IGuestMemoryA
         }
     }
 
+    /// <summary>
+    /// Guest-facing gate for protection changes: the whole range must sit
+    /// inside regions this instance mapped for the guest before any host
+    /// VirtualProtect/mprotect runs. Reachable from guest-controlled addresses
+    /// through the mprotect HLE exports, which resolve this class through
+    /// <c>ctx.Memory</c>; without the gate a guest-chosen address flows
+    /// straight into the raw host call and can retag emulator- or
+    /// runtime-owned pages (JIT stubs, PLT, abort stacks).
+    /// </summary>
+    public bool IsRangeGuestMapped(ulong address, ulong size)
+    {
+        if (size == 0 || ulong.MaxValue - address < size - 1)
+        {
+            return false;
+        }
+
+        _gate.EnterReadLock();
+        try
+        {
+            return IsRangeCoveredByRegionsLocked(address, address + size);
+        }
+        finally
+        {
+            _gate.ExitReadLock();
+        }
+    }
+
     public bool TryProtect(ulong address, ulong size, GuestPageProtection protection)
     {
         if (size == 0)
@@ -979,7 +1006,51 @@ public sealed unsafe class PhysicalVirtualMemory : IVirtualMemory, IGuestMemoryA
             return false;
         }
 
+        // Sandbox backstop: only pages this instance mapped for the guest may
+        // be re-protected. KernelMemoryCompatExports.MprotectCore validates
+        // against the kernel mapping table plus this query before routing
+        // here; re-checking keeps the seam safe for any other caller.
+        if (!IsRangeGuestMapped(address, size))
+        {
+            return false;
+        }
+
         return _hostMemory.Protect(address, size, ResolveProtection(protection), out _);
+    }
+
+    // _regions is kept sorted by VirtualAddress (InsertRegionSorted) and may
+    // contain overlapping neighbours; the walk skips anything that ends before
+    // the cursor so overlaps still advance monotonically.
+    private bool IsRangeCoveredByRegionsLocked(ulong start, ulong end)
+    {
+        var cursor = start;
+        foreach (var region in _regions)
+        {
+            if (region.Size > ulong.MaxValue - region.VirtualAddress)
+            {
+                continue;
+            }
+
+            var regionEnd = region.VirtualAddress + region.Size;
+            if (regionEnd <= cursor)
+            {
+                continue;
+            }
+
+            if (region.VirtualAddress > cursor)
+            {
+                // Gap onto pages that are not part of any guest region.
+                return false;
+            }
+
+            cursor = regionEnd;
+            if (cursor >= end)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public bool TryCommitRange(ulong address, ulong size)

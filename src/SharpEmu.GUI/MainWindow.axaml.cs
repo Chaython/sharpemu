@@ -48,6 +48,11 @@ public partial class MainWindow : Window
     [
         LocalizedChoice.FromKey("Native", "Options.CpuEngine.Native"),
     ];
+    private readonly LocalizedChoice[] _renderBackendChoices =
+    [
+        LocalizedChoice.FromKey("Legacy", "Options.RenderingBackend.Legacy"),
+        LocalizedChoice.FromKey("Native", "Options.RenderingBackend.Native"),
+    ];
     private readonly LocalizedChoice[] _logLevelChoices =
     [
         LocalizedChoice.FromKey("Trace", "Options.LogLevel.Trace"),
@@ -232,6 +237,8 @@ public partial class MainWindow : Window
         // The settings page edits _settings live, so a launch started while
         // it is open already uses the new values.
         LogLevelBox.SelectionChanged += (_, _) => _settings.LogLevel = SelectedLogLevel();
+        RenderingBackendBox.SelectionChanged += (_, _) =>
+            _settings.RenderingBackend = SelectedRenderingBackend();
         TraceImportsBox.ValueChanged += (_, _) => _settings.ImportTraceLimit = (int)(TraceImportsBox.Value ?? 0);
         RenderResolutionBox.SelectionChanged += (_, _) =>
         {
@@ -1163,6 +1170,7 @@ public partial class MainWindow : Window
     private void InitializeLocalizedChoiceBoxes()
     {
         CpuEngineBox.ItemsSource = _cpuEngineChoices;
+        RenderingBackendBox.ItemsSource = _renderBackendChoices;
         LogLevelBox.ItemsSource = _logLevelChoices;
         RenderResolutionBox.ItemsSource = _renderResolutionChoices;
         WindowModeBox.ItemsSource = _windowModeChoices;
@@ -1173,6 +1181,7 @@ public partial class MainWindow : Window
     private void RefreshLocalizedChoices()
     {
         RefreshChoices(_cpuEngineChoices);
+        RefreshChoices(_renderBackendChoices);
         RefreshChoices(_logLevelChoices);
         RefreshChoices(_renderResolutionChoices);
         RefreshChoices(_windowModeChoices);
@@ -1191,6 +1200,10 @@ public partial class MainWindow : Window
     private void ApplySettingsToControls()
     {
         CpuEngineBox.SelectedIndex = 0;
+        RenderingBackendBox.SelectedIndex = string.Equals(
+            _settings.RenderingBackend,
+            "Native",
+            StringComparison.OrdinalIgnoreCase) ? 1 : 0;
         LogLevelBox.SelectedIndex = _settings.LogLevel.ToLowerInvariant() switch
         {
             "trace" => 0,
@@ -1472,6 +1485,9 @@ public partial class MainWindow : Window
             _ => "Info",
         };
     }
+
+    private string SelectedRenderingBackend() =>
+        RenderingBackendBox.SelectedIndex == 1 ? "Native" : "Legacy";
 
     private void UpdateLogFilePathText()
     {
@@ -2394,6 +2410,33 @@ public partial class MainWindow : Window
             DefaultProfileEnvironmentName,
             GuiSettings.NormalizeDefaultProfile(_settings.DefaultProfile));
         _appliedEnvironmentVariables.Add(DefaultProfileEnvironmentName);
+
+        // The GUI owns this setting when it launches the emulator. Set both
+        // choices explicitly so a SHARPEMU_GPU_BACKEND value inherited by the
+        // launcher cannot silently override the Options menu. "vulkan" keeps
+        // the managed Silk.NET backend selected in the unified selector.
+        Environment.SetEnvironmentVariable(
+            "SHARPEMU_GPU_BACKEND",
+            string.Equals(_settings.RenderingBackend, "Native", StringComparison.OrdinalIgnoreCase)
+                ? "native"
+                : "vulkan");
+        _appliedEnvironmentVariables.Add("SHARPEMU_GPU_BACKEND");
+
+        if (string.Equals(_settings.RenderingBackend, "Native", StringComparison.OrdinalIgnoreCase))
+        {
+            var nativeLibraryName = OperatingSystem.IsWindows()
+                ? "sharpemu_gpu_vulkan.dll"
+                : OperatingSystem.IsMacOS()
+                    ? "libsharpemu_gpu_vulkan.dylib"
+                    : "libsharpemu_gpu_vulkan.so";
+            var emulatorDirectory = Path.GetDirectoryName(_emulatorExePath) ?? AppContext.BaseDirectory;
+            if (!File.Exists(Path.Combine(emulatorDirectory, nativeLibraryName)))
+            {
+                AppendConsoleLine(
+                    Localization.Instance.Format("Launch.NativeBackendMissing", nativeLibraryName),
+                    WarningLineBrush);
+            }
+        }
 
         Environment.SetEnvironmentVariable(
             "SHARPEMU_RENDER_SCALE",

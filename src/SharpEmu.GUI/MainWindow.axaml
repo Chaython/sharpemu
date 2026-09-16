@@ -1194,6 +1194,17 @@ SPDX-License-Identifier: GPL-2.0-or-later
                         </ComboBox>
                       </local:SettingRow>
 
+                      <local:SettingRow x:Name="RenderingBackendRow"
+                                        Classes="optionRow"
+                                        Label="{Binding [Options.RenderingBackend.Label], Source={x:Static local:Localization.Instance}}"
+                                        Description="{Binding [Options.RenderingBackend.Desc], Source={x:Static local:Localization.Instance}}">
+                        <ComboBox x:Name="RenderingBackendBox"
+                                  Classes="optionValue"
+                                  Width="210"
+                                  VerticalAlignment="Center"
+                                  SelectedIndex="0" />
+                      </local:SettingRow>
+
                       <local:SettingRow x:Name="DefaultProfileRow"
                                         Classes="optionRow"
                                         Label="{Binding [Options.DefaultProfile.Label], Source={x:Static local:Localization.Instance}}"
@@ -1505,6 +1516,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
                                         Description="{Binding [Options.Env.ForceSubmitOrphanPreambles.Desc], Source={x:Static local:Localization.Instance}}">
                         <ToggleSwitch x:Name="EnvForceSubmitOrphanPreamblesToggle" Classes="optionToggle" />
                       </local:SettingRow>
+
                     </StackPanel>
                   </Border>
 

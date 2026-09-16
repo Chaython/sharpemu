@@ -1360,13 +1360,31 @@ public static partial class Gen5MslTranslator
                 return false;
             }
 
+            // FLAT and GLOBAL share one emission path: map the FLAT segment
+            // onto the equivalent GLOBAL opcode so the load/store/atomic
+            // cases below match both segments.
+            var memoryOpcode = control.UsesFlatAddress
+                ? "Global" + instruction.Opcode["Flat".Length..]
+                : instruction.Opcode;
+            var vectorAddress = $"v[{control.VectorAddress}]";
+            if (control.UsesFlatAddress)
+            {
+                // FLAT instructions carry the complete 64-bit guest address in
+                // a VGPR pair. The scalar evaluator captures the buffer rooted
+                // at the inferred SGPR pair, so convert the low address dword
+                // back to a byte offset inside that binding (mirrors the SPIR-V
+                // translator's ISub). Subtraction wraps modulo 2^32, which also
+                // handles a carry into the high dword.
+                vectorAddress = $"({vectorAddress} - s[{control.ScalarAddress}])";
+            }
+
             var address = Temp(
                 "uint",
                 ApplyByteBias(
                     bindingIndex,
-                    $"(v[{control.VectorAddress}] + 0x{unchecked((uint)control.OffsetBytes):X}u)"));
+                    $"({vectorAddress} + 0x{unchecked((uint)control.OffsetBytes):X}u)"));
             return TryEmitResolvedMemoryAccess(
-                instruction.Opcode,
+                memoryOpcode,
                 bindingIndex,
                 address,
                 control.VectorData,
@@ -1631,31 +1649,16 @@ public static partial class Gen5MslTranslator
             out string error)
         {
             error = string.Empty;
-            if (opcode is "GlobalAtomicAdd" or "BufferAtomicAdd" or
-                "GlobalAtomicUMax" or "BufferAtomicUMax")
+            if (opcode.StartsWith("GlobalAtomic", StringComparison.Ordinal) ||
+                opcode.StartsWith("BufferAtomic", StringComparison.Ordinal))
             {
-                var function = opcode.EndsWith("Add", StringComparison.Ordinal)
-                    ? "atomic_fetch_add_explicit"
-                    : "atomic_fetch_max_explicit";
-                Line("if (exec)");
-                Line("{");
-                _indent++;
-                Line($"if ({byteAddress} + 4u <= {BufferBytes(bindingIndex)} && ({byteAddress} & 3u) == 0u)");
-                Line("{");
-                _indent++;
-                var original = Temp(
-                    "uint",
-                    $"{function}((device atomic_uint*)(b{bindingIndex} + ({byteAddress} >> 2)), v[{vectorData}], memory_order_relaxed)");
-                if (glc)
-                {
-                    Line($"v[{vectorData}] = {original};");
-                }
-
-                _indent--;
-                Line("}");
-                _indent--;
-                Line("}");
-                return true;
+                return TryEmitAtomic(
+                    opcode,
+                    bindingIndex,
+                    byteAddress,
+                    vectorData,
+                    glc,
+                    out error);
             }
 
             if (opcode.StartsWith("GlobalStore", StringComparison.Ordinal) ||
@@ -1719,6 +1722,92 @@ public static partial class Gen5MslTranslator
 
             error = $"unsupported memory opcode {opcode}";
             return false;
+        }
+
+        // Emits one FLAT/GLOBAL/BUFFER atomic against a resolved buffer
+        // binding. The MSL memory orders mirror the SPIR-V translator's
+        // semantics (AcquireRelease on the operation; the cmpxchg failure
+        // path downgrades to Acquire). AMD's INC/DEC wrap-clamp semantics
+        // (result = old >= clamp ? 0 : old ± 1) are approximated with a plain
+        // ±1 fetch, the same approximation OpAtomicIIncrement/IDecrement make.
+        private bool TryEmitAtomic(
+            string opcode,
+            int bindingIndex,
+            string byteAddress,
+            uint vectorData,
+            bool glc,
+            out string error)
+        {
+            error = string.Empty;
+            var prefix = opcode.StartsWith("BufferAtomic", StringComparison.Ordinal)
+                ? "BufferAtomic"
+                : "GlobalAtomic";
+            var operation = opcode[prefix.Length..];
+            var unsignedPointer =
+                $"(device atomic_uint*)(b{bindingIndex} + ({byteAddress} >> 2))";
+            var signedPointer =
+                $"(device atomic_int*)(b{bindingIndex} + ({byteAddress} >> 2))";
+            var value = $"v[{vectorData}]";
+
+            var expression = operation switch
+            {
+                "Add" => $"atomic_fetch_add_explicit({unsignedPointer}, {value}, memory_order_acq_rel)",
+                "Sub" => $"atomic_fetch_sub_explicit({unsignedPointer}, {value}, memory_order_acq_rel)",
+                "Inc" => $"atomic_fetch_add_explicit({unsignedPointer}, 1u, memory_order_acq_rel)",
+                "Dec" => $"atomic_fetch_sub_explicit({unsignedPointer}, 1u, memory_order_acq_rel)",
+                "And" => $"atomic_fetch_and_explicit({unsignedPointer}, {value}, memory_order_acq_rel)",
+                "Or" => $"atomic_fetch_or_explicit({unsignedPointer}, {value}, memory_order_acq_rel)",
+                "Xor" => $"atomic_fetch_xor_explicit({unsignedPointer}, {value}, memory_order_acq_rel)",
+                "Umin" => $"atomic_fetch_min_explicit({unsignedPointer}, {value}, memory_order_acq_rel)",
+                "Umax" => $"atomic_fetch_max_explicit({unsignedPointer}, {value}, memory_order_acq_rel)",
+                "Smin" =>
+                    $"as_type<uint>(atomic_fetch_min_explicit({signedPointer}, as_type<int>({value}), memory_order_acq_rel))",
+                "Smax" =>
+                    $"as_type<uint>(atomic_fetch_max_explicit({signedPointer}, as_type<int>({value}), memory_order_acq_rel))",
+                "Swap" =>
+                    $"atomic_exchange_explicit({unsignedPointer}, {value}, memory_order_acq_rel)",
+                _ => null,
+            };
+            if (expression is null && operation != "Cmpswap")
+            {
+                error = $"unsupported atomic opcode {opcode}";
+                return false;
+            }
+
+            Line("if (exec)");
+            Line("{");
+            _indent++;
+            Line($"if ({byteAddress} + 4u <= {BufferBytes(bindingIndex)} && ({byteAddress} & 3u) == 0u)");
+            Line("{");
+            _indent++;
+            if (expression is null)
+            {
+                // VDATA holds {new value, comparator}, the same layout as
+                // BUFFER_ATOMIC_CMPSWAP. atomic_compare_exchange_weak_explicit
+                // leaves the pre-operation value in the expected variable on
+                // both the success and failure paths.
+                var original = Temp("uint", $"v[{vectorData + 1}]");
+                Line(
+                    $"atomic_compare_exchange_weak_explicit({unsignedPointer}, &{original}, v[{vectorData}], memory_order_acq_rel, memory_order_acquire);");
+                if (glc)
+                {
+                    Line($"v[{vectorData}] = {original};");
+                }
+            }
+            else
+            {
+                var original = Temp("uint", expression);
+                if (glc)
+                {
+                    Line($"v[{vectorData}] = {original};");
+                }
+            }
+
+            _indent--;
+            Line("}");
+            _indent--;
+            Line("}");
+            return true;
         }
 
         private static bool TryGetSubdwordLoadInfo(

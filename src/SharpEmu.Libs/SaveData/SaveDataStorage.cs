@@ -10,8 +10,8 @@ namespace SharpEmu.Libs.SaveData;
 /// Host-side layout and metadata for PS5 save data. Saves live under
 /// <c>user/savedata/&lt;titleId&gt;/&lt;dirName&gt;/</c> next to the executable (overridable via
 /// <c>SHARPEMU_SAVEDATA_DIR</c>); the game's files are written directly inside a
-/// slot through the mounted <c>/savedata0</c> filesystem, and the PS5 UI
-/// metadata (title/subtitle/detail/userParam) plus icon live under
+/// slot through its mounted <c>/savedata0</c>–<c>/savedata15</c> mount point, and the PS5
+/// UI metadata (title/subtitle/detail/userParam) plus icon live under
 /// <c>&lt;slot&gt;/sce_sys/</c>. This type is pure filesystem logic with no guest
 /// interop so the path and metadata handling can be unit-tested.
 /// </summary>
@@ -150,12 +150,37 @@ public static class SaveDataStorage
         return SaveDataMetadata.CreateDefault(Path.GetFileName(slotDir.TrimEnd(Path.DirectorySeparatorChar)));
     }
 
-    /// <summary>Writes a slot's metadata, creating <c>sce_sys/</c> as needed.</summary>
+    /// <summary>
+    /// Writes a slot's metadata, creating <c>sce_sys/</c> as needed. The write
+    /// is atomic (staged through a sibling <c>param.json.tmp</c> then renamed
+    /// over the destination), so a crash mid-write can never truncate the
+    /// previous metadata back to defaults.
+    /// </summary>
     public static void WriteMetadata(string slotDir, SaveDataMetadata metadata)
     {
         var path = ParamPath(slotDir);
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, JsonSerializer.Serialize(metadata, SaveDataMetadataContext.Default.SaveDataMetadata));
+        WriteMetadataAtomically(
+            path,
+            JsonSerializer.Serialize(metadata, SaveDataMetadataContext.Default.SaveDataMetadata));
+    }
+
+    /// <summary>
+    /// Stages <paramref name="contents"/> in a sibling <c>.tmp</c> file and
+    /// then moves it over the destination — an atomic same-volume rename. A
+    /// failure while writing the temporary file leaves the destination's
+    /// previous contents untouched. The <paramref name="writeFile"/> seam
+    /// exists so tests can simulate a mid-write crash.
+    /// </summary>
+    internal static void WriteMetadataAtomically(
+        string destinationPath,
+        string contents,
+        Action<string, string>? writeFile = null)
+    {
+        writeFile ??= static (path, text) => File.WriteAllText(path, text);
+        var temporaryPath = destinationPath + ".tmp";
+        writeFile(temporaryPath, contents);
+        File.Move(temporaryPath, destinationPath, overwrite: true);
     }
 }
 

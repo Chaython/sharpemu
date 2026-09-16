@@ -88,6 +88,10 @@
   "Options.CpuEngine.Label": "Silnik CPU",
   "Options.CpuEngine.Desc": "Silnik wykonawczy używany do uruchamiania kodu gry.",
   "Options.CpuEngine.Native": "Natywny",
+  "Options.RenderingBackend.Label": "Backend renderowania",
+  "Options.RenderingBackend.Desc": "Implementacja graficzna używana dla nowo uruchamianych gier. Natywny Vulkan wymaga osobnej biblioteki.",
+  "Options.RenderingBackend.Native": "Natywny Vulkan (Eksperymentalny)",
+  "Options.RenderingBackend.Legacy": "Silk.NET Vulkan (Domyślny)",
 
   "Options.Strict.Label": "Ścisłe rozwiązywanie dynlib",
   "Options.Strict.Desc": "Przerwij uruchomienie, gdy importowany symbol nie może zostać rozwiązany.",
@@ -138,6 +142,7 @@
   "Console.WindowTitle": "Konsola SharpEmu",
 
   "Launch.NoGameSelected": "Nie wybrano gry",
+  "Launch.NativeBackendMissing": "OSTRZEŻENIE: wybrano natywny Vulkan, ale nie znaleziono {0} obok SharpEmu. Pobierz go z https://github.com/sharpemu/sharpemu.vulkan lub wybierz Silk.NET Vulkan w Opcjach.",
   "Launch.NoGameHint": "Wybierz grę z biblioteki lub otwórz bezpośrednio plik eboot.bin.",
   "Launch.Idle": "Bezczynny",
   "Launch.Console": "≡ Konsola",

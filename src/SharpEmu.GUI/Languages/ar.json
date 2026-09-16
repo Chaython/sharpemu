@@ -37,6 +37,10 @@
   "Options.CpuEngine.Label": "محرك المعالج",
   "Options.CpuEngine.Desc": "محرك التنفيذ المستخدم لتشغيل كود اللعبة.", 
   "Options.CpuEngine.Native": "أصلي",
+  "Options.RenderingBackend.Label": "الواجهة الخلفية للعرض",
+  "Options.RenderingBackend.Desc": "تنفيذ الرسوميات المستخدم للألعاب التي يتم تشغيلها حديثًا. يتطلب Vulkan الأصلي مكتبة منفصلة.",
+  "Options.RenderingBackend.Native": "Vulkan الأصلي (تجريبي)",
+  "Options.RenderingBackend.Legacy": "Silk.NET Vulkan (افتراضي)",
 
   "Options.Strict.Label": "ربط صارم للمكتبات الديناميكية (dynlib)",
   "Options.Strict.Desc": "إفشال التشغيل عندما يتعذر التعرف على رمز مستورد.",
@@ -86,6 +90,7 @@
   "Console.WindowTitle": "نافذة سجلات SharpEmu",
 
   "Launch.NoGameSelected": "لم تُحدد أي لعبة",
+  "Launch.NativeBackendMissing": "تحذير: Vulkan الأصلي محدد، لكن لم يتم العثور على {0} بجانب SharpEmu. قم بتنزيله من https://github.com/sharpemu/sharpemu.vulkan أو اختر Silk.NET Vulkan في الخيارات.",
   "Launch.NoGameHint": "اختر لعبة من المكتبة، أو افتح ملف eboot.bin مباشرة.",
   "Launch.Idle": "خامل",
   "Launch.Console": "≡ نافذة السجلات",

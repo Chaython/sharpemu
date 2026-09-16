@@ -240,6 +240,30 @@ public static class SystemServiceExports
         LibraryName = "libSceSystemService")]
     public static int SystemServiceReportAbnormalTermination(CpuContext ctx) => ctx.SetReturn(0);
 
+    // Boot-adjacent gap: titles query their own app type during startup, and
+    // an unresolved stub (0x80020002) can stall that path. No SceSystemService
+    // app-type constant is derivable in this emulator (every load is a game),
+    // so report 0, the neutral "none" value.
+    [SysAbiExport(
+        Nid = "YLbhAXS20C0",
+        ExportName = "sceSystemServiceGetAppType",
+        Target = Generation.Gen4 | Generation.Gen5,
+        LibraryName = "libSceSystemService")]
+    public static int SystemServiceGetAppType(CpuContext ctx)
+    {
+        var appTypeAddress = ctx[CpuRegister.Rdi];
+        if (appTypeAddress == 0)
+        {
+            return ctx.SetReturn(OrbisSystemServiceErrorParameter);
+        }
+
+        Span<byte> appType = stackalloc byte[sizeof(int)];
+        BinaryPrimitives.WriteInt32LittleEndian(appType, 0);
+        return ctx.Memory.TryWrite(appTypeAddress, appType)
+            ? ctx.SetReturn(0)
+            : ctx.SetReturn((int)OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
+    }
+
     internal static void ResetForTests() =>
         Volatile.Write(ref _noticeScreenSkipFlag, 0);
 }

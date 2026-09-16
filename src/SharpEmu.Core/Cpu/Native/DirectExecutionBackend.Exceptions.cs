@@ -628,15 +628,23 @@ public sealed partial class DirectExecutionBackend
 		return true;
 	}
 
+	// SHARPEMU_DISABLE_GUEST_ALLOCATOR_HOLE_RECOVERY=1 turns the allocator
+	// hole adapter off. Cached once per process at class initialization:
+	// this recovery check runs on every access violation, and an environment
+	// lookup per fault is a global lock plus a string allocation in the hot
+	// fault-recovery path. Set the variable before launching the emulator.
+	private static readonly bool _disableGuestAllocatorHoleRecovery =
+		string.Equals(
+			Environment.GetEnvironmentVariable("SHARPEMU_DISABLE_GUEST_ALLOCATOR_HOLE_RECOVERY"),
+			"1",
+			StringComparison.Ordinal);
+
 	private unsafe static bool TryRecoverGuestAllocatorHole(
 		EXCEPTION_RECORD* exceptionRecord,
 		void* contextRecord,
 		ulong rip)
 	{
-		if (string.Equals(
-				Environment.GetEnvironmentVariable("SHARPEMU_DISABLE_GUEST_ALLOCATOR_HOLE_RECOVERY"),
-				"1",
-				StringComparison.Ordinal) ||
+		if (_disableGuestAllocatorHoleRecovery ||
 			exceptionRecord->NumberParameters < 2 ||
 			exceptionRecord->ExceptionInformation[0] != 0 ||
 			exceptionRecord->ExceptionInformation[1] != 8 ||
@@ -706,22 +714,27 @@ public sealed partial class DirectExecutionBackend
 	{
 		ulong accessType = exceptionRecord->NumberParameters >= 1 ? (*exceptionRecord->ExceptionInformation) : 0;
 		ulong target = exceptionRecord->NumberParameters >= 2 ? exceptionRecord->ExceptionInformation[1] : 0;
-		if (_lastAvTraceRip == exceptionAddress && _lastAvTraceType == accessType && _lastAvTraceTarget == target)
+		// The dedup fields are shared by concurrent faulting executors;
+		// serialize so interleaved faults cannot tear the dedup state.
+		lock (_avTraceGate)
 		{
-			_lastAvTraceRepeatCount++;
-			if (_lastAvTraceRepeatCount > 4 && _lastAvTraceRepeatCount % 128 != 0)
+			if (_lastAvTraceRip == exceptionAddress && _lastAvTraceType == accessType && _lastAvTraceTarget == target)
 			{
+				_lastAvTraceRepeatCount++;
+				if (_lastAvTraceRepeatCount > 4 && _lastAvTraceRepeatCount % 128 != 0)
+				{
+					return;
+				}
+				Console.Error.WriteLine($"[LOADER][TRACE] VEH_AV repeat#{_lastAvTraceRepeatCount} at 0x{exceptionAddress:X16} type={accessType} target=0x{target:X16}");
+				Console.Error.Flush();
 				return;
 			}
-			Console.Error.WriteLine($"[LOADER][TRACE] VEH_AV repeat#{_lastAvTraceRepeatCount} at 0x{exceptionAddress:X16} type={accessType} target=0x{target:X16}");
-			Console.Error.Flush();
-			return;
-		}
 
-		_lastAvTraceRip = exceptionAddress;
-		_lastAvTraceType = accessType;
-		_lastAvTraceTarget = target;
-		_lastAvTraceRepeatCount = 1;
+			_lastAvTraceRip = exceptionAddress;
+			_lastAvTraceType = accessType;
+			_lastAvTraceTarget = target;
+			_lastAvTraceRepeatCount = 1;
+		}
 		Console.Error.WriteLine($"[LOADER][TRACE] VEH_AV first-chance at 0x{exceptionAddress:X16} type={accessType} target=0x{target:X16}");
 		Console.Error.Flush();
 	}
@@ -1626,9 +1639,17 @@ public sealed partial class DirectExecutionBackend
 		PatchTlsPatternsInRange(committedBase, committedBase + committedSize, announce: false);
 	}
 
+	// SHARPEMU_LOG_LAZY_COMMIT=1 forces a trace line for every demand-paged
+	// (lazy-commit) fault. Cached once per process at class initialization:
+	// the guard-page fault path runs the check on every fault, and an
+	// environment lookup per fault is a global lock plus a string allocation.
+	// Set the variable before launching the emulator.
+	private static readonly bool _logLazyCommit =
+		string.Equals(Environment.GetEnvironmentVariable("SHARPEMU_LOG_LAZY_COMMIT"), "1", StringComparison.Ordinal);
+
 	private static bool ShouldTraceLazyCommit(int traceIndex)
 	{
-		if (string.Equals(Environment.GetEnvironmentVariable("SHARPEMU_LOG_LAZY_COMMIT"), "1", StringComparison.Ordinal))
+		if (_logLazyCommit)
 		{
 			return true;
 		}

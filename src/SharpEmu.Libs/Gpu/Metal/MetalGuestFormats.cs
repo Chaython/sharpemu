@@ -69,6 +69,12 @@ internal enum MtlPixelFormat : uint
     Bc7RgbaUnorm = 152,
     Bc7RgbaUnormSrgb = 153,
     Depth32Float = 252,
+    // Stencil-capable attachment formats. The guest depth backing is currently
+    // Depth32Float (no stencil plane); Stencil8 is declared on pipelines whose
+    // guest draw enables stencil so the state is complete the moment a
+    // combined depth-stencil backing (Depth32FloatStencil8) is allocated.
+    Stencil8 = 253,
+    Depth32FloatStencil8 = 260,
 }
 
 /// <summary>A sampled-texture format: the Metal pixel format plus the byte

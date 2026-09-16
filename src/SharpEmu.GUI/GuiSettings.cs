@@ -23,6 +23,9 @@ public sealed class GuiSettings
 
     public bool StrictDynlibResolution { get; set; }
 
+    /// <summary>GPU implementation selected for newly launched games.</summary>
+    public string RenderingBackend { get; set; } = "Legacy";
+
     /// <summary>
     /// Mirror emulator output to user/logs/&lt;titleId&gt;-&lt;timestamp&gt;.log, if <see cref="LogFilePath"/> is null.
     /// </summary>

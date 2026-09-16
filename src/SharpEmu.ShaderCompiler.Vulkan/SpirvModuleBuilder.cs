@@ -332,7 +332,7 @@ public sealed class SpirvModuleBuilder
         (
             uint SampledType,
             SpirvImageDim Dimension,
-            bool Depth,
+            uint Depth,
             bool Arrayed,
             bool Multisampled,
             uint Sampled,
@@ -502,7 +502,7 @@ public sealed class SpirvModuleBuilder
     public uint TypeImage(
         uint sampledType,
         SpirvImageDim dimension,
-        bool depth,
+        uint depth,
         bool arrayed,
         bool multisampled,
         uint sampled,
@@ -528,7 +528,10 @@ public sealed class SpirvModuleBuilder
             id,
             sampledType,
             (uint)dimension,
-            depth ? 1u : 0u,
+            // 0 = not a depth image, 1 = depth image, 2 = unknown (depth
+            // sampling is legal against a Depth=2 type regardless of the
+            // underlying format).
+            depth,
             arrayed ? 1u : 0u,
             multisampled ? 1u : 0u,
             sampled,

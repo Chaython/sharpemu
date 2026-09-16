@@ -325,7 +325,12 @@ public static partial class Gen5SpirvTranslator
             ImageComponentKind ComponentKind,
             bool IsStorage,
             bool Arrayed,
-            SpirvImageDim Dimension);
+            SpirvImageDim Dimension,
+            // OpTypeImage Depth operand (0 = not depth, 2 = unknown). Set to 2
+            // for shadow-compare bindings so OpImageSampleDref*/OpImageDrefGather
+            // sample a valid depth image; 2 (unknown) stays legal for plain
+            // sampling of the same binding.
+            uint Depth);
 
         private readonly record struct SpirvVertexInput(
             uint Variable,
@@ -701,15 +706,11 @@ public static partial class Gen5SpirvTranslator
             _module.AddCapability(SpirvCapability.Shader);
             _module.AddCapability(SpirvCapability.Int64);
             _module.AddCapability(SpirvCapability.ImageQuery);
-            if (_evaluation.ImageBindings.Any(
-                    static binding =>
-                        (binding.Opcode.StartsWith(
-                             "ImageSample",
-                             StringComparison.Ordinal) ||
-                         binding.Opcode.StartsWith(
-                             "ImageGather4",
-                             StringComparison.Ordinal)) &&
-                        binding.Opcode.EndsWith("O", StringComparison.Ordinal)))
+            if (_evaluation.ImageBindings.Any(static binding =>
+                    Gen5ShaderTranslator.ParseImageOpcodeFlags(
+                        binding.Opcode,
+                        out var flags) &&
+                    flags.Offset))
             {
                 _module.AddCapability(SpirvCapability.ImageGatherExtended);
             }
@@ -1024,10 +1025,24 @@ public static partial class Gen5SpirvTranslator
                 var isArrayed = dimension != SpirvImageDim.Dim3D &&
                     !isStorage &&
                     Gen5ShaderTranslator.IsArrayedImageBinding(binding);
+                // Shadow-compare bindings (IMAGE_SAMPLE_C*/IMAGE_GATHER4_C*)
+                // declare their image type with Depth=2 ("unknown") so the
+                // Dref sampling instructions below validate. Only a float
+                // component type can be depth-sampled in SPIR-V; integer
+                // compare variants keep Depth=0 and fall back to the manual
+                // compare path at emission.
+                var depth = !isStorage &&
+                    componentKind == ImageComponentKind.Float &&
+                    Gen5ShaderTranslator.ParseImageOpcodeFlags(
+                        binding.Opcode,
+                        out var bindingFlags) &&
+                    bindingFlags.Compare
+                        ? 2u
+                        : 0u;
                 var imageType = _module.TypeImage(
                     componentType,
                     dimension,
-                    depth: false,
+                    depth,
                     arrayed: isArrayed,
                     multisampled: false,
                     sampled: isStorage ? 2u : 1u,
@@ -1057,7 +1072,8 @@ public static partial class Gen5SpirvTranslator
                         componentKind,
                         isStorage,
                         isArrayed,
-                        dimension));
+                        dimension,
+                        depth));
                 _interfaces.Add(variable);
             }
         }
@@ -2324,21 +2340,31 @@ public static partial class Gen5SpirvTranslator
             byteAddress = ApplyGuestBufferByteBias(bindingIndex, byteAddress);
             var dwordAddress = ShiftRightLogical(byteAddress, UInt(2));
 
-            if (memoryOpcode is "GlobalAtomicAdd" or "GlobalAtomicUMax")
+            if (memoryOpcode.StartsWith("GlobalAtomic", StringComparison.Ordinal))
             {
+                if (!TryGetAtomicOp(
+                        memoryOpcode["GlobalAtomic".Length..],
+                        out var atomicOp))
+                {
+                    error = $"unsupported global atomic opcode {instruction.Opcode}";
+                    return false;
+                }
+
                 EmitExecConditional(() =>
                 {
                     EmitConditional(IsBufferWordInRange(bindingIndex, dwordAddress), () =>
                     {
-                        var original = _module.AddInstruction(
-                            memoryOpcode == "GlobalAtomicAdd"
-                                ? SpirvOp.AtomicIAdd
-                                : SpirvOp.AtomicUMax,
+                        var original = EmitAtomic(
+                            atomicOp,
                             _uintType,
                             BufferWordPointer(bindingIndex, dwordAddress),
-                            UInt(1),
-                            UInt(0x48),
-                            LoadV(control.VectorData));
+                            scope: 1,
+                            semantics: 0x48,
+                            // GLOBAL_ATOMIC_CMPSWAP carries {new value,
+                            // comparator} in VDATA:VDATA+1, same layout as
+                            // BUFFER_ATOMIC_CMPSWAP.
+                            value: () => LoadV(control.VectorData),
+                            comparator: () => LoadV(control.VectorData + 1));
                         if (control.Glc)
                         {
                             StoreV(control.VectorData, original);
@@ -3549,18 +3575,20 @@ public static partial class Gen5SpirvTranslator
                          "ImageSample",
                          StringComparison.Ordinal))
             {
-                var hasOffset =
-                    instruction.Opcode.EndsWith("O", StringComparison.Ordinal);
-                var hasCompare =
-                    instruction.Opcode.Contains("SampleC", StringComparison.Ordinal);
-                var hasGradients =
-                    instruction.Opcode.Contains("SampleD", StringComparison.Ordinal);
-                var hasZeroLod =
-                    instruction.Opcode.Contains("Lz", StringComparison.Ordinal);
-                var hasLod = !hasZeroLod &&
-                    instruction.Opcode.Contains("SampleL", StringComparison.Ordinal);
-                var hasBias =
-                    instruction.Opcode.Contains("SampleB", StringComparison.Ordinal);
+                if (!Gen5ShaderTranslator.ParseImageOpcodeFlags(
+                        instruction.Opcode,
+                        out var flags))
+                {
+                    error = $"unsupported image opcode {instruction.Opcode}";
+                    return false;
+                }
+
+                var hasOffset = flags.Offset;
+                var hasCompare = flags.Compare;
+                var hasGradients = flags.Derivatives;
+                var hasZeroLod = flags.LodZero;
+                var hasLod = flags.Lod;
+                var hasBias = flags.Bias;
 
                 // RDNA MIMG address operands are ordered as
                 // {offset}{bias/lod}{z-compare}{derivatives}{body}.  The old
@@ -3676,25 +3704,58 @@ public static partial class Gen5SpirvTranslator
 
                 }
 
-                sampled = _module.AddInstruction(
-                    explicitLod
-                        ? SpirvOp.ImageSampleExplicitLod
-                        : SpirvOp.ImageSampleImplicitLod,
-                    resource.VectorType,
-                    [.. operands]);
-                if (hasCompare)
+                if (hasCompare && resource.Depth == 2)
                 {
-                    sampled = EmitManualDepthCompare(resource, sampled, reference);
+                    // Shadow-compare sampling: the Dref operand replaces the
+                    // manual per-texel compare, so the host performs real PCF.
+                    // OpImageSampleDref* takes the reference right after the
+                    // coordinates and returns a scalar, which is broadcast to
+                    // the (r, r, r, 1) shape the manual path produced.
+                    var drefOperands = new List<uint>
+                    {
+                        imageObject,
+                        coordinates,
+                        reference,
+                    };
+                    drefOperands.AddRange(operands.Skip(2));
+                    var compared = _module.AddInstruction(
+                        explicitLod
+                            ? SpirvOp.ImageSampleDrefExplicitLod
+                            : SpirvOp.ImageSampleDrefImplicitLod,
+                        resource.ComponentType,
+                        [.. drefOperands]);
+                    sampled = BroadcastDepthCompareScalar(resource, compared);
+                }
+                else
+                {
+                    sampled = _module.AddInstruction(
+                        explicitLod
+                            ? SpirvOp.ImageSampleExplicitLod
+                            : SpirvOp.ImageSampleImplicitLod,
+                        resource.VectorType,
+                        [.. operands]);
+                    if (hasCompare)
+                    {
+                        // Integer-compare fallback: the binding could not be
+                        // declared as a depth image, so compare in-shader.
+                        sampled = EmitManualDepthCompare(resource, sampled, reference);
+                    }
                 }
             }
             else if (instruction.Opcode.StartsWith(
                          "ImageGather4",
                          StringComparison.Ordinal))
             {
-                var hasOffset =
-                    instruction.Opcode.EndsWith("O", StringComparison.Ordinal);
-                var hasCompare =
-                    instruction.Opcode.Contains("Gather4C", StringComparison.Ordinal);
+                if (!Gen5ShaderTranslator.ParseImageOpcodeFlags(
+                        instruction.Opcode,
+                        out var flags))
+                {
+                    error = $"unsupported image opcode {instruction.Opcode}";
+                    return false;
+                }
+
+                var hasOffset = flags.Offset;
+                var hasCompare = flags.Compare;
                 var spatialComponentCount =
                     ImageSpatialComponentCount(resource);
                 var coordinateComponentCount =
@@ -3725,54 +3786,81 @@ public static partial class Gen5SpirvTranslator
                     image,
                     addressCursor,
                     coordinateComponentCount);
-                var operands = new List<uint>
+                if (hasCompare && resource.Depth == 2)
                 {
-                    imageObject,
-                    coordinates,
-                };
-                if (hasCompare)
-                {
-                    operands.Add(UInt(0));
-                }
-                else
-                {
-                    uint component = 0;
-                    while (component < 3 &&
-                           (image.Dmask & (1u << (int)component)) == 0)
+                    // Shadow gather: OpImageDrefGather takes the Dref operand
+                    // in place of the component selector and already returns
+                    // the per-texel compare results as a vec4.
+                    var drefOperands = new List<uint>
                     {
-                        component++;
-                    }
-
-                    operands.Add(UInt(component));
-                }
-
-                if (hasOffset)
-                {
-                    operands.Add(0x10u);
-                    operands.Add(offset);
-                }
-
-                sampled = _module.AddInstruction(
-                    SpirvOp.ImageGather,
-                    resource.VectorType,
-                    [.. operands]);
-                if (hasCompare)
-                {
-                    var compared = new uint[4];
-                    for (var component = 0u; component < 4; component++)
+                        imageObject,
+                        coordinates,
+                        reference,
+                    };
+                    if (hasOffset)
                     {
-                        var texel = _module.AddInstruction(
-                            SpirvOp.CompositeExtract,
-                            resource.ComponentType,
-                            sampled,
-                            component);
-                        compared[component] = EmitDepthCompareScalar(resource, texel, reference);
+                        drefOperands.Add(0x10u);
+                        drefOperands.Add(offset);
                     }
 
                     sampled = _module.AddInstruction(
-                        SpirvOp.CompositeConstruct,
+                        SpirvOp.ImageDrefGather,
                         resource.VectorType,
-                        compared);
+                        [.. drefOperands]);
+                }
+                else
+                {
+                    var operands = new List<uint>
+                    {
+                        imageObject,
+                        coordinates,
+                    };
+                    if (hasCompare)
+                    {
+                        operands.Add(UInt(0));
+                    }
+                    else
+                    {
+                        uint component = 0;
+                        while (component < 3 &&
+                               (image.Dmask & (1u << (int)component)) == 0)
+                        {
+                            component++;
+                        }
+
+                        operands.Add(UInt(component));
+                    }
+
+                    if (hasOffset)
+                    {
+                        operands.Add(0x10u);
+                        operands.Add(offset);
+                    }
+
+                    sampled = _module.AddInstruction(
+                        SpirvOp.ImageGather,
+                        resource.VectorType,
+                        [.. operands]);
+                    if (hasCompare)
+                    {
+                        // Integer-compare fallback: compare each gathered
+                        // texel in-shader against the reference.
+                        var compared = new uint[4];
+                        for (var component = 0u; component < 4; component++)
+                        {
+                            var texel = _module.AddInstruction(
+                                SpirvOp.CompositeExtract,
+                                resource.ComponentType,
+                                sampled,
+                                component);
+                            compared[component] = EmitDepthCompareScalar(resource, texel, reference);
+                        }
+
+                        sampled = _module.AddInstruction(
+                            SpirvOp.CompositeConstruct,
+                            resource.VectorType,
+                            compared);
+                    }
                 }
 
                 writeAllComponents = true;
@@ -3892,6 +3980,28 @@ public static partial class Gen5SpirvTranslator
                 });
         }
 
+        // Broadcasts a scalar depth-compare result to the (r, r, r, 1) vector
+        // shape the guest dmask filtering expects, matching the original
+        // manual-compare lowering.
+        private uint BroadcastDepthCompareScalar(
+            SpirvImageResource resource,
+            uint scalar)
+        {
+            var one = resource.ComponentKind switch
+            {
+                ImageComponentKind.Uint => UInt(1),
+                ImageComponentKind.Sint => _module.Constant(_intType, 1),
+                _ => Float(1),
+            };
+            return _module.AddInstruction(
+                SpirvOp.CompositeConstruct,
+                resource.VectorType,
+                scalar,
+                scalar,
+                scalar,
+                one);
+        }
+
         private uint EmitManualDepthCompare(
             SpirvImageResource resource,
             uint sampledVector,
@@ -3903,18 +4013,7 @@ public static partial class Gen5SpirvTranslator
                 sampledVector,
                 0u);
             var scalar = EmitDepthCompareScalar(resource, texel, reference);
-            return _module.AddInstruction(
-                SpirvOp.CompositeConstruct,
-                resource.VectorType,
-                scalar,
-                scalar,
-                scalar,
-                resource.ComponentKind switch
-                {
-                    ImageComponentKind.Uint => UInt(1),
-                    ImageComponentKind.Sint => _module.Constant(_intType, 1),
-                    _ => Float(1),
-                });
+            return BroadcastDepthCompareScalar(resource, scalar);
         }
 
         private static uint ImageSpatialComponentCount(

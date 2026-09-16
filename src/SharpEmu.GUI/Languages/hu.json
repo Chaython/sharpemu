@@ -51,6 +51,10 @@
   "Options.CpuEngine.Label": "CPU motor",
   "Options.CpuEngine.Desc": "A játék kódjának futtatásához használt végrehajtó motor.",
   "Options.CpuEngine.Native": "Natív",
+  "Options.RenderingBackend.Label": "Renderelési backend",
+  "Options.RenderingBackend.Desc": "Az újonnan indított játékokhoz használt grafikai megvalósítás. A natív Vulkan külön könyvtárat igényel.",
+  "Options.RenderingBackend.Native": "Natív Vulkan (Kísérleti)",
+  "Options.RenderingBackend.Legacy": "Silk.NET Vulkan (Alapértelmezett)",
 
   "Options.Strict.Label": "Szigorú dynlib felbontás",
   "Options.Strict.Desc": "Indítás megszakítása, ha egy importált szimbólum nem oldható fel.",
@@ -100,6 +104,7 @@
   "Console.WindowTitle": "SharpEmu Konzol",
 
   "Launch.NoGameSelected": "Nincs játék kiválasztva",
+  "Launch.NativeBackendMissing": "FIGYELMEZTETÉS: A natív Vulkan van kiválasztva, de a(z) {0} nem található a SharpEmu mellett. Töltsd le a https://github.com/sharpemu/sharpemu.vulkan oldalról, vagy válaszd a Silk.NET Vulkan lehetőséget a Beállításokban.",
   "Launch.NoGameHint": "Válassz egy játékot a könyvtárból, vagy nyiss meg közvetlenül egy eboot.bin fájlt.",
   "Launch.Idle": "Tétlen",
   "Launch.Console": "≡ Konzol",

@@ -35,5 +35,23 @@ public interface IGuestAddressSpace : IGuestMemoryAllocator
 
     bool TryAllocateAtOrAbove(ulong desiredAddress, ulong size, bool executable, ulong alignment, out ulong actualAddress);
 
+    /// <summary>
+    /// Reports whether <c>[address, address+size)</c> lies entirely inside
+    /// guest mappings the backing memory knows about (loader segments,
+    /// allocator ranges, fixed mappings), with no gap onto host pages the
+    /// guest does not own. Protection-changing exports (mprotect and friends)
+    /// must query this before touching host page protections: guest addresses
+    /// are identity-mapped onto host pages, so an ungated protect call lets a
+    /// guest-chosen address retag emulator- or runtime-owned memory — a
+    /// host-memory sandbox escape.
+    /// </summary>
+    bool IsRangeGuestMapped(ulong address, ulong size);
+
+    /// <summary>
+    /// Changes host page protections for a guest range. Implementations must
+    /// only accept ranges <see cref="IsRangeGuestMapped"/> (or their own
+    /// region bookkeeping) vouches for; callers normally pre-validate with
+    /// <see cref="IsRangeGuestMapped"/> so the check here is a backstop.
+    /// </summary>
     bool TryProtect(ulong address, ulong size, GuestPageProtection protection);
 }

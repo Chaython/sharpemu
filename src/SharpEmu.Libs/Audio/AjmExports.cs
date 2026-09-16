@@ -497,6 +497,7 @@ public static class AjmExports
         if (TryGetInstance(instanceId, out var instance))
         {
             instance.Atrac9?.Reset();
+            instance.Mp3?.Reset();
             status = 0;
         }
 
@@ -910,6 +911,14 @@ public static class AjmExports
         {
             result = new Atrac9DecodeResult(Atrac9DecodeState.ResultInvalidParameter, 0, 0, 0, 0);
         }
+        else if (instance.Mp3 is not null)
+        {
+            // The flag-driven Run/RunSplit path is the only decode entry point
+            // modern titles call (see the sceAjmBatchJobRun note above), so MP3
+            // has to decode here too — falling through to the unknown-codec stub
+            // below is what silenced every Run-driven MP3 voice.
+            result = DecodeMp3Scattered(ctx, instance, inputs, inputLength, outputs, outputLength);
+        }
         else if (instance.Codec != Atrac9CodecType || instance.Atrac9 is null)
         {
             foreach (var buffer in outputs)
@@ -1101,6 +1110,109 @@ public static class AjmExports
         }
     }
 
+    /// <summary>
+    /// Flag-driven (<see cref="AjmBatchJobRunCore"/>) counterpart of
+    /// <see cref="DecodeMp3"/>: gathers the split/non-split input descriptors
+    /// into the one contiguous byte stream the NLayer parser needs, then
+    /// scatters the decoded PCM across the output descriptors. Unwritten output
+    /// room is zeroed so stale PCM from a previous job never leaks back out.
+    /// </summary>
+    private static Atrac9DecodeResult DecodeMp3Scattered(
+        CpuContext ctx,
+        AjmInstanceState instance,
+        List<AjmGuestBuffer> inputs,
+        int inputLength,
+        List<AjmGuestBuffer> outputs,
+        int outputLength)
+    {
+        var mp3 = instance.Mp3!;
+        var input = ArrayPool<byte>.Shared.Rent(Math.Max(inputLength, 1));
+        var output = ArrayPool<byte>.Shared.Rent(Math.Max(outputLength, 1));
+        try
+        {
+            var gathered = 0;
+            foreach (var buffer in inputs)
+            {
+                if (!ctx.Memory.TryRead(buffer.Address, input.AsSpan(gathered, buffer.Length)))
+                {
+                    return new Atrac9DecodeResult(Atrac9DecodeState.ResultInvalidParameter, 0, 0, 0, 0);
+                }
+
+                gathered += buffer.Length;
+            }
+
+            var decoded = mp3.Decode(
+                input.AsSpan(0, inputLength),
+                output.AsSpan(0, outputLength),
+                pcm16: instance.PreferPcm16);
+
+            // Match the legacy DecodeMp3 fallbacks: a job that decoded nothing
+            // and consumed nothing must still report the whole input consumed,
+            // otherwise the guest re-submits the same bytes forever.
+            if (decoded.OutputWritten == 0 && decoded.InputConsumed == 0)
+            {
+                foreach (var buffer in outputs)
+                {
+                    ClearGuestMemory(ctx, buffer.Address, (ulong)buffer.Length);
+                }
+
+                return new Atrac9DecodeResult(
+                    0,
+                    inputLength,
+                    0,
+                    mp3.TotalDecodedSamples,
+                    inputLength != 0 || outputLength != 0 ? 1u : 0u);
+            }
+
+            var scattered = 0;
+            foreach (var buffer in outputs)
+            {
+                var chunk = Math.Min(buffer.Length, Math.Max(decoded.OutputWritten - scattered, 0));
+                if (chunk > 0 &&
+                    !ctx.Memory.TryWrite(buffer.Address, output.AsSpan(scattered, chunk)))
+                {
+                    return new Atrac9DecodeResult(
+                        Atrac9DecodeState.ResultInvalidParameter,
+                        decoded.InputConsumed,
+                        scattered,
+                        mp3.TotalDecodedSamples,
+                        decoded.Frames);
+                }
+
+                if (chunk < buffer.Length)
+                {
+                    ClearGuestMemory(ctx, buffer.Address + (ulong)chunk, (ulong)(buffer.Length - chunk));
+                }
+
+                scattered += chunk;
+            }
+
+            if (decoded.OutputWritten == 0)
+            {
+                // Frames decoded but no room used (e.g. all output descriptors
+                // were zero-sized): report the consumed prefix and silence.
+                return new Atrac9DecodeResult(
+                    0,
+                    decoded.InputConsumed,
+                    0,
+                    mp3.TotalDecodedSamples,
+                    0);
+            }
+
+            return new Atrac9DecodeResult(
+                0,
+                decoded.InputConsumed,
+                decoded.OutputWritten,
+                mp3.TotalDecodedSamples,
+                decoded.Frames);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(input);
+            ArrayPool<byte>.Shared.Return(output);
+        }
+    }
+
     private static void WriteRunSideband(
         CpuContext ctx,
         ulong address,
@@ -1139,13 +1251,29 @@ public static class AjmExports
 
         if ((flags & AjmJobSidebandFlagFormat) != 0 && (ulong)(offset + AjmSidebandFormatBytes) <= size)
         {
-            var channels = config?.ChannelCount ?? instance?.MaxChannels ?? 0;
+            // ATRAC9 knows its layout from the config block; MP3 learns it from
+            // the first decoded frame (StreamChannels/StreamSampleRate) and falls
+            // back to the instance channel bound until then. The MP3 path also
+            // only ever emits S16 or float (see PreferPcm16), never S32.
+            var mp3 = instance?.Mp3;
+            var mp3Channels = mp3?.StreamChannels ?? 0;
+            var channels = config?.ChannelCount
+                ?? (mp3Channels > 0 ? mp3Channels : instance?.MaxChannels ?? 0);
+            var sampleRate = config?.SampleRate ?? mp3?.StreamSampleRate ?? 0;
+            var encoding = instance?.Encoding ?? Atrac9PcmEncoding.Signed16;
+            if (mp3 is not null)
+            {
+                encoding = instance!.PreferPcm16
+                    ? Atrac9PcmEncoding.Signed16
+                    : Atrac9PcmEncoding.Float;
+            }
+
             BinaryPrimitives.WriteUInt32LittleEndian(sideband[offset..], unchecked((uint)channels));
             BinaryPrimitives.WriteUInt32LittleEndian(sideband[(offset + 4)..], ChannelMaskFor(channels));
-            BinaryPrimitives.WriteUInt32LittleEndian(sideband[(offset + 8)..], unchecked((uint)(config?.SampleRate ?? 0)));
+            BinaryPrimitives.WriteUInt32LittleEndian(sideband[(offset + 8)..], unchecked((uint)sampleRate));
             BinaryPrimitives.WriteUInt32LittleEndian(
                 sideband[(offset + 12)..],
-                unchecked((uint)(instance?.Encoding ?? Atrac9PcmEncoding.Signed16)));
+                unchecked((uint)encoding));
             offset += AjmSidebandFormatBytes;
         }
 

@@ -515,7 +515,12 @@ internal static partial class MetalVideoPresenter
         // Depth attachment, keyed by guest DB address; read-only depth drops write.
         GuestImage? depth = null;
         var depthState = draw.RenderState.Depth;
-        if (work.DepthTarget is { } depthTarget && (depthState.TestEnable || depthState.WriteEnable))
+        // A stencil test needs the DB attachment too, even when the depth test
+        // itself is off (matching the Vulkan presenter's ShouldAttachGuestDepth).
+        var needsDepthAttachment = depthState.TestEnable ||
+            depthState.WriteEnable ||
+            draw.RenderState.Stencil.TestEnable;
+        if (work.DepthTarget is { } depthTarget && needsDepthAttachment)
         {
             if (depthTarget.ReadOnly && depthState.WriteEnable)
             {
@@ -527,7 +532,13 @@ internal static partial class MetalVideoPresenter
             depth = EnsureGuestDepthImage(device, depthTarget, depthWidth, depthHeight);
         }
 
-        if (!TryGetDrawPipeline(device, draw, targetFormats, depth is not null, out var pipeline))
+        if (!TryGetDrawPipeline(
+                device,
+                draw,
+                targetFormats,
+                depth is not null,
+                out var pipeline,
+                GetGuestRenderTargetSampleCount(work.Targets)))
         {
             ReturnPooledGuestData(draw);
             return;
@@ -787,10 +798,83 @@ internal static partial class MetalVideoPresenter
                 (nint)(depthState.TestEnable ? depthState.CompareOp & 0x7 : 7));
             MetalNative.SendVoidBool(
                 descriptor, MetalNative.Selector("setDepthWriteEnabled:"), depthState.WriteEnable);
+
+            // Stencil: MTLStencilDescriptor front/back on the shared
+            // MTLDepthStencilDescriptor, mirroring the Vulkan presenter's
+            // PipelineDepthStencilStateCreateInfo. The pipeline declares the
+            // matching stencilAttachmentPixelFormat (see CreateDrawPipeline);
+            // the guest depth backing is Depth32Float without a stencil plane
+            // yet, so the encoder state is complete and takes effect once a
+            // stencil-capable backing is allocated.
+            var stencil = renderState.Stencil;
+            if (stencil.TestEnable)
+            {
+                MetalNative.SendVoid(
+                    descriptor,
+                    MetalNative.Selector("setFrontFaceStencil:"),
+                    CreateStencilDescriptor(stencil.Front));
+                MetalNative.SendVoid(
+                    descriptor,
+                    MetalNative.Selector("setBackFaceStencil:"),
+                    CreateStencilDescriptor(
+                        stencil.BackfaceEnable ? stencil.Back : stencil.Front));
+            }
+
             var depthStencilState = MetalNative.Send(
                 device, MetalNative.Selector("newDepthStencilStateWithDescriptor:"), descriptor);
             MetalNative.SendVoid(encoder, MetalNative.Selector("setDepthStencilState:"), depthStencilState);
+            if (stencil.TestEnable)
+            {
+                // DB_STENCILREFMASK(_BF) references are encoder state in Metal
+                // (like the Vulkan presenter's dynamic stencil reference). The
+                // back face reuses the front value unless the guest enabled
+                // separate back-face state.
+                var backFace = stencil.BackfaceEnable ? stencil.Back : stencil.Front;
+                MetalNative.SendVoid(
+                    encoder,
+                    MetalNative.Selector("setStencilFrontReferenceValue:backReferenceValue:"),
+                    (nint)(stencil.Front.Reference & 0xFFu),
+                    (nint)(backFace.Reference & 0xFFu));
+            }
         }
+    }
+
+    /// <summary>Builds one face's MTLStencilDescriptor from the decoded guest
+    /// state: compare func and the three ops come straight from the GCN
+    /// encodings (identical to MTLCompareFunction / MTLStencilOperation),
+    /// read/write masks from DB_STENCILREFMASK.</summary>
+    private static nint CreateStencilDescriptor(GuestStencilFace face)
+    {
+        var descriptor = MetalNative.Send(
+            MetalNative.Send(MetalNative.Class("MTLStencilDescriptor"), MetalNative.Selector("alloc")),
+            MetalNative.Selector("init"));
+        // Guest stencil funcs use the same 0=Never..7=Always ordering as
+        // MTLCompareFunction (like the depth ZFUNC above).
+        MetalNative.Send(
+            descriptor,
+            MetalNative.Selector("setStencilCompareFunction:"),
+            (nint)(face.CompareFunc & 0x7u));
+        MetalNative.Send(
+            descriptor,
+            MetalNative.Selector("setStencilFailureOperation:"),
+            (nint)ToMetalStencilOperation(face.FailOp));
+        MetalNative.Send(
+            descriptor,
+            MetalNative.Selector("setDepthFailureOperation:"),
+            (nint)ToMetalStencilOperation(face.DepthFailOp));
+        MetalNative.Send(
+            descriptor,
+            MetalNative.Selector("setDepthStencilPassOperation:"),
+            (nint)ToMetalStencilOperation(face.PassOp));
+        MetalNative.Send(
+            descriptor,
+            MetalNative.Selector("setReadMask:"),
+            (nint)(face.CompareMask & 0xFFu));
+        MetalNative.Send(
+            descriptor,
+            MetalNative.Selector("setWriteMask:"),
+            (nint)(face.WriteMask & 0xFFu));
+        return descriptor;
     }
 
     /// <summary>Builds and binds a stage's sampler argument buffer: one 8-byte
@@ -1089,8 +1173,13 @@ internal static partial class MetalVideoPresenter
         TranslatedGuestDraw draw,
         MetalRenderTargetFormat[] targetFormats,
         bool hasDepth,
-        out nint pipeline)
+        out nint pipeline,
+        uint sampleCount = 1)
     {
+        // MSAA: clamp to what the backing attachments actually allocate (1x)
+        // before the sample count keys the cache — the created pipeline and
+        // its key must agree.
+        sampleCount = ClampRenderTargetSamples(sampleCount);
         var stateHash = 14695981039346656037UL;
         void Mix(ulong value)
         {
@@ -1109,6 +1198,23 @@ internal static partial class MetalVideoPresenter
         }
 
         Mix(hasDepth ? 2UL : 1UL);
+        // Stencil pipeline identity (enables/funcs/ops baked into
+        // MTLDepthStencilDescriptor and the stencilAttachmentPixelFormat).
+        // Reference and compare/write masks are encoder state and excluded so
+        // per-draw updates reuse the cached pipeline, mirroring the Vulkan
+        // presenter's dynamic stencil state.
+        var stencil = draw.RenderState.Stencil.PipelineIdentity;
+        Mix(stencil.TestEnable ? 1UL : 0UL);
+        Mix(stencil.BackfaceEnable ? 1UL : 0UL);
+        Mix(stencil.FrontFunc |
+            ((ulong)stencil.FrontFailOp << 3) |
+            ((ulong)stencil.FrontDepthFailOp << 6) |
+            ((ulong)stencil.FrontPassOp << 9));
+        Mix(stencil.BackFunc |
+            ((ulong)stencil.BackFailOp << 3) |
+            ((ulong)stencil.BackDepthFailOp << 6) |
+            ((ulong)stencil.BackPassOp << 9));
+        Mix(sampleCount);
         Span<nuint> vertexSlots = stackalloc nuint[draw.VertexBuffers.Length];
         if (!TryAssignVertexBufferSlots(draw.VertexBuffers, vertexSlots))
         {
@@ -1148,7 +1254,7 @@ internal static partial class MetalVideoPresenter
             }
         }
 
-        pipeline = CreateDrawPipeline(device, draw, targetFormats, hasDepth);
+        pipeline = CreateDrawPipeline(device, draw, targetFormats, hasDepth, sampleCount);
         lock (_pipelineCache)
         {
             _pipelineCache[key] = pipeline;
@@ -1161,7 +1267,8 @@ internal static partial class MetalVideoPresenter
         nint device,
         TranslatedGuestDraw draw,
         MetalRenderTargetFormat[] targetFormats,
-        bool hasDepth)
+        bool hasDepth,
+        uint sampleCount)
     {
         var vertexFunction = draw.VertexShader is { } vertexShader
             ? GetShaderFunction(device, vertexShader)
@@ -1229,7 +1336,30 @@ internal static partial class MetalVideoPresenter
                 descriptor,
                 MetalNative.Selector("setDepthAttachmentPixelFormat:"),
                 (nint)MtlPixelFormat.Depth32Float);
+            if (draw.RenderState.Stencil.TestEnable)
+            {
+                // Declare the stencil attachment the guest's stencil test
+                // targets, mirroring the Vulkan pipeline's StencilTestEnable.
+                // The DB backing is Depth32Float (no stencil plane) today, so
+                // no stencil texture is bound yet; this completes the moment
+                // a stencil-capable depth backing is allocated.
+                MetalNative.Send(
+                    descriptor,
+                    MetalNative.Selector("setStencilAttachmentPixelFormat:"),
+                    (nint)MtlPixelFormat.Stencil8);
+            }
         }
+
+        // MSAA: MTLSampleCount is the literal sample count. Guest render
+        // targets can be bound multisampled, but every backing texture this
+        // presenter allocates is 1x, so the resolved count is clamped to 1 in
+        // TryGetDrawPipeline (ClampRenderTargetSamples); the plumbing
+        // (CB_COLORn_ATTRIB.NUM_SAMPLES -> GuestRenderTarget.SampleCount ->
+        // rasterSampleCount) is complete for when multisample backings arrive.
+        MetalNative.Send(
+            descriptor,
+            MetalNative.Selector("setRasterSampleCount:"),
+            (nint)ToMetalSampleCount(sampleCount));
 
         if (draw.VertexShader is not null && draw.VertexBuffers.Length > 0)
         {
@@ -2223,6 +2353,54 @@ internal static partial class MetalVideoPresenter
             4 => 2,
             _ => 0,
         };
+
+    // Guest GCN stencil-op codes to MTLStencilOperation. The encodings are
+    // identical (Keep=0, Zero=1, Replace=2, IncrementClamp=3, DecrementClamp=4,
+    // Invert=5, IncrementWrap=6, DecrementWrap=7); unknown codes degrade to
+    // Keep, mirroring the Vulkan presenter's ToVkStencilOp.
+    internal static uint ToMetalStencilOperation(uint op) =>
+        op switch
+        {
+            1 => 1,
+            2 => 2,
+            3 => 3,
+            4 => 4,
+            5 => 5,
+            6 => 6,
+            7 => 7,
+            _ => 0,
+        };
+
+    // Guest sample count (CB_COLORn_ATTRIB.NUM_SAMPLES) to MTLSampleCount.
+    // Only 1/2/4/8 exist in the encoding; anything else degrades to the
+    // single-sample pipeline.
+    internal static uint ToMetalSampleCount(uint samples) =>
+        samples is 2u or 4u or 8u ? samples : 1u;
+
+    // MSAA plumbing: guest render targets can be bound multisampled, but
+    // every backing texture this presenter allocates is 1x (guest color
+    // images, transient targets and the Depth32Float guest depth images are
+    // all single-sample), so any multisample request is clamped to 1x. The
+    // full path — CB_COLORn_ATTRIB.NUM_SAMPLES decode ->
+    // GuestRenderTarget.SampleCount -> rasterSampleCount — is in place, so
+    // multisample rendering only needs backing allocations that stop
+    // clamping (mirrors the Vulkan presenter's ClampRenderTargetSamples).
+    internal static uint ClampRenderTargetSamples(uint requestedSamples) => 1;
+
+    // Resolves the sample count a draw's pipelines are created with: the
+    // maximum across the bound color targets (MTLRenderPipelineDescriptor's
+    // rasterSampleCount must agree with every bound attachment).
+    private static uint GetGuestRenderTargetSampleCount(
+        IReadOnlyList<GuestRenderTarget> targets)
+    {
+        var samples = 1u;
+        for (var index = 0; index < targets.Count; index++)
+        {
+            samples = Math.Max(samples, targets[index].SampleCount);
+        }
+
+        return samples;
+    }
 
     // Guest sampler clamp codes to MTLSamplerAddressMode, matching the Vulkan mapping.
     private static nuint ToMetalAddressMode(uint mode) =>

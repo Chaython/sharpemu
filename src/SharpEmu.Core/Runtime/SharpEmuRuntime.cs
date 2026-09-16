@@ -13,6 +13,7 @@ using SharpEmu.Libs.AppContent;
 using SharpEmu.Libs.SaveData;
 using SharpEmu.Libs.Fiber;
 using SharpEmu.Libs.SystemService;
+using SharpEmu.Libs.Np;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
@@ -113,15 +114,44 @@ public sealed class SharpEmuRuntime : ISharpEmuRuntime
         }
 
         var fileInfo = new FileInfo(fullPath);
+        if (fileInfo.Length == 0)
+        {
+            // A 0-byte eboot means the dump on disk is broken (interrupted
+            // extraction, cloud placeholder, antivirus quarantine). Fail with
+            // an actionable message instead of the opaque "Input image is
+            // empty." that SelfLoader would surface for an empty span.
+            throw new InvalidDataException(ExecutableImageDiagnostics.BuildEmptyImageErrorMessage(fullPath));
+        }
+
+        if (fileInfo.Length < ExecutableImageDiagnostics.MinExecutableImageSize)
+        {
+            throw new InvalidDataException(
+                ExecutableImageDiagnostics.BuildTooSmallImageErrorMessage(fullPath, fileInfo.Length));
+        }
+
         if (fileInfo.Length > int.MaxValue)
         {
             throw new NotSupportedException("Images larger than 2 GB are not currently supported.");
         }
 
+        Console.Error.WriteLine($"[RUNTIME] Executable image: {fullPath} ({fileInfo.Length:N0} bytes)");
+
         var bytes = GC.AllocateUninitializedArray<byte>((int)fileInfo.Length);
-        using (var stream = File.OpenRead(fullPath))
+        try
         {
-            stream.ReadExactly(bytes);
+            using (var stream = File.OpenRead(fullPath))
+            {
+                stream.ReadExactly(bytes);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Most commonly a sharing violation (the dump is still being
+            // written or scanned) or a race that shrank the file between the
+            // FileInfo query and the read.
+            throw new IOException(
+                $"Could not read the executable image \"{fullPath}\" ({fileInfo.Length:N0} bytes): {ex.Message}",
+                ex);
         }
 
         var mountRoot = Path.GetDirectoryName(fullPath);
@@ -146,6 +176,7 @@ public sealed class SharpEmuRuntime : ISharpEmuRuntime
         KernelMemoryCompatExports.ConfigureApplicationInfo(image.TitleId);
         SaveDataExports.ConfigureApplicationInfo(image.TitleId);
         SystemServiceExports.ConfigureApplicationInfo(image.TitleId);
+        NpTrophyStore.ConfigureApplicationInfo(image.TitleId);
         _ = RegisterLoadedModule(normalizedEbootPath, image, isMain: true, isSystemModule: false);
         KernelRuntimeCompatExports.ConfigureProcessProcParamAddress(image.ProcParamAddress);
         Console.Error.WriteLine($"[RUNTIME] Entry: 0x{image.EntryPoint:X16}");
@@ -707,8 +738,29 @@ public sealed class SharpEmuRuntime : ISharpEmuRuntime
             try
             {
                 var fileInfo = new FileInfo(modulePath);
-                if (!fileInfo.Exists || fileInfo.Length <= 0 || fileInfo.Length > int.MaxValue)
+                if (!fileInfo.Exists)
                 {
+                    // Enumerated moments ago and already gone: another process
+                    // (extractor, sync client) is mutating the game folder.
+                    Console.Error.WriteLine(
+                        $"[RUNTIME] WARNING: module {Path.GetFileName(modulePath)} disappeared before load.");
+                    failedModules++;
+                    continue;
+                }
+
+                if (fileInfo.Length == 0)
+                {
+                    Console.Error.WriteLine(
+                        $"[RUNTIME] WARNING: module {Path.GetFileName(modulePath)} is 0 bytes " +
+                        "(incomplete dump?) — skipping. If eboot.bin is also empty, re-extract the game.");
+                    failedModules++;
+                    continue;
+                }
+
+                if (fileInfo.Length > int.MaxValue)
+                {
+                    Console.Error.WriteLine(
+                        $"[RUNTIME] WARNING: module {Path.GetFileName(modulePath)} is larger than 2 GB — skipping.");
                     failedModules++;
                     continue;
                 }

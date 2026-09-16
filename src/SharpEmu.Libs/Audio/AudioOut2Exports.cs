@@ -87,6 +87,14 @@ public static class AudioOut2Exports
         public uint QueueDepth { get; }
         public IHostAudioStream? Backend { get; }
 
+        // Bed (channel-based ambient/spatial) audio queued by
+        // sceAudioOut2ContextBedWrite and consumed by the next Push/Advance,
+        // exactly like a port's PCM attribute. The bed is interleaved float PCM.
+        public ulong BedPcmAddress;
+        public int BedByteLength;
+        public int BedChannels;
+        public int BedPending;
+
         public void PaceAdvance()
         {
             long delay;
@@ -151,6 +159,9 @@ public static class AudioOut2Exports
     private static string SecondaryBackendName = "none";
     private static ulong PrimaryContextHandle;
     private static readonly object HostSubmitGate = new();
+    // Test seam mirroring AudioOutExports.SetStreamFactoryForTests: replaces
+    // the SDL host device with a recording stream under the Libs test suite.
+    private static Func<uint, IHostAudioStream?>? _backendFactoryForTests;
 
     [SysAbiExport(
         Nid = "g2tViFIohHE",
@@ -330,12 +341,79 @@ public static class AudioOut2Exports
         return SetReturn(ctx, 0);
     }
 
+    // The bed is interleaved float PCM, bounded by one grain of at most
+    // MaxBedChannels channels — the same per-grain shape the port mixer reads.
+    private const int MaxBedChannels = 16;
+    private const int MaxBedPcmBytes = 16 * 1024 * 1024;
+
+    /// <summary>
+    /// sceAudioOut2ContextBedWrite hands the context a block of "bed" (channel
+    /// based, non-object — ambient/spatial) audio. Sony publishes no header for
+    /// the exact Prospero payload, so this implements the most defensible
+    /// reading of the SysV arguments, following the conventions of every other
+    /// Context* export in this library: rdi = context handle, rsi = pointer to
+    /// the bed payload, rdx = payload size in bytes (float-aligned; a null
+    /// pointer or zero length clears the pending bed and succeeds). The channel
+    /// count is not part of the observable ABI here, so it is inferred from the
+    /// grain: channels = length / (grainSamples * sizeof(float)) when that is an
+    /// exact 1..16 channel count, otherwise the payload is treated as stereo.
+    /// The block is queued on the context and folded into the same stereo bed
+    /// the port PCM mixes into at the next sceAudioOut2ContextPush/Advance —
+    /// the AudioOut2 model consumes every submission exactly once per grain.
+    /// Returns 0 (like every write-path AudioOut2 export here and in the classic
+    /// sceAudioOutOutput), or ORBIS_GEN2_ERROR_MEMORY_FAULT when the payload
+    /// pointer is not readable guest memory.
+    /// </summary>
     [SysAbiExport(
         Nid = "DxGyV8dtOR8",
         ExportName = "sceAudioOut2ContextBedWrite",
         Target = Generation.Gen5,
         LibraryName = "libSceAudioOut2")]
-    public static int AudioOut2ContextBedWrite(CpuContext ctx) => SetReturn(ctx, 0);
+    public static int AudioOut2ContextBedWrite(CpuContext ctx)
+    {
+        var handle = ctx[CpuRegister.Rdi];
+        var bedAddress = ctx[CpuRegister.Rsi];
+        var bedByteLength = ctx[CpuRegister.Rdx];
+        if (!Contexts.TryGetValue(handle, out var context))
+        {
+            return SetReturn(ctx, 0);
+        }
+
+        if (bedAddress == 0 ||
+            bedByteLength == 0 ||
+            (bedByteLength & 3) != 0 ||
+            bedByteLength > MaxBedPcmBytes ||
+            !IsPlausibleGuestObjectPointer(bedAddress))
+        {
+            // Null/zero/small payloads are "write nothing" (and clear any stale
+            // bed), matching how PortSetAttributes treats a null PCM pointer.
+            Volatile.Write(ref context.BedPending, 0);
+            return SetReturn(ctx, 0);
+        }
+
+        Span<byte> probe = stackalloc byte[sizeof(float)];
+        if (!ctx.Memory.TryRead(bedAddress, probe))
+        {
+            return SetReturn(ctx, (int)OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
+        }
+
+        var byteLength = unchecked((int)bedByteLength);
+        var grainFloats = Math.Max((int)context.GrainSamples, 1);
+        var channels = byteLength / sizeof(float) / grainFloats;
+        if (channels is < 1 or > MaxBedChannels ||
+            (channels * grainFloats * sizeof(float)) != byteLength)
+        {
+            // Not a whole number of MaxBedChannels-bounded grains: read it as
+            // stereo PCM of at most one grain (the mix clamps to the grain).
+            channels = 2;
+        }
+
+        context.BedPcmAddress = bedAddress;
+        context.BedByteLength = byteLength;
+        context.BedChannels = channels;
+        Volatile.Write(ref context.BedPending, 1);
+        return SetReturn(ctx, 0);
+    }
 
     [SysAbiExport(
         Nid = "aII9h5nli9U",
@@ -851,22 +929,7 @@ public static class AudioOut2Exports
             {
                 if (PrimaryBackend is null)
                 {
-                    try
-                    {
-                        var audio = HostPlatform.Current.Audio;
-                        // Deeper host queue than classic AudioOut: FMOD's bursty
-                        // AudioOut2 Push pattern underran a 32 KiB (~171 ms) bed.
-                        PrimaryBackend = audio.OpenStereoPcm16Stream(
-                            context.Frequency,
-                            maxQueuedPcmBytes: 128 * 1024);
-                        PrimaryBackendName = audio.BackendName + "-primary";
-                    }
-                    catch (Exception exception)
-                    {
-                        PrimaryBackendName = "silent";
-                        Console.Error.WriteLine(
-                            $"[LOADER][WARN] AudioOut2 primary backend unavailable: {exception.Message}");
-                    }
+                    TryOpenBackendStream(context.Frequency, "-primary", out PrimaryBackend, out PrimaryBackendName);
                 }
 
                 backendName = PrimaryBackendName;
@@ -875,25 +938,76 @@ public static class AudioOut2Exports
 
             if (SecondaryBackend is null)
             {
-                try
-                {
-                    var audio = HostPlatform.Current.Audio;
-                    SecondaryBackend = audio.OpenStereoPcm16Stream(
-                        context.Frequency,
-                        maxQueuedPcmBytes: 128 * 1024);
-                    SecondaryBackendName = audio.BackendName + "-secondary";
-                }
-                catch (Exception exception)
-                {
-                    SecondaryBackendName = "silent";
-                    Console.Error.WriteLine(
-                        $"[LOADER][WARN] AudioOut2 secondary backend unavailable: {exception.Message}");
-                }
+                TryOpenBackendStream(context.Frequency, "-secondary", out SecondaryBackend, out SecondaryBackendName);
             }
 
             backendName = SecondaryBackendName;
             return SecondaryBackend;
         }
+    }
+
+    private static void TryOpenBackendStream(
+        uint frequency,
+        string suffix,
+        out IHostAudioStream? backend,
+        out string backendName)
+    {
+        var factory = Volatile.Read(ref _backendFactoryForTests);
+        if (factory is not null)
+        {
+            backend = factory(frequency);
+            backendName = backend is null ? "test-silent" + suffix : "test" + suffix;
+            return;
+        }
+
+        try
+        {
+            var audio = HostPlatform.Current.Audio;
+            // Deeper host queue than classic AudioOut: FMOD's bursty
+            // AudioOut2 Push pattern underran a 32 KiB (~171 ms) bed.
+            backend = audio.OpenStereoPcm16Stream(
+                frequency,
+                maxQueuedPcmBytes: 128 * 1024);
+            backendName = audio.BackendName + suffix;
+        }
+        catch (Exception exception)
+        {
+            backend = null;
+            backendName = "silent";
+            Console.Error.WriteLine(
+                $"[LOADER][WARN] AudioOut2 backend unavailable: {exception.Message}");
+        }
+    }
+
+    internal static void SetBackendFactoryForTests(Func<uint, IHostAudioStream?>? backendFactory) =>
+        Volatile.Write(ref _backendFactoryForTests, backendFactory);
+
+    // Clears every piece of AudioOut2 HLE state the Libs tests mutate. The
+    // speaker-array registry is deliberately left alone: its tests run in
+    // parallel collections and only ever add their own entries.
+    internal static void ResetForTests()
+    {
+        Contexts.Clear();
+        Ports.Clear();
+        Interlocked.Exchange(ref _nextContextHandle, 0);
+        Interlocked.Exchange(ref _nextUserHandle, 0);
+        Interlocked.Exchange(ref _nextPortId, 0);
+        Interlocked.Exchange(ref _pushTraceCount, 0);
+        Interlocked.Exchange(ref _submitTraceCount, 0);
+        Interlocked.Exchange(ref _submitSkipTraceCount, 0);
+        Interlocked.Exchange(ref _attributePcmTraceCount, 0);
+        lock (HostBackendGate)
+        {
+            PrimaryBackend?.Dispose();
+            PrimaryBackend = null;
+            SecondaryBackend?.Dispose();
+            SecondaryBackend = null;
+            PrimaryContextHandle = 0;
+            PrimaryBackendName = "none";
+            SecondaryBackendName = "none";
+        }
+
+        Volatile.Write(ref _backendFactoryForTests, null);
     }
 
     private static bool TrySubmitContextAudio(CpuContext ctx, ContextState context)
@@ -912,7 +1026,34 @@ public static class AudioOut2Exports
             try
             {
                 mix.AsSpan(0, frames * 2).Clear();
-                var mixedPorts = 0;
+                var mixedSources = 0;
+
+                // The context bed (sceAudioOut2ContextBedWrite) is consumed first
+                // and becomes the base the port PCM adds on top of, so a bed-only
+                // context (spatial ambient bed, no MAIN ports) still makes noise.
+                if (Interlocked.Exchange(ref context.BedPending, 0) != 0 &&
+                    context.BedPcmAddress != 0)
+                {
+                    var bedChannels = Math.Clamp(context.BedChannels, 1, MaxBedChannels);
+                    var bedLength = Math.Min(
+                        context.BedByteLength,
+                        frames * bedChannels * sizeof(float));
+                    if (bedLength > 0 &&
+                        bedLength <= source.Length &&
+                        ctx.Memory.TryRead(context.BedPcmAddress, source.AsSpan(0, bedLength)))
+                    {
+                        MixPortIntoStereo(
+                            source.AsSpan(0, bedLength),
+                            mix.AsSpan(0, frames * 2),
+                            frames,
+                            bedChannels,
+                            sizeof(float),
+                            isFloat: true,
+                            additive: false);
+                        mixedSources++;
+                    }
+                }
+
                 foreach (var port in Ports.Values)
                 {
                     if (port.ContextHandle != context.Handle ||
@@ -942,13 +1083,13 @@ public static class AudioOut2Exports
                         ch,
                         bps,
                         isFloat,
-                        additive: mixedPorts > 0);
-                    mixedPorts++;
+                        additive: mixedSources > 0);
+                    mixedSources++;
                 }
 
-                if (mixedPorts == 0)
+                if (mixedSources == 0)
                 {
-                    TraceSubmitSkipped(context, frames, "no-ports");
+                    TraceSubmitSkipped(context, frames, "no-sources");
                     return false;
                 }
 
@@ -979,7 +1120,7 @@ public static class AudioOut2Exports
                 {
                     TraceAudioOut2(
                         $"context-submit#{n} handle=0x{context.Handle:X} frames={frames} " +
-                        $"ports={mixedPorts} peak={peak:F4} backend={backendName}");
+                        $"sources={mixedSources} peak={peak:F4} backend={backendName}");
                 }
 
                 return backend.Submit(outputSpan);
@@ -1026,6 +1167,21 @@ public static class AudioOut2Exports
                 const float side = 0.70710678f;
                 left = fl + (c * side) + (bl * side) + (sl * side);
                 right = fr + (c * side) + (br * side) + (sr * side);
+            }
+            else if (channels == 6)
+            {
+                // 5.1: same fold-down as the 7.1 branch minus the side pair.
+                // Center feeds both stereo channels at -3 dB (dialog would
+                // otherwise vanish); LFE (channel 3) is dropped like the 7.1
+                // path drops it; the surround pair lands as backs.
+                var fl = ReadNormalizedSample(frameBytes, 0, bytesPerSample, isFloat);
+                var fr = ReadNormalizedSample(frameBytes, 1, bytesPerSample, isFloat);
+                var c = ReadNormalizedSample(frameBytes, 2, bytesPerSample, isFloat);
+                var bl = ReadNormalizedSample(frameBytes, 4, bytesPerSample, isFloat);
+                var br = ReadNormalizedSample(frameBytes, 5, bytesPerSample, isFloat);
+                const float side = 0.70710678f;
+                left = fl + (c * side) + (bl * side);
+                right = fr + (c * side) + (br * side);
             }
             else
             {

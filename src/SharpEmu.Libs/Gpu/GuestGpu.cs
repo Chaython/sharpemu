@@ -3,6 +3,7 @@
 
 using SharpEmu.Libs.Gpu.Metal;
 using SharpEmu.Libs.Gpu.Vulkan;
+using SharpEmu.Libs.Gpu.NativeVulkan;
 
 namespace SharpEmu.Libs.Gpu;
 
@@ -15,16 +16,27 @@ namespace SharpEmu.Libs.Gpu;
 /// </summary>
 internal static class GuestGpu
 {
-    private static readonly Lazy<IGuestGpuBackend> Instance = new(Create);
+    private static readonly Lazy<IGuestGpuBackend> Instance = new(CreateBackend);
 
     public static IGuestGpuBackend Current => Instance.Value;
 
-    private static IGuestGpuBackend Create()
+    private static IGuestGpuBackend CreateBackend()
     {
         var requested = Environment.GetEnvironmentVariable("SHARPEMU_GPU_BACKEND");
+
         if (string.IsNullOrEmpty(requested) || requested.Equals("vulkan", StringComparison.OrdinalIgnoreCase))
         {
             return new VulkanGuestGpuBackend();
+        }
+
+        if (requested.Equals("native", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!NativeVulkanApi.IsAvailable(out var error))
+            {
+                Console.Error.WriteLine($"[LOADER][WARN] {error}");
+            }
+
+            return new NativeVulkanGuestGpuBackend();
         }
 
         if (requested.Equals("metal", StringComparison.OrdinalIgnoreCase))

@@ -89,6 +89,12 @@
   "Options.CpuEngine.Desc": "Execution engine used to run game code.",
   "Options.CpuEngine.Native": "Native",
 
+  "Options.RenderingBackend.Label": "Rendering backend",
+  "Options.RenderingBackend.Desc": "Graphics implementation used for newly launched games. Native Vulkan requires a separate library.",
+  "Options.RenderingBackend.Native": "Native Vulkan (Experimental)",
+  "Options.RenderingBackend.Legacy": "Silk.NET Vulkan (Default)",
+  "Launch.NativeBackendMissing": "WARNING: Native Vulkan is selected, but {0} was not found next to SharpEmu. Download it from https://github.com/sharpemu/sharpemu.vulkan or select Silk.NET Vulkan in Options.",
+
   "Options.Strict.Label": "Strict dynlib resolution",
   "Options.Strict.Desc": "Fail the launch when an imported symbol cannot be resolved.",
 

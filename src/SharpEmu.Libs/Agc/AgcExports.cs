@@ -1118,6 +1118,11 @@ public static partial class AgcExports
     private const uint CbColor0Base = 0x318;
     private const uint CbColorRegisterStride = 15;
     private const uint CbColor0Info = 0x31C;
+    // CB_COLORn_ATTRIB (GFX10 context register): NUM_SAMPLES [16:14] holds
+    // log2 of the render target's sample count (0=1x, 1=2x, 2=4x, 3=8x).
+    private const uint CbColor0Attrib = 0x31D;
+    private const int CbColorAttribNumSamplesShift = 14;
+    private const uint CbColorAttribNumSamplesMask = 0x7u << CbColorAttribNumSamplesShift;
     private const uint CbColor0Cmask = 0x31F;
     private const uint CbColor0ClearWord0 = 0x323;
     private const uint CbColor0ClearWord1 = 0x324;
@@ -1476,7 +1481,8 @@ public static partial class AgcExports
         uint Height,
         uint Format,
         uint NumberType,
-        uint TileMode);
+        uint TileMode,
+        uint SampleCount = 1);
 
     private sealed record TranslatedGuestDraw(
         ulong ExportShaderAddress,
@@ -9368,7 +9374,8 @@ var renderTargets = GetRenderTargets(state.CxRegisters);
                 renderTargets[index].Width,
                 renderTargets[index].Height,
                 renderTargets[index].Format,
-                renderTargets[index].NumberType);
+                renderTargets[index].NumberType,
+                SampleCount: renderTargets[index].SampleCount);
         }
 
         var pixelUserDataCount = Math.Min(pixelEvaluation.InitialScalarRegisters.Count, 8);
@@ -10405,7 +10412,7 @@ var renderTargets = GetRenderTargets(state.CxRegisters);
     private static readonly HashSet<ulong> _sampledRenderTargets = new();
     private static readonly object _renderTargetProbeGate = new();
     private static long _renderTargetSampleTraceCount;
-private static long _indirectDrawProbeCount;
+    private static long _indirectDrawProbeCount;
     private static long _indirectDrawEmitCount;
     private static long _indirectDrawEmitRejectCount;
     private static long _indirectMultiProbeCount;
@@ -10489,6 +10496,12 @@ private static long _indirectDrawProbeCount;
 
             NoteRenderTargetAddress(address);
 
+            // CB_COLORn_ATTRIB.NUM_SAMPLES [16:14]: log2 count (0=1x .. 3=8x).
+            registers.TryGetValue(
+                CbColor0Attrib + slot * CbColorRegisterStride,
+                out var attrib);
+            var sampleCount = DecodeRenderTargetSampleCount(attrib);
+
             targets.Add(new RenderTargetDescriptor(
                 slot,
                 address,
@@ -10496,7 +10509,8 @@ private static long _indirectDrawProbeCount;
                 (attrib2 & 0x3FFFu) + 1,
                 (info >> 2) & 0x1Fu,
                 (info >> 8) & 0x7u,
-                (attrib3 >> 14) & 0x1Fu));
+                (attrib3 >> 14) & 0x1Fu,
+                sampleCount));
         }
 
         if (targets.Count > 1 &&
@@ -10528,6 +10542,7 @@ private static long _indirectDrawProbeCount;
             DecodeViewport(registers, target.Width, target.Height, scissor),
             DecodeRasterState(registers),
             DecodeDepthState(registers),
+            DecodeStencilState(registers),
             DecodeBlendConstant(registers));
     }
 
@@ -10562,6 +10577,7 @@ private static long _indirectDrawProbeCount;
             DecodeViewport(registers, target.Width, target.Height, scissor),
             DecodeRasterState(registers),
             DecodeDepthState(registers),
+            DecodeStencilState(registers),
             DecodeBlendConstant(registers));
     }
 
@@ -10582,6 +10598,93 @@ private static long _indirectDrawProbeCount;
             : GuestDepthState.Default.CompareOp;
         var clearEnable = (renderControl & 0x1u) != 0;
         return new GuestDepthState(testEnable, writeEnable, compareOp, clearEnable);
+    }
+
+    // DB_DEPTH_CONTROL stencil fields (GFX10 layout, stable since GFX6):
+    //   bit0      STENCIL_ENABLE
+    //   bit7      BACKFACE_ENABLE (back-face func/ops are honored)
+    //   bits[10:8]  STENCILFUNC     (front compare, CompareOp ordering)
+    //   bits[13:11] STENCILFUNC_BF  (back compare)
+    //   bits[16:14] STENCILFAIL     (front op on stencil fail)
+    //   bits[19:17] STENCILZFAIL    (front op on depth fail)
+    //   bits[22:20] STENCILZPASS    (front op on depth+stencil pass)
+    //   bits[25:23] STENCILFAIL_BF
+    //   bits[28:26] STENCILZFAIL_BF
+    //   bits[31:29] STENCILZPASS_BF
+    // Op encodings match Vulkan StencilOp / MTLStencilOperation: 0=Keep,
+    // 1=Zero, 2=Replace, 3=IncrementClamp, 4=DecrementClamp, 5=Invert,
+    // 6=IncrementWrap, 7=DecrementWrap.
+    //
+    // DB_STENCILREFMASK (0x10C) / DB_STENCILREFMASK_BF (0x10D):
+    //   bits[7:0]   STENCILREF
+    //   bits[15:8]  STENCILMASK      (compare mask)
+    //   bits[23:16] STENCILWRITEMASK
+    // The registers are hardware-reset to 0; a guest that enables stencil
+    // without programming them still gets a testable pass-through pair
+    // (ref 0, full masks) instead of a compare mask of 0 that can never pass.
+    private const uint DbStencilRefMask = 0x10C;
+    private const uint DbStencilRefMaskBf = 0x10D;
+    // Missing DB_STENCILREFMASK fallback: reference 0 with full 8-bit compare
+    // and write masks (see the note above).
+    private const uint StencilRefMaskFullMasks = 0x00FF_FF00u;
+
+    internal static GuestStencilState DecodeStencilState(
+        IReadOnlyDictionary<uint, uint> registers)
+    {
+        var hasDepthControl = registers.TryGetValue(DbDepthControl, out var control);
+        var testEnable = hasDepthControl && (control & 0x1u) != 0;
+        var backfaceEnable = hasDepthControl && (control & (1u << 7)) != 0;
+        var front = DecodeStencilFace(
+            control,
+            hasDepthControl,
+            funcShift: 8,
+            failShift: 14,
+            registers.TryGetValue(DbStencilRefMask, out var refMask)
+                ? refMask
+                : StencilRefMaskFullMasks);
+        var back = DecodeStencilFace(
+            control,
+            hasDepthControl,
+            funcShift: 11,
+            failShift: 23,
+            registers.TryGetValue(DbStencilRefMaskBf, out var refMaskBf)
+                ? refMaskBf
+                : StencilRefMaskFullMasks);
+        return new GuestStencilState(testEnable, backfaceEnable, front, back);
+    }
+
+    private static GuestStencilFace DecodeStencilFace(
+        uint control,
+        bool hasDepthControl,
+        int funcShift,
+        int failShift,
+        uint refMaskRegister)
+    {
+        var compareFunc = hasDepthControl
+            ? (control >> funcShift) & 0x7u
+            : GuestStencilFace.Default.CompareFunc;
+        var failOp = (control >> failShift) & 0x7u;
+        var depthFailOp = (control >> (failShift + 3)) & 0x7u;
+        var passOp = (control >> (failShift + 6)) & 0x7u;
+        return new GuestStencilFace(
+            compareFunc,
+            failOp,
+            depthFailOp,
+            passOp,
+            refMaskRegister & 0xFFu,
+            (refMaskRegister >> 8) & 0xFFu,
+            (refMaskRegister >> 16) & 0xFFu);
+    }
+
+    // CB_COLORn_ATTRIB.NUM_SAMPLES [16:14] holds log2 of the sample count
+    // (0=1x, 1=2x, 2=4x, 3=8x — the only counts the 3-bit field encodes);
+    // absent/malformed codes decode to 1. Backends clamp the result against
+    // what their backing attachments actually allocate.
+    internal static uint DecodeRenderTargetSampleCount(uint attrib)
+    {
+        var log2Samples =
+            (attrib & CbColorAttribNumSamplesMask) >> CbColorAttribNumSamplesShift;
+        return log2Samples is 1u or 2u or 3u ? 1u << (int)log2Samples : 1u;
     }
 
     private static GuestDepthTarget? DecodeDepthTarget(

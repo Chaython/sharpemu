@@ -204,31 +204,7 @@ public static class KernelRuntimeCompatExports
             return (int)OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT;
         }
 
-        long seconds;
-        long nanoseconds;
-        if (clockId == 0)
-        {
-            var now = DateTimeOffset.UtcNow;
-            seconds = now.ToUnixTimeSeconds();
-            nanoseconds = (now.Ticks % TimeSpan.TicksPerSecond) * 100;
-        }
-        else
-        {
-            var elapsedTicks = Stopwatch.GetTimestamp() - _processStartCounter;
-            if (_stopwatchTicksAreNanoseconds)
-            {
-                // Constant divisors let the JIT strength-reduce the division;
-                // games call this thousands of times per second.
-                seconds = elapsedTicks / 1_000_000_000L;
-                nanoseconds = elapsedTicks - seconds * 1_000_000_000L;
-            }
-            else
-            {
-                seconds = elapsedTicks / Stopwatch.Frequency;
-                nanoseconds = (elapsedTicks % Stopwatch.Frequency) * 1_000_000_000L / Stopwatch.Frequency;
-            }
-        }
-
+        ReadClock(clockId, out var seconds, out var nanoseconds);
         if (!ctx.TryWriteUInt64(timeAddress, unchecked((ulong)seconds)) ||
             !ctx.TryWriteUInt64(timeAddress + sizeof(long), unchecked((ulong)nanoseconds)))
         {
@@ -237,6 +213,39 @@ public static class KernelRuntimeCompatExports
 
         ctx[CpuRegister.Rax] = 0;
         return (int)OrbisGen2Result.ORBIS_GEN2_OK;
+    }
+
+    // Shared clock source for sceKernelClockGettime and the libc clock_gettime
+    // export (KernelMemoryCompatExports.ClockGettime). id 0 (CLOCK_REALTIME)
+    // is the UTC wall clock; every other id (CLOCK_MONOTONIC=1,
+    // CLOCK_PROCESS_CPUTIME_ID=2, ...) maps to the process-relative Stopwatch
+    // clock. Mixing the two sources would hand guests wall-vs-monotonic deltas
+    // (~1.7e9 s, and NTP can even move wall time backwards), which breaks every
+    // std::chrono deadline computed from them, so both exports must resolve
+    // their ids through this single helper.
+    internal static void ReadClock(int clockId, out long seconds, out long nanoseconds)
+    {
+        if (clockId == 0)
+        {
+            var now = DateTimeOffset.UtcNow;
+            seconds = now.ToUnixTimeSeconds();
+            nanoseconds = (now.Ticks % TimeSpan.TicksPerSecond) * 100;
+            return;
+        }
+
+        var elapsedTicks = Stopwatch.GetTimestamp() - _processStartCounter;
+        if (_stopwatchTicksAreNanoseconds)
+        {
+            // Constant divisors let the JIT strength-reduce the division;
+            // games call this thousands of times per second.
+            seconds = elapsedTicks / 1_000_000_000L;
+            nanoseconds = elapsedTicks - seconds * 1_000_000_000L;
+        }
+        else
+        {
+            seconds = elapsedTicks / Stopwatch.Frequency;
+            nanoseconds = (elapsedTicks % Stopwatch.Frequency) * 1_000_000_000L / Stopwatch.Frequency;
+        }
     }
 
     [SysAbiExport(

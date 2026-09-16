@@ -14,6 +14,9 @@ public static class AudioOutExports
 {
     private const int AudioOutOutputParamSize = 16;
     private const int AudioOutMaximumOutputCount = 25;
+    // ORBIS_AUDIO_OUT_MODE tops out at 7.1, and sceAudioOutSetVolume's channel
+    // mask/volume array covers the same eight slots.
+    private const int AudioOutMaximumChannels = 8;
 
     internal const int AudioOutErrorInvalidPort = unchecked((int)0x80260003);
     internal const int AudioOutErrorInvalidPointer = unchecked((int)0x80260004);
@@ -70,9 +73,58 @@ public static class AudioOutExports
         public bool PreservesGuestFormat { get; }
         public IHostAudioStream? Backend { get; }
         public object SubmissionGate { get; } = new();
-        public volatile float Volume = 1.0f;
         public int BufferByteLength =>
             checked((int)BufferLength * Channels * BytesPerSample);
+
+        // sceAudioOutSetVolume installs one gain per port channel (values
+        // 0-32768); a uniform volume is just eight equal gains. Reads hand the
+        // real-time submit path a snapshot so a concurrent SetVolume never
+        // tears a buffer mid-submission.
+        private readonly object _channelGainsGate = new();
+        private float[] _channelGains = CreateUnityChannelGains();
+
+        public void SetChannelGain(int channel, float gain)
+        {
+            lock (_channelGainsGate)
+            {
+                var updated = (float[])_channelGains.Clone();
+                updated[channel] = Math.Clamp(gain, 0f, 1f);
+                _channelGains = updated;
+            }
+        }
+
+        public float[] GetChannelGainsSnapshot()
+        {
+            lock (_channelGainsGate)
+            {
+                return (float[])_channelGains.Clone();
+            }
+        }
+
+        // Diagnostic view of the port's loudest channel (SHARPEMU_LOG_AUDIO_OUT).
+        public float Volume
+        {
+            get
+            {
+                lock (_channelGainsGate)
+                {
+                    var max = 0f;
+                    foreach (var gain in _channelGains)
+                    {
+                        max = Math.Max(max, gain);
+                    }
+
+                    return max;
+                }
+            }
+        }
+
+        private static float[] CreateUnityChannelGains()
+        {
+            var gains = new float[AudioOutMaximumChannels];
+            Array.Fill(gains, 1f);
+            return gains;
+        }
 
         public void PaceSilence()
         {
@@ -299,7 +351,7 @@ public static class AudioOutExports
     [SysAbiExport(
         Nid = "QOQtbeDqsT4",
         ExportName = "sceAudioOutOutput",
-        Target = Generation.Gen5,
+        Target = Generation.Gen4 | Generation.Gen5,
         LibraryName = "libSceAudioOut")]
     public static int AudioOutOutput(CpuContext ctx)
     {
@@ -520,9 +572,18 @@ public static class AudioOutExports
 
     private static void ConvertForHost(PortState port, ReadOnlySpan<byte> source, Span<byte> destination)
     {
+        // Per-channel gains live on the port (sceAudioOutSetVolume); a uniform
+        // volume is the all-equal snapshot, so legacy behaviour is unchanged.
+        var channelGains = port.GetChannelGainsSnapshot();
         if (port.PreservesGuestFormat)
         {
-            AudioPcmConversion.CopyWithVolume(source, destination, port.IsFloat, port.Volume);
+            AudioPcmConversion.CopyWithVolume(
+                source,
+                destination,
+                port.Channels,
+                port.IsFloat,
+                1.0f,
+                channelGains);
             return;
         }
 
@@ -533,7 +594,8 @@ public static class AudioOutExports
             port.Channels,
             port.BytesPerSample,
             port.IsFloat,
-            port.Volume);
+            1.0f,
+            channelGains);
     }
 
     private static void TraceOutput(int handle, PortState port, ReadOnlySpan<byte> source)
@@ -567,13 +629,17 @@ public static class AudioOutExports
             return ctx.SetReturn((int)OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT);
         }
 
+        // The real API takes one volume (0-32768) per channel selected by the
+        // channelFlags mask; the volumes used to be collapsed to max(), which
+        // muted a channel the game had deliberately zeroed (or blew a channel
+        // back to full that it had ducked). Store the gains per channel — a
+        // uniform set behaves exactly like the old scalar volume. An empty mask
+        // (or null array) leaves the port's gains alone, like before.
         const int unityVolume = 32768;
-        var maxVolume = 0;
-        var found = false;
         if (volumeArrayAddress != 0)
         {
             Span<byte> raw = stackalloc byte[sizeof(int)];
-            for (var channel = 0; channel < 8; channel++)
+            for (var channel = 0; channel < AudioOutMaximumChannels; channel++)
             {
                 if ((channelFlags & (1u << channel)) == 0)
                 {
@@ -586,14 +652,8 @@ public static class AudioOutExports
                 }
 
                 var value = System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(raw);
-                maxVolume = Math.Max(maxVolume, value);
-                found = true;
+                port.SetChannelGain(channel, value / (float)unityVolume);
             }
-        }
-
-        if (found)
-        {
-            port.Volume = Math.Clamp(maxVolume / (float)unityVolume, 0f, 1f);
         }
 
         return ctx.SetReturn(0);
@@ -663,6 +723,11 @@ public static class AudioOutExports
 
     private static bool _shutdown;
 
+    // ORBIS_AUDIO_OUT_MODE: 0-3 are S16 mono/stereo/5.1/7.1, 4-7 are the same
+    // four layouts in F32. The old table misread 3 as mono and 4 as stereo and
+    // derived bytesPerSample from the wrong half of the range, so every 5.1,
+    // 7.1 and mono-float port got the wrong buffer geometry (BufferByteLength
+    // feeds both the guest read size and the host submit size).
     private static bool TryGetFormat(
         int rawFormat,
         out int channels,
@@ -672,13 +737,14 @@ public static class AudioOutExports
         var format = rawFormat & 0xFF;
         channels = format switch
         {
-            0 or 3 => 1,
-            1 or 4 => 2,
-            2 or 5 or 6 or 7 => 8,
+            0 or 4 => 1,
+            1 or 5 => 2,
+            2 or 6 => 6,
+            3 or 7 => 8,
             _ => 0,
         };
-        bytesPerSample = format is >= 3 and <= 5 or 7 ? 4 : 2;
-        isFloat = bytesPerSample == 4;
+        isFloat = format is >= 4 and <= 7;
+        bytesPerSample = isFloat ? 4 : 2;
         return channels != 0;
     }
 }

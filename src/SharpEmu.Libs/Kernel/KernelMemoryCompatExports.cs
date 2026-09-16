@@ -2547,15 +2547,18 @@ public static partial class KernelMemoryCompatExports
         LibraryName = "libKernel")]
     public static int ClockGettime(CpuContext ctx)
     {
+        // libc clock_gettime(clockid_t clk_id, struct timespec *tp): rdi is the
+        // clock id, rsi the output. Guests mix this with sceKernelClockGettime
+        // (libc++ steady_clock uses CLOCK_MONOTONIC here), so the id must select
+        // the same per-id clock source sceKernelClockGettime resolves through.
+        var clockId = unchecked((int)ctx[CpuRegister.Rdi]);
         var timespecAddress = ctx[CpuRegister.Rsi];
         if (timespecAddress == 0)
         {
             return (int)OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT;
         }
 
-        var now = DateTimeOffset.UtcNow;
-        var seconds = now.ToUnixTimeSeconds();
-        var nanoseconds = (now.Ticks % TimeSpan.TicksPerSecond) * 100;
+        KernelRuntimeCompatExports.ReadClock(clockId, out var seconds, out var nanoseconds);
         if (!ctx.TryWriteUInt64(timespecAddress, unchecked((ulong)seconds)) ||
             !ctx.TryWriteUInt64(timespecAddress + sizeof(long), unchecked((ulong)nanoseconds)))
         {
@@ -3741,7 +3744,9 @@ public static partial class KernelMemoryCompatExports
     /// POSIX alias of <see cref="KernelMprotect"/>; identical (addr, len, prot)
     /// argument order. Imported by libcohtml, whose embedded V8 changes page
     /// permissions through this name when moving JIT pages between writable and
-    /// executable.
+    /// executable. Delegates to the same <see cref="MprotectCore"/> guest-region
+    /// validation as the kernel spellings, so the alias cannot be used to reach
+    /// host pages the guest does not own.
     /// </summary>
     [SysAbiExport(
         Nid = "YQOfxL4QfeU",
@@ -3785,30 +3790,11 @@ public static partial class KernelMemoryCompatExports
         LibraryName = "libKernel")]
     public static int KernelMprotect(CpuContext ctx)
     {
-        var address = ctx[CpuRegister.Rdi];
-        var length = ctx[CpuRegister.Rsi];
-        var protection = unchecked((int)ctx[CpuRegister.Rdx]);
-        if (address == 0 || length == 0)
-        {
-            return (int)OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT;
-        }
-
-        if (!TryNormalizeProtectRange(address, length, out var alignedAddress, out var alignedLength))
-        {
-            return (int)OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT;
-        }
-
-        if (!TryProtectHostRange(alignedAddress, alignedLength, protection))
-        {
-            return (int)OrbisGen2Result.ORBIS_GEN2_ERROR_NOT_FOUND;
-        }
-
-        lock (_memoryGate)
-        {
-            _ = TryApplyMappedRegionProtectionLocked(alignedAddress, alignedLength, protection);
-        }
-
-        return (int)OrbisGen2Result.ORBIS_GEN2_OK;
+        return MprotectCore(
+            ctx,
+            address: ctx[CpuRegister.Rdi],
+            length: ctx[CpuRegister.Rsi],
+            protection: unchecked((int)ctx[CpuRegister.Rdx]));
     }
 
     [SysAbiExport(
@@ -3818,10 +3804,44 @@ public static partial class KernelMemoryCompatExports
         LibraryName = "libKernel")]
     public static int KernelMtypeprotect(CpuContext ctx)
     {
-        var address = ctx[CpuRegister.Rdi];
-        var length = ctx[CpuRegister.Rsi];
-        var memoryType = unchecked((int)ctx[CpuRegister.Rdx]);
-        var protection = unchecked((int)ctx[CpuRegister.Rcx]);
+        return MprotectCore(
+            ctx,
+            address: ctx[CpuRegister.Rdi],
+            length: ctx[CpuRegister.Rsi],
+            protection: unchecked((int)ctx[CpuRegister.Rcx]),
+            memoryType: unchecked((int)ctx[CpuRegister.Rdx]));
+    }
+
+    /// <summary>
+    /// Shared body of <see cref="KernelMprotect"/>,
+    /// <see cref="KernelMtypeprotect"/> and the POSIX <c>mprotect</c> alias
+    /// (<see cref="PosixMprotect"/>), which libcohtml's embedded V8 uses to
+    /// flip JIT pages between writable and executable.
+    /// </summary>
+    /// <remarks>
+    /// The guest-supplied (addr, len) pair used to flow straight into a raw
+    /// host VirtualProtect/mprotect, so a malicious or buggy guest could
+    /// change host page permissions for memory outside its address space —
+    /// emulator internals (JIT stubs, PLT, abort stacks) or the host runtime
+    /// itself. That is a host-memory sandbox escape. MprotectCore instead
+    /// requires the aligned range to be fully guest-owned — covered with no
+    /// gaps by the kernel mapping table and/or the backing memory's own
+    /// region list — BEFORE any host protection changes:
+    /// PERMISSION_DENIED (EACCES-flavoured) for ranges that are host-committed
+    /// but not guest-owned, NOT_FOUND (the ENOMEM-flavoured code the raw path
+    /// already returned) for ranges with nothing mapped. Partial overlap is
+    /// rejected outright rather than clamped, matching both POSIX mprotect —
+    /// which fails with ENOMEM if any page in the range is unmapped — and the
+    /// all-or-nothing region bookkeeping in
+    /// <see cref="TryApplyMappedRegionProtectionLocked"/>.
+    /// </remarks>
+    private static int MprotectCore(
+        CpuContext ctx,
+        ulong address,
+        ulong length,
+        int protection,
+        int? memoryType = null)
+    {
         if (address == 0 || length == 0)
         {
             return (int)OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT;
@@ -3832,7 +3852,15 @@ public static partial class KernelMemoryCompatExports
             return (int)OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT;
         }
 
-        if (!TryProtectHostRange(alignedAddress, alignedLength, protection))
+        if (!IsMprotectRangeGuestOwned(ctx, alignedAddress, alignedLength))
+        {
+            // Out-of-sandbox ranges must never reach the host protection call.
+            return IsHostRangeCommitted(alignedAddress, alignedLength)
+                ? (int)OrbisGen2Result.ORBIS_GEN2_ERROR_PERMISSION_DENIED
+                : (int)OrbisGen2Result.ORBIS_GEN2_ERROR_NOT_FOUND;
+        }
+
+        if (!TryProtectHostRange(ctx, alignedAddress, alignedLength, protection))
         {
             return (int)OrbisGen2Result.ORBIS_GEN2_ERROR_NOT_FOUND;
         }
@@ -5070,6 +5098,24 @@ public static partial class KernelMemoryCompatExports
             return ResolveDownload0Root();
         }
 
+        if (guestPath.StartsWith("/system_resources/fonts/", StringComparison.OrdinalIgnoreCase))
+        {
+            var relative = NormalizeMountRelativePath(guestPath["/system_resources/fonts/".Length..]);
+            return CombineWithinMount(ResolveSystemFontsRoot(), relative);
+        }
+
+        if (guestPath.StartsWith("system_resources/fonts/", StringComparison.OrdinalIgnoreCase))
+        {
+            var relative = NormalizeMountRelativePath(guestPath["system_resources/fonts/".Length..]);
+            return CombineWithinMount(ResolveSystemFontsRoot(), relative);
+        }
+
+        if (string.Equals(guestPath, "/system_resources/fonts", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(guestPath, "system_resources/fonts", StringComparison.OrdinalIgnoreCase))
+        {
+            return ResolveSystemFontsRoot();
+        }
+
         if (guestPath.StartsWith("/hostapp/", StringComparison.OrdinalIgnoreCase))
         {
             var relative = NormalizeMountRelativePath(guestPath["/hostapp/".Length..]);
@@ -5454,6 +5500,23 @@ public static partial class KernelMemoryCompatExports
         return _cachedDownload0Root;
     }
 
+    // PS5 system fonts live under the read-only /system_resources/fonts tree.
+    // The tree is shipped with the emulator (or pointed at a host directory
+    // via SHARPEMU_FONTS_DIR); unlike the writable roots nothing is created
+    // here — a missing tree simply resolves to paths that do not exist, which
+    // callers report as NOT_FOUND, exactly like an absent font on hardware.
+    private static string ResolveSystemFontsRoot()
+    {
+        const string fontsVariableName = "SHARPEMU_FONTS_DIR";
+        var configuredRoot = Environment.GetEnvironmentVariable(fontsVariableName);
+        if (!string.IsNullOrWhiteSpace(configuredRoot))
+        {
+            return Path.GetFullPath(configuredRoot);
+        }
+
+        return Path.Combine(AppContext.BaseDirectory, "system_resources", "fonts");
+    }
+
     private static string ResolveHostappRoot()
     {
         const string hostappVariableName = "SHARPEMU_HOSTAPP_DIR";
@@ -5537,7 +5600,10 @@ public static partial class KernelMemoryCompatExports
         var normalized = NormalizeGuestStatCachePath(guestPath);
         return normalized is not null &&
                (string.Equals(normalized, "/app0", StringComparison.OrdinalIgnoreCase) ||
-                normalized.StartsWith("/app0/", StringComparison.OrdinalIgnoreCase));
+                normalized.StartsWith("/app0/", StringComparison.OrdinalIgnoreCase) ||
+                // System resources (fonts) are read-only system data on hardware.
+                string.Equals(normalized, "/system_resources", StringComparison.OrdinalIgnoreCase) ||
+                normalized.StartsWith("/system_resources/", StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool TryReadCString(CpuContext ctx, ulong address, ulong maxLength, out byte[] bytes)
@@ -6343,8 +6409,138 @@ public static partial class KernelMemoryCompatExports
         return alignedLength != 0;
     }
 
-    private static bool TryProtectHostRange(ulong address, ulong length, int orbisProtection)
+    /// <summary>
+    /// Reports whether <c>[address, address+length)</c> is entirely owned by
+    /// the guest: covered with no gaps by the kernel mapping table tracked in
+    /// <c>_mappedRegions</c> (mmap / flexible / direct / HLE-data mappings) or
+    /// by the region list of the backing memory itself (loader segments and
+    /// other ranges mapped straight through the address space). Only such
+    /// ranges may reach a host protection change from
+    /// <see cref="MprotectCore"/>.
+    /// </summary>
+    private static bool IsMprotectRangeGuestOwned(CpuContext ctx, ulong address, ulong length)
     {
+        if (length == 0 || !TryAddU64(address, length, out _))
+        {
+            return false;
+        }
+
+        lock (_memoryGate)
+        {
+            if (IsRangeCoveredByMappedRegionsLocked(address, length))
+            {
+                return true;
+            }
+        }
+
+        if (KernelVirtualRangeAllocator.TryResolveAddressSpace(ctx.Memory, out var addressSpace) &&
+            addressSpace.IsRangeGuestMapped(address, length))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    // _mappedRegions is a SortedList keyed by region base address, so Values
+    // enumerates in ascending address order and the walk advances a cursor
+    // from `address` to the exclusive end; any gap before the cursor reaches
+    // the end means a page in the range is not a known guest mapping.
+    private static bool IsRangeCoveredByMappedRegionsLocked(ulong address, ulong length)
+    {
+        if (!TryAddU64(address, length, out var endAddress))
+        {
+            return false;
+        }
+
+        var cursor = address;
+        foreach (var region in _mappedRegions.Values)
+        {
+            if (!TryAddU64(region.Address, region.Length, out var regionEnd) || regionEnd <= cursor)
+            {
+                continue;
+            }
+
+            if (region.Address > cursor)
+            {
+                return false;
+            }
+
+            cursor = regionEnd;
+            if (cursor >= endAddress)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Reports whether any page of <c>[address, address+length)</c> is
+    /// committed host memory (as opposed to unmapped/free). Used by
+    /// <see cref="MprotectCore"/> to pick the rejection code for
+    /// out-of-sandbox ranges: host-committed pages are memory the guest must
+    /// never re-protect (PERMISSION_DENIED), while free pages simply do not
+    /// exist (NOT_FOUND, the code the raw VirtualProtect path returned).
+    /// </summary>
+    private static bool IsHostRangeCommitted(ulong address, ulong length)
+    {
+        if (address == 0 || length == 0)
+        {
+            return false;
+        }
+
+        const ulong canonicalUpper = 0x0000800000000000UL;
+        if (address >= canonicalUpper || ulong.MaxValue - address < length - 1)
+        {
+            return false;
+        }
+
+        var endAddress = address + length - 1;
+        var cursor = address;
+        while (cursor <= endAddress)
+        {
+            if (TryQueryHostPage(cursor, out var info))
+            {
+                return true;
+            }
+
+            var regionBase = unchecked((ulong)info.BaseAddress);
+            var regionSize = (ulong)info.RegionSize;
+            if (regionSize == 0 ||
+                regionBase > cursor ||
+                ulong.MaxValue - regionBase < regionSize)
+            {
+                break;
+            }
+
+            var regionEnd = regionBase + regionSize;
+            if (regionEnd <= cursor || regionEnd > endAddress)
+            {
+                break;
+            }
+
+            cursor = regionEnd;
+        }
+
+        return false;
+    }
+
+    private static bool TryProtectHostRange(CpuContext ctx, ulong address, ulong length, int orbisProtection)
+    {
+        // Prefer the backing memory's own protect seam: the implementation
+        // that owns the pages re-checks the range against its region table
+        // before the host call. MprotectCore has already validated the range,
+        // so the raw VirtualProtect below only runs for memories without the
+        // seam (plain ICpuMemory fakes or wrappers that hide it) and can never
+        // be reached for a non-guest range.
+        if (KernelVirtualRangeAllocator.TryResolveAddressSpace(ctx.Memory, out var addressSpace) &&
+            addressSpace.TryProtect(address, length, ToGuestPageProtection(orbisProtection)))
+        {
+            return true;
+        }
+
         if (length == 0 || length > nuint.MaxValue)
         {
             return false;
@@ -6357,6 +6553,27 @@ public static partial class KernelMemoryCompatExports
         }
 
         return true;
+    }
+
+    private static GuestPageProtection ToGuestPageProtection(int orbisProtection)
+    {
+        var protection = GuestPageProtection.None;
+        if ((orbisProtection & (OrbisProtCpuRead | OrbisProtGpuRead)) != 0)
+        {
+            protection |= GuestPageProtection.Read;
+        }
+
+        if ((orbisProtection & (OrbisProtCpuWrite | OrbisProtGpuWrite)) != 0)
+        {
+            protection |= GuestPageProtection.Write;
+        }
+
+        if ((orbisProtection & OrbisProtCpuExec) != 0)
+        {
+            protection |= GuestPageProtection.Execute;
+        }
+
+        return protection;
     }
 
     private static uint ResolveHostProtection(int orbisProtection)
@@ -7512,7 +7729,9 @@ public static partial class KernelMemoryCompatExports
          string.Equals(normalizedGuestPath, "/temp0", StringComparison.OrdinalIgnoreCase) ||
          normalizedGuestPath.StartsWith("/temp0/", StringComparison.OrdinalIgnoreCase) ||
          string.Equals(normalizedGuestPath, "/download0", StringComparison.OrdinalIgnoreCase) ||
-         normalizedGuestPath.StartsWith("/download0/", StringComparison.OrdinalIgnoreCase));
+         normalizedGuestPath.StartsWith("/download0/", StringComparison.OrdinalIgnoreCase) ||
+         string.Equals(normalizedGuestPath, "/system_resources", StringComparison.OrdinalIgnoreCase) ||
+         normalizedGuestPath.StartsWith("/system_resources/", StringComparison.OrdinalIgnoreCase));
 
     private static bool IsNegativeStatCached(string cacheKey)
     {

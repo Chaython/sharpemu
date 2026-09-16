@@ -32,6 +32,14 @@ internal sealed class AjmMp3Decoder
 
     public ulong TotalDecodedSamples { get; private set; }
 
+    /// <summary>Channel count of the decoded stream, learned from the first
+    /// decoded frame (0 until a frame has actually produced PCM).</summary>
+    public int StreamChannels { get; private set; }
+
+    /// <summary>Sample rate of the decoded stream, learned from the first
+    /// decoded frame (0 until a frame has actually produced PCM).</summary>
+    public int StreamSampleRate { get; private set; }
+
     public void Reset()
     {
         lock (_gate)
@@ -39,6 +47,8 @@ internal sealed class AjmMp3Decoder
             _decoder.Reset();
             _pending = Array.Empty<byte>();
             TotalDecodedSamples = 0;
+            StreamChannels = 0;
+            StreamSampleRate = 0;
         }
     }
 
@@ -130,6 +140,8 @@ internal sealed class AjmMp3Decoder
                     }
 
                     var channels = frame.ChannelMode == MpegChannelMode.Mono ? 1 : 2;
+                    StreamChannels = channels;
+                    StreamSampleRate = frame.SampleRate;
                     var bytesPerSample = pcm16 ? 2 : 4;
                     var byteCount = sampleCount * bytesPerSample;
                     if (outputOffset + byteCount > output.Length)

@@ -5,6 +5,36 @@ namespace SharpEmu.ShaderCompiler.Vulkan;
 
 public static class SpirvFixedShaders
 {
+    /// <summary>Fragment half of the fixed fullscreen barycentric diagnostic draw.</summary>
+    public static byte[] CreateBarycentricFragment()
+    {
+        var module = new SpirvModuleBuilder();
+        module.AddCapability(SpirvCapability.Shader);
+        var voidType = module.TypeVoid();
+        var floatType = module.TypeFloat(32);
+        var vec4Type = module.TypeVector(floatType, 4);
+        var inputPointer = module.TypePointer(SpirvStorageClass.Input, vec4Type);
+        var outputPointer = module.TypePointer(SpirvStorageClass.Output, vec4Type);
+        var barycentric = module.AddGlobalVariable(inputPointer, SpirvStorageClass.Input);
+        module.AddName(barycentric, "barycentric");
+        module.AddDecoration(barycentric, SpirvDecoration.Location, 0);
+        module.AddDecoration(barycentric, SpirvDecoration.NoPerspective);
+        var output = module.AddGlobalVariable(outputPointer, SpirvStorageClass.Output);
+        module.AddName(output, "outColor");
+        module.AddDecoration(output, SpirvDecoration.Location, 0);
+        var functionType = module.TypeFunction(voidType);
+        var main = module.BeginFunction(voidType, functionType);
+        module.AddName(main, "main");
+        module.AddLabel();
+        var value = module.AddInstruction(SpirvOp.Load, vec4Type, barycentric);
+        module.AddStatement(SpirvOp.Store, output, value);
+        module.AddStatement(SpirvOp.Return);
+        module.EndFunction();
+        module.AddEntryPoint(SpirvExecutionModel.Fragment, main, "main", [barycentric, output]);
+        module.AddExecutionMode(main, SpirvExecutionMode.OriginUpperLeft);
+        return module.Build();
+    }
+
     public static byte[] CreateFullscreenVertex(uint attributeCount)
     {
         var module = new SpirvModuleBuilder();
@@ -106,7 +136,7 @@ public static class SpirvFixedShaders
         var imageType = module.TypeImage(
             floatType,
             SpirvImageDim.Dim2D,
-            depth: false,
+            depth: 0u,
             arrayed: false,
             multisampled: false,
             sampled: 1,
@@ -196,7 +226,7 @@ public static class SpirvFixedShaders
         var imageType = module.TypeImage(
             floatType,
             SpirvImageDim.Dim2D,
-            depth: false,
+            depth: 0u,
             arrayed: false,
             multisampled: false,
             sampled: 1,

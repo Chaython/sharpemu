@@ -1580,8 +1580,22 @@ public static class Gen5ShaderTranslator
             0x23 => "LoadSbyteD16Hi",
             0x24 => "LoadShortD16",
             0x25 => "LoadShortD16Hi",
+            // FLAT/GLOBAL atomics share the MUBUF atomic numbering. The same
+            // opcode encodes the return and no-return forms: GLC=1 makes the
+            // instruction write the pre-operation value back to VDATA.
+            0x30 => "AtomicSwap",
+            0x31 => "AtomicCmpswap",
             0x32 => "AtomicAdd",
-            0x38 => "AtomicUMax",
+            0x33 => "AtomicSub",
+            0x35 => "AtomicSmin",
+            0x36 => "AtomicUmin",
+            0x37 => "AtomicSmax",
+            0x38 => "AtomicUmax",
+            0x39 => "AtomicAnd",
+            0x3A => "AtomicOr",
+            0x3B => "AtomicXor",
+            0x3C => "AtomicInc",
+            0x3D => "AtomicDec",
             _ => string.Empty,
         };
         name = prefix.Length != 0 && suffix.Length != 0
@@ -1667,20 +1681,66 @@ public static class Gen5ShaderTranslator
             0x1A => "ImageAtomicXor",
             0x1B => "ImageAtomicInc",
             0x1C => "ImageAtomicDec",
+            // IMAGE_SAMPLE family. The full gfx10 modifier grammar is
+            // [C][modifier][O]; the C rows are the shadow-compare variants
+            // that sample with a depth-reference operand.
             0x20 => "ImageSample",
+            0x21 => "ImageSampleCl",
             0x22 => "ImageSampleD",
+            0x23 => "ImageSampleDCl",
             0x24 => "ImageSampleL",
             0x25 => "ImageSampleB",
+            0x26 => "ImageSampleBCl",
             0x27 => "ImageSampleLz",
+            0x28 => "ImageSampleC",
+            0x29 => "ImageSampleCCl",
+            0x2A => "ImageSampleCD",
+            0x2B => "ImageSampleCDCl",
+            0x2C => "ImageSampleCL",
+            0x2D => "ImageSampleCB",
+            0x2E => "ImageSampleCBCl",
             0x2F => "ImageSampleCLz",
             0x30 => "ImageSampleO",
+            0x31 => "ImageSampleClO",
+            0x32 => "ImageSampleDO",
+            0x33 => "ImageSampleDClO",
             0x34 => "ImageSampleLO",
+            0x35 => "ImageSampleBO",
+            0x36 => "ImageSampleBClO",
             0x37 => "ImageSampleLzO",
+            0x38 => "ImageSampleCO",
+            0x39 => "ImageSampleCClO",
+            0x3A => "ImageSampleCDO",
+            0x3B => "ImageSampleCDClO",
+            0x3C => "ImageSampleCLO",
+            0x3D => "ImageSampleCBO",
+            0x3E => "ImageSampleCBClO",
+            0x3F => "ImageSampleCLzO",
+            // IMAGE_GATHER4 family (no derivative variants in the ISA).
             0x40 => "ImageGather4",
+            0x41 => "ImageGather4Cl",
+            0x42 => "ImageGather4L",
+            0x43 => "ImageGather4B",
+            0x44 => "ImageGather4BCl",
             0x47 => "ImageGather4Lz",
             0x48 => "ImageGather4C",
+            0x49 => "ImageGather4CCl",
+            0x4A => "ImageGather4CL",
+            0x4B => "ImageGather4CB",
+            0x4C => "ImageGather4CBCl",
             0x4E => "ImageGather4CBCl",
+            0x4F => "ImageGather4CLz",
+            0x50 => "ImageGather4O",
+            0x51 => "ImageGather4ClO",
+            0x52 => "ImageGather4LO",
+            0x53 => "ImageGather4BO",
+            0x54 => "ImageGather4BClO",
             0x57 => "ImageGather4LzO",
+            0x58 => "ImageGather4CO",
+            0x59 => "ImageGather4CClO",
+            0x5A => "ImageGather4CLO",
+            0x5B => "ImageGather4CBO",
+            0x5C => "ImageGather4CBClO",
             0x5F => "ImageGather4CLzO",
             _ => string.Empty,
         };
@@ -1795,6 +1855,117 @@ public static class Gen5ShaderTranslator
         binding.Control.IsArray &&
         (binding.Opcode.StartsWith("ImageSample", StringComparison.Ordinal) ||
          binding.Opcode.StartsWith("ImageGather4", StringComparison.Ordinal));
+
+    // Image-opcode flag tokens, longest first so the greedy tokenizer prefers
+    // the composite tokens ("DCl" over "D", "Cl" over "C") at each position.
+    private static readonly string[] ImageOpcodeFlagTokens =
+    [
+        "DCl", "BCl", "Lz", "Cl", "C", "S", "D", "B", "L", "O",
+    ];
+
+    /// <summary>
+    /// Tokenizes a sampled-image opcode name (IMAGE_SAMPLE / IMAGE_GATHER4
+    /// variants) into its modifier flags. The name grammar is
+    /// <c>Image(Sample|Gather4)[C][S][modifier][O]</c> where the modifier is
+    /// one of D, DCl, B, BCl, L, Cl, Lz — GATHER4 has no derivative variants.
+    /// This replaces the ad-hoc substring matching that cannot distinguish
+    /// the LOD-clamp forms (ImageSampleCl) from the shadow-compare forms
+    /// (ImageSampleC…), because "ImageSampleCl" contains "SampleC".
+    /// Returns false for non-sampling opcodes (loads, stores, atomics,
+    /// resinfo) and for names that do not follow the grammar.
+    /// </summary>
+    public static bool ParseImageOpcodeFlags(string opcode, out Gen5ImageOpcodeFlags flags)
+    {
+        flags = default;
+        string tail;
+        if (opcode.StartsWith("ImageSample", StringComparison.Ordinal))
+        {
+            tail = opcode["ImageSample".Length..];
+        }
+        else if (opcode.StartsWith("ImageGather4", StringComparison.Ordinal))
+        {
+            flags.Gather = true;
+            tail = opcode["ImageGather4".Length..];
+        }
+        else
+        {
+            return false;
+        }
+
+        var cursor = 0;
+        var sawSigned = false;
+        var sawModifier = false;
+        var sawOffset = false;
+        while (cursor < tail.Length)
+        {
+            string? matched = null;
+            foreach (var token in ImageOpcodeFlagTokens)
+            {
+                if (tail.Length - cursor >= token.Length &&
+                    tail.AsSpan(cursor, token.Length).SequenceEqual(token))
+                {
+                    matched = token;
+                    break;
+                }
+            }
+
+            if (matched is null)
+            {
+                return false;
+            }
+
+            switch (matched)
+            {
+                case "C" when !flags.Compare && !sawSigned && !sawModifier && !sawOffset:
+                    flags.Compare = true;
+                    break;
+                case "S" when flags.Compare && !sawSigned && !sawModifier && !sawOffset:
+                    sawSigned = true;
+                    flags.SignedCompare = true;
+                    break;
+                case "DCl" when !flags.Gather && !sawModifier && !sawOffset:
+                    sawModifier = true;
+                    flags.Derivatives = true;
+                    flags.LodClamp = true;
+                    break;
+                case "D" when !flags.Gather && !sawModifier && !sawOffset:
+                    sawModifier = true;
+                    flags.Derivatives = true;
+                    break;
+                case "BCl" when !sawModifier && !sawOffset:
+                    sawModifier = true;
+                    flags.Bias = true;
+                    flags.LodClamp = true;
+                    break;
+                case "B" when !sawModifier && !sawOffset:
+                    sawModifier = true;
+                    flags.Bias = true;
+                    break;
+                case "L" when !sawModifier && !sawOffset:
+                    sawModifier = true;
+                    flags.Lod = true;
+                    break;
+                case "Cl" when !sawModifier && !sawOffset:
+                    sawModifier = true;
+                    flags.LodClamp = true;
+                    break;
+                case "Lz" when !sawModifier && !sawOffset:
+                    sawModifier = true;
+                    flags.LodZero = true;
+                    break;
+                case "O" when !sawOffset:
+                    sawOffset = true;
+                    flags.Offset = true;
+                    break;
+                default:
+                    return false;
+            }
+
+            cursor += matched.Length;
+        }
+
+        return true;
+    }
 
     public static bool IsDataShareAtomic(string name) => name switch
     {
@@ -2321,9 +2492,13 @@ public static class Gen5ShaderTranslator
                     "GlobalStoreByteD16Hi" or
                     "GlobalStoreShort" or
                     "GlobalStoreShortD16Hi" or
-                    "GlobalStoreDword" or
-                    "GlobalAtomicAdd" or
-                    "GlobalAtomicUMax" => 1u,
+                    "GlobalStoreDword" => 1u,
+                    // CMPSWAP carries {new value, comparator} in VDATA:VDATA+1;
+                    // every other atomic touches a single dword.
+                    "GlobalAtomicCmpswap" => 2u,
+                    _ when memoryOpcode.StartsWith(
+                        "GlobalAtomic",
+                        StringComparison.Ordinal) => 1u,
                     "GlobalLoadDword" => 1u,
                     "GlobalLoadDwordx2" => 2u,
                     "GlobalLoadDwordx3" => 3u,

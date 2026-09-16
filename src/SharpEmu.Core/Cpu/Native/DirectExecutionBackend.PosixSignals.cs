@@ -81,6 +81,15 @@ public sealed unsafe partial class DirectExecutionBackend
 	private static readonly bool _perfSignalCounter =
 		string.Equals(Environment.GetEnvironmentVariable("SHARPEMU_PERF_MEM"), "1", StringComparison.Ordinal);
 
+	// SHARPEMU_LOG_POSIX_SIGNALS=1 forces a trace line for every fault.
+	// Cached once per process at class initialization (same pattern as
+	// _perfSignalCounter above): the fault handler runs on every
+	// SIGSEGV/SIGBUS/SIGILL, and an environment lookup per fault is a
+	// global lock plus a string allocation in the hottest error path.
+	// Set the variable before launching the emulator.
+	private static readonly bool _logPosixSignals =
+		string.Equals(Environment.GetEnvironmentVariable("SHARPEMU_LOG_POSIX_SIGNALS"), "1", StringComparison.Ordinal);
+
 	[ThreadStatic]
 	private static int _posixSignalHandlerDepth;
 
@@ -322,8 +331,7 @@ public sealed unsafe partial class DirectExecutionBackend
 		pointers.ContextRecord = contextRecord;
 
 		int traceIndex = _posixSignalWarmup ? 0 : Interlocked.Increment(ref _posixSignalTraceCount);
-		bool traceSignal = traceIndex > 0 && (traceIndex <= 16 || traceIndex % 1024 == 0 ||
-			string.Equals(Environment.GetEnvironmentVariable("SHARPEMU_LOG_POSIX_SIGNALS"), "1", StringComparison.Ordinal));
+		bool traceSignal = traceIndex > 0 && (traceIndex <= 16 || traceIndex % 1024 == 0 || _logPosixSignals);
 		if (traceSignal)
 		{
 			Console.Error.WriteLine(

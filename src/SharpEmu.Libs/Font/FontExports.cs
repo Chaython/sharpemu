@@ -2,16 +2,33 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 using System.Buffers.Binary;
+using System.Text;
 using SharpEmu.HLE;
+using SharpEmu.Libs.Kernel;
 
 namespace SharpEmu.Libs.Font;
 
+/// <summary>
+/// libSceFont / libSceFontFt behavior. The library/renderer/font handles are
+/// opaque guest allocations, glyph metrics come from a fixed fallback
+/// geometry, and glyph rasterization remains a documented stub: the render
+/// exports report success and clear their output buffers instead of drawing
+/// pixels (see <see cref="RenderCharGlyphImageHorizontal"/>). What IS real:
+/// font files referenced by guest path are resolved through the kernel
+/// guest-path table (<see cref="OpenFontFile"/>) — including the optional
+/// read-only /system_resources/fonts tree — so titles that load fonts through
+/// their own rasterizer can read real font bytes.
+/// </summary>
 public static class FontExports
 {
     private const ushort GlyphMagic = 0x0F03;
+    private const ushort FontMagic = 0x0F02;
     private const int GlyphSize = 0x100;
     private const int GlyphMetricsSize = 8 * sizeof(float);
     private const int RenderOutputSize = 0x40;
+    private const int MaxGuestPathBytes = 4096;
+    // Guest pointers live well above the first 64 KiB.
+    private const ulong MinGuestPointer = 0x1_0000;
 
     private static readonly object AllocationGate = new();
     private static readonly Stack<ulong> FreeGlyphs = new();
@@ -248,6 +265,51 @@ public static class FontExports
             : SetReturn(ctx, OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
     }
 
+    /// <summary>
+    /// Opens a font file referenced by guest path (a title-bundled font under
+    /// /app0, or a real system font under /system_resources/fonts). The path
+    /// is resolved through the kernel guest-path table; a file that does not
+    /// exist resolves to nothing and the call reports NOT_FOUND — a defined
+    /// failure the caller must already handle — rather than handing back a
+    /// handle the rasterizer stubs would silently render nothing from.
+    /// </summary>
+    /// <remarks>
+    /// PS4 ABI: (library, const char* path, openMode, fileSize, SceFontHandle*).
+    /// Some titles bind the older four-argument variant
+    /// (library, path, openMode, SceFontHandle*); the output slot is selected
+    /// by which register carries a plausible pointer, mirroring the register
+    /// disambiguation in sceSaveDataCreateTransactionResource.
+    /// </remarks>
+    [SysAbiExport(
+        Nid = "RvXyHMUiLhE",
+        ExportName = "sceFontOpenFontFile",
+        Target = Generation.Gen5,
+        LibraryName = "libSceFont")]
+    public static int OpenFontFile(CpuContext ctx)
+    {
+        var pathAddress = ctx[CpuRegister.Rsi];
+        var outputAddress = SelectHandleOutAddress(ctx[CpuRegister.R8], ctx[CpuRegister.Rcx]);
+        if (pathAddress == 0 || outputAddress == 0)
+        {
+            return SetReturn(ctx, OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT);
+        }
+
+        if (!TryReadGuestPath(ctx, pathAddress, out var guestPath))
+        {
+            return SetReturn(ctx, OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
+        }
+
+        var hostPath = KernelMemoryCompatExports.ResolveGuestPath(guestPath);
+        if (string.IsNullOrEmpty(hostPath) || !File.Exists(hostPath))
+        {
+            TraceFont($"open_font_file path='{guestPath}' not_found");
+            return SetReturn(ctx, OrbisGen2Result.ORBIS_GEN2_ERROR_NOT_FOUND);
+        }
+
+        TraceFont($"open_font_file path='{guestPath}' host='{hostPath}'");
+        return CreateOpaqueHandle(ctx, outputAddress, 0x100, FontMagic);
+    }
+
     [SysAbiExport(
         Nid = "SsRbbCiWoGw",
         ExportName = "sceFontSupportSystemFonts",
@@ -274,28 +336,8 @@ public static class FontExports
         ExportName = "sceFontGetRenderCharGlyphMetrics",
         Target = Generation.Gen5,
         LibraryName = "libSceFont")]
-    public static int GetRenderCharGlyphMetrics(CpuContext ctx)
-    {
-        var metricsAddress = ctx[CpuRegister.Rdx];
-        if (metricsAddress == 0)
-        {
-            return SetReturn(ctx, OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT);
-        }
-
-        var values = new[] { 8.0f, 16.0f, 0.0f, 12.0f, 8.0f, 0.0f, 0.0f, 16.0f };
-        for (var index = 0; index < values.Length; index++)
-        {
-            if (!TryWriteUInt32(
-                    ctx,
-                    metricsAddress + (ulong)(index * sizeof(float)),
-                    BitConverter.SingleToUInt32Bits(values[index])))
-            {
-                return SetReturn(ctx, OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
-            }
-        }
-
-        return SetSuccess(ctx);
-    }
+    public static int GetRenderCharGlyphMetrics(CpuContext ctx) =>
+        WriteFallbackGlyphMetrics(ctx, ctx[CpuRegister.Rdx]);
 
     [SysAbiExport(
         Nid = "gdUCnU0gHdI",
@@ -397,18 +439,14 @@ public static class FontExports
         var metricsAddress = ctx[CpuRegister.Rcx];
         var resultAddress = ctx[CpuRegister.R8];
 
+        // Documented rasterization stub: the fallback geometry is reported
+        // and the output buffer is cleared, but no glyph pixels are drawn.
         if (metricsAddress != 0)
         {
-            var values = new[] { 8.0f, 16.0f, 0.0f, 12.0f, 8.0f, 0.0f, 0.0f, 16.0f };
-            for (var index = 0; index < values.Length; index++)
+            var metricsResult = WriteFallbackGlyphMetrics(ctx, metricsAddress);
+            if (metricsResult != 0)
             {
-                if (!TryWriteUInt32(
-                        ctx,
-                        metricsAddress + (ulong)(index * sizeof(float)),
-                        BitConverter.SingleToUInt32Bits(values[index])))
-                {
-                    return SetReturn(ctx, OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
-                }
+                return metricsResult;
             }
         }
 
@@ -455,6 +493,173 @@ public static class FontExports
         return ctx.TryWriteUInt64(rendererPointerAddress, 0)
             ? SetSuccess(ctx)
             : SetReturn(ctx, OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
+    }
+
+    // Mirrors DestroyRenderer: the library slot is cleared so a stale handle
+    // is not reused after teardown.
+    [SysAbiExport(
+        Nid = "FXP359ygujs",
+        ExportName = "sceFontDestroyLibrary",
+        Target = Generation.Gen5,
+        LibraryName = "libSceFont")]
+    public static int DestroyLibrary(CpuContext ctx)
+    {
+        var libraryPointerAddress = ctx[CpuRegister.Rdi];
+        if (libraryPointerAddress == 0)
+        {
+            return SetReturn(ctx, OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT);
+        }
+
+        return ctx.TryWriteUInt64(libraryPointerAddress, 0)
+            ? SetSuccess(ctx)
+            : SetReturn(ctx, OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
+    }
+
+    [SysAbiExport(
+        Nid = "h6hIgxXEiEc",
+        ExportName = "sceFontMemoryTerm",
+        Target = Generation.Gen5,
+        LibraryName = "libSceFont")]
+    public static int MemoryTerm(CpuContext ctx) => SetSuccess(ctx);
+
+    // The non-rendering twin of GetRenderCharGlyphMetrics: same fallback
+    // geometry, asked of a font instead of a renderer.
+    [SysAbiExport(
+        Nid = "L97d+3OgMlE",
+        ExportName = "sceFontGetCharGlyphMetrics",
+        Target = Generation.Gen5,
+        LibraryName = "libSceFont")]
+    public static int GetCharGlyphMetrics(CpuContext ctx) =>
+        WriteFallbackGlyphMetrics(ctx, ctx[CpuRegister.Rdx]);
+
+    // No kerning is modeled for the fallback geometry.
+    [SysAbiExport(
+        Nid = "sDuhHGNhHvE",
+        ExportName = "sceFontGetKerning",
+        Target = Generation.Gen5,
+        LibraryName = "libSceFont")]
+    public static int GetKerning(CpuContext ctx)
+    {
+        var kerningAddress = ctx[CpuRegister.Rcx];
+        if (kerningAddress == 0)
+        {
+            return SetReturn(ctx, OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT);
+        }
+
+        return TryWriteUInt32(ctx, kerningAddress, 0)
+            ? SetSuccess(ctx)
+            : SetReturn(ctx, OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
+    }
+
+    [SysAbiExport(
+        Nid = "+ehNXJPUyhk",
+        ExportName = "sceFontFtSupportSystemFonts",
+        Target = Generation.Gen5,
+        LibraryName = "libSceFontFt")]
+    public static int FtSupportSystemFonts(CpuContext ctx) => SetSuccess(ctx);
+
+    // The point-based scale twins of the pixel variants above; the fallback
+    // geometry ignores scale, so these accept and discard the value.
+    [SysAbiExport(
+        Nid = "sw65+7wXCKE",
+        ExportName = "sceFontSetScalePoint",
+        Target = Generation.Gen5,
+        LibraryName = "libSceFont")]
+    public static int SetScalePoint(CpuContext ctx) => SetSuccess(ctx);
+
+    [SysAbiExport(
+        Nid = "nMZid4oDfi4",
+        ExportName = "sceFontSetupRenderScalePoint",
+        Target = Generation.Gen5,
+        LibraryName = "libSceFont")]
+    public static int SetupRenderScalePoint(CpuContext ctx) => SetSuccess(ctx);
+
+    [SysAbiExport(
+        Nid = "I1acwR7Qp8E",
+        ExportName = "sceFontSetResolutionDpi",
+        Target = Generation.Gen5,
+        LibraryName = "libSceFont")]
+    public static int SetResolutionDpi(CpuContext ctx) => SetSuccess(ctx);
+
+    [SysAbiExport(
+        Nid = "kihFGYJee7o",
+        ExportName = "sceFontSetFontsOpenMode",
+        Target = Generation.Gen5,
+        LibraryName = "libSceFont")]
+    public static int SetFontsOpenMode(CpuContext ctx) => SetSuccess(ctx);
+
+    // The fixed fallback glyph geometry shared by every metrics query:
+    // horizontalWidth, verticalWidth, horizontalAdvance, ... in the order the
+    // render exports already report.
+    private static int WriteFallbackGlyphMetrics(CpuContext ctx, ulong metricsAddress)
+    {
+        if (metricsAddress == 0)
+        {
+            return SetReturn(ctx, OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT);
+        }
+
+        var values = new[] { 8.0f, 16.0f, 0.0f, 12.0f, 8.0f, 0.0f, 0.0f, 16.0f };
+        for (var index = 0; index < values.Length; index++)
+        {
+            if (!TryWriteUInt32(
+                    ctx,
+                    metricsAddress + (ulong)(index * sizeof(float)),
+                    BitConverter.SingleToUInt32Bits(values[index])))
+            {
+                return SetReturn(ctx, OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
+            }
+        }
+
+        return SetSuccess(ctx);
+    }
+
+    // Picks the SceFontHandle* slot between the five-argument PS4 ABI (out in
+    // R8 after library/path/openMode/fileSize) and the four-argument variant
+    // (out in RCX after library/path/openMode), based on which register holds
+    // a plausible guest pointer.
+    private static ulong SelectHandleOutAddress(ulong r8, ulong rcx) =>
+        r8 >= MinGuestPointer ? r8 : rcx >= MinGuestPointer ? rcx : 0;
+
+    // Reads a NUL-terminated guest path, bounded so a missing terminator
+    // cannot loop unbounded over guest memory.
+    private static bool TryReadGuestPath(CpuContext ctx, ulong address, out string value)
+    {
+        value = string.Empty;
+        var builder = new StringBuilder();
+        Span<byte> chunk = stackalloc byte[128];
+        var consumed = 0;
+        while (consumed < MaxGuestPathBytes)
+        {
+            var length = Math.Min(chunk.Length, MaxGuestPathBytes - consumed);
+            if (!ctx.Memory.TryRead(address + (ulong)consumed, chunk[..length]))
+            {
+                return false;
+            }
+
+            var terminator = chunk[..length].IndexOf((byte)0);
+            if (terminator >= 0)
+            {
+                builder.Append(Encoding.ASCII.GetString(chunk[..terminator]));
+                value = builder.ToString();
+                return true;
+            }
+
+            builder.Append(Encoding.ASCII.GetString(chunk[..length]));
+            consumed += length;
+        }
+
+        // Unterminated path: treat as invalid rather than guess the end.
+        return false;
+    }
+
+    private static void TraceFont(string message)
+    {
+        if (!string.Equals(Environment.GetEnvironmentVariable("SHARPEMU_LOG_FONT"), "1", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        Console.Error.WriteLine($"[LOADER][TRACE] font.{message}");
     }
 
     private static bool TryRentGlyph(CpuContext ctx, out ulong glyph)

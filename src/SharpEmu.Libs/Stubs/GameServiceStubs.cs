@@ -132,6 +132,14 @@ public static class GameServiceStubs
         Target = Generation.Gen5, LibraryName = "libSceVideoRecording")]
     public static int VideoRecordingSetInfo(CpuContext ctx) => Ok(ctx);
 
+    // Titles disable the system screenshot feature around cutscenes and other
+    // spoiler-sensitive scenes; an unresolved stub makes that call fail with
+    // 0x80020002. The emulator has no screenshot pipeline, so a side-effect-
+    // free success is exact.
+    [SysAbiExport(Nid = "tIYf0W5VTi8", ExportName = "sceScreenShotDisable",
+        Target = Generation.Gen4 | Generation.Gen5, LibraryName = "libSceScreenShot")]
+    public static int ScreenShotDisable(CpuContext ctx) => Ok(ctx);
+
     // Captured from GTA V Enhanced (PPSA04264); not in the public NID catalog.
     // Side-effect-free success — same as unresolved stub behavior that kept boot
     // moving; reverse the ABI before writing guest memory.

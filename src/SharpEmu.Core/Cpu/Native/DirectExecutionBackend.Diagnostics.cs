@@ -132,7 +132,9 @@ public sealed partial class DirectExecutionBackend
 		}
 	}
 
-	private void RecordRecentImportTrace(
+	// Internal so the concurrency stress tests can hammer the exact
+	// production ring entry point shared by all guest executors.
+	internal void RecordRecentImportTrace(
 		long dispatchIndex,
 		string nid,
 		ulong returnRip,
@@ -141,35 +143,88 @@ public sealed partial class DirectExecutionBackend
 		ulong arg2)
 	{
 		var trace = _recentImportTrace;
-		trace[_recentImportTraceWriteIndex] = new RecentImportTraceEntry(
-			dispatchIndex,
-			nid,
-			returnRip,
-			arg0,
-			arg1,
-			arg2,
-			GuestThreadExecution.CurrentGuestThreadHandle,
-			Environment.CurrentManagedThreadId);
-		_recentImportTraceWriteIndex = (_recentImportTraceWriteIndex + 1) % trace.Length;
-		if (_recentImportTraceCount < trace.Length)
+		lock (_recentImportTraceGate)
 		{
-			_recentImportTraceCount++;
+			trace[_recentImportTraceWriteIndex] = new RecentImportTraceEntry(
+				dispatchIndex,
+				nid,
+				returnRip,
+				arg0,
+				arg1,
+				arg2,
+				GuestThreadExecution.CurrentGuestThreadHandle,
+				Environment.CurrentManagedThreadId);
+			_recentImportTraceWriteIndex = (_recentImportTraceWriteIndex + 1) % trace.Length;
+			if (_recentImportTraceCount < trace.Length)
+			{
+				_recentImportTraceCount++;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Number of live entries in the bounded recent-import ring (never above
+	/// the ring capacity). Internal so the concurrency stress tests can assert
+	/// the saturated count never drifts past capacity under concurrent runners.
+	/// </summary>
+	internal int RecentImportTraceCount
+	{
+		get
+		{
+			lock (_recentImportTraceGate)
+			{
+				return _recentImportTraceCount;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Oldest-to-newest copy of the bounded recent-import ring. Internal for
+	/// the concurrency stress tests; <see cref="DumpRecentImportTrace"/> logs
+	/// the same snapshot.
+	/// </summary>
+	internal RecentImportTraceEntry[] SnapshotRecentImportTrace()
+	{
+		lock (_recentImportTraceGate)
+		{
+			var trace = _recentImportTrace;
+			var count = _recentImportTraceCount;
+			if (trace is null || count == 0)
+			{
+				return Array.Empty<RecentImportTraceEntry>();
+			}
+
+			if (count > trace.Length)
+			{
+				// Defensive: a pre-lock ring could have drifted its count
+				// past the capacity; clamping keeps the start index in
+				// range (C# % of a negative is negative).
+				count = trace.Length;
+			}
+
+			var snapshot = new RecentImportTraceEntry[count];
+			int num = (_recentImportTraceWriteIndex - count + trace.Length) % trace.Length;
+			for (int i = 0; i < count; i++)
+			{
+				snapshot[i] = trace[(num + i) % trace.Length];
+			}
+
+			return snapshot;
 		}
 	}
 
 	private void DumpRecentImportTrace()
 	{
-		var trace = _recentImportTrace;
-		if (trace is null || _recentImportTraceCount == 0)
+		var snapshot = SnapshotRecentImportTrace();
+		if (snapshot.Length == 0)
 		{
 			return;
 		}
-		Log.Info($"   Recent import calls for managed={Environment.CurrentManagedThreadId} guest=0x{GuestThreadExecution.CurrentGuestThreadHandle:X16} ({_recentImportTraceCount}):");
-		int num = (_recentImportTraceWriteIndex - _recentImportTraceCount + trace.Length) % trace.Length;
-		for (int i = 0; i < _recentImportTraceCount; i++)
+
+		Log.Info($"   Recent import calls for managed={Environment.CurrentManagedThreadId} guest=0x{GuestThreadExecution.CurrentGuestThreadHandle:X16} ({snapshot.Length}):");
+		for (int i = 0; i < snapshot.Length; i++)
 		{
-			int num2 = (num + i) % trace.Length;
-			var entry = trace[num2];
+			var entry = snapshot[i];
 			if (!string.IsNullOrEmpty(entry.Nid))
 			{
 				Log.Info(

@@ -80,7 +80,9 @@ public sealed unsafe partial class DirectExecutionBackend : INativeCpuBackend, I
 		}
 	}
 
-	private readonly record struct RecentImportTraceEntry(
+	// Internal (not private) so the concurrency stress tests can assert on
+	// ring snapshots via InternalsVisibleTo.
+	internal readonly record struct RecentImportTraceEntry(
 		long DispatchIndex,
 		string Nid,
 		ulong ReturnRip,
@@ -311,11 +313,20 @@ public sealed unsafe partial class DirectExecutionBackend : INativeCpuBackend, I
 
 	private int _recentImportTraceWriteIndex;
 
+	// Import diagnostics below are mutated by every concurrent guest
+	// executor sharing this backend (8-12 tbb runners are common), so all
+	// ring mutations and reads serialize on these gates. Without them the
+	// check-then-increment count can drift past the ring length and readers
+	// observe torn entries / lost updates.
+	private readonly object _recentImportTraceGate = new();
+
 	private readonly string[] _distinctImportNidHistory = new string[128];
 
 	private int _distinctImportNidHistoryCount;
 
 	private int _distinctImportNidHistoryWriteIndex;
+
+	private readonly object _importNidHistoryGate = new();
 
 	private string _lastDistinctImportNid = string.Empty;
 
@@ -402,6 +413,8 @@ public sealed unsafe partial class DirectExecutionBackend : INativeCpuBackend, I
 	private int _importLoopPatternHits;
 
 	private long _importLoopPatternStartTimestamp;
+
+	private readonly object _importLoopGuardGate = new();
 
 
 	private enum GuestThreadRunState
@@ -749,6 +762,8 @@ public sealed unsafe partial class DirectExecutionBackend : INativeCpuBackend, I
 	private ulong _lastAvTraceTarget;
 
 	private int _lastAvTraceRepeatCount;
+
+	private readonly object _avTraceGate = new();
 
 	private long _lastProgressTimestamp;
 
@@ -1148,13 +1163,19 @@ public sealed unsafe partial class DirectExecutionBackend : INativeCpuBackend, I
 		result = OrbisGen2Result.ORBIS_GEN2_OK;
 		LastError = null;
 		InitializeRuntimeSymbolIndex(runtimeSymbols);
-		_recentImportTraceCount = 0;
-		_recentImportTraceWriteIndex = 0;
-		_distinctImportNidHistoryCount = 0;
-		_distinctImportNidHistoryWriteIndex = 0;
-		_lastDistinctImportNid = string.Empty;
-		_consecutiveStrlenImports = 0;
-		_strlenPreludeLogged = false;
+		lock (_recentImportTraceGate)
+		{
+			_recentImportTraceCount = 0;
+			_recentImportTraceWriteIndex = 0;
+		}
+		lock (_importNidHistoryGate)
+		{
+			_distinctImportNidHistoryCount = 0;
+			_distinctImportNidHistoryWriteIndex = 0;
+			_lastDistinctImportNid = string.Empty;
+			_consecutiveStrlenImports = 0;
+			_strlenPreludeLogged = false;
+		}
 		_logStrlenImports = string.Equals(Environment.GetEnvironmentVariable("SHARPEMU_LOG_STRLEN"), "1", StringComparison.Ordinal);
 		_logStrlenBursts = _logStrlenImports ||
 			string.Equals(Environment.GetEnvironmentVariable("SHARPEMU_LOG_STRLEN_BURSTS"), "1", StringComparison.Ordinal);
@@ -1190,10 +1211,13 @@ public sealed unsafe partial class DirectExecutionBackend : INativeCpuBackend, I
 		_entryReturnSentinelRip = 0uL;
 		_forcedGuestExit = false;
 		HostSessionControl.SetShutdownHandler(RequestHostShutdown);
-		_importLoopSignatureCount = 0;
-		_importLoopSignatureWriteIndex = 0;
-		_importLoopPatternHits = 0;
-		_importLoopPatternStartTimestamp = 0;
+		lock (_importLoopGuardGate)
+		{
+			_importLoopSignatureCount = 0;
+			_importLoopSignatureWriteIndex = 0;
+			_importLoopPatternHits = 0;
+			_importLoopPatternStartTimestamp = 0;
+		}
 		lock (_importResultLogSampleGate)
 		{
 			_importResultLogSamples.Clear();

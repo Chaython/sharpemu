@@ -88,6 +88,10 @@
   "Options.CpuEngine.Label": "CPU-mootor",
   "Options.CpuEngine.Desc": "Käitusmootor, mida kasutatakse mängukoodi käivitamiseks.",
   "Options.CpuEngine.Native": "Natiivne",
+  "Options.RenderingBackend.Label": "Renderdamise taustaprogramm",
+  "Options.RenderingBackend.Desc": "Uute käivitatud mängude jaoks kasutatav graafikarakendus. Natiivne Vulkan nõuab eraldi teeki.",
+  "Options.RenderingBackend.Native": "Natiivne Vulkan (Eksperimentaalne)",
+  "Options.RenderingBackend.Legacy": "Silk.NET Vulkan (Vaikimisi)",
 
   "Options.Strict.Label": "Range dynlib-lahendamine",
   "Options.Strict.Desc": "Katkesta käivitamine, kui imporditud sümbolit ei õnnestu lahendada.",
@@ -138,6 +142,7 @@
   "Console.WindowTitle": "SharpEmu konsool",
 
   "Launch.NoGameSelected": "Mäng pole valitud",
+  "Launch.NativeBackendMissing": "HOIATUS: natiivne Vulkan on valitud, kuid {0} ei leitud SharpEmu kõrval. Laadi see alla aadressilt https://github.com/sharpemu/sharpemu.vulkan või vali Sätetes Silk.NET Vulkan.",
   "Launch.NoGameHint": "Vali mäng teegist või ava eboot.bin fail otse.",
   "Launch.Idle": "Ootel",
   "Launch.Console": "≡ Konsool",

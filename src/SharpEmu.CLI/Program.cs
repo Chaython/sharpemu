@@ -3,6 +3,7 @@
 
 using SharpEmu.Core.Runtime;
 using SharpEmu.Core.Cpu;
+using SharpEmu.Core.Loader;
 using SharpEmu.GUI;
 using SharpEmu.HLE;
 using SharpEmu.Libs.VideoOut;
@@ -276,6 +277,16 @@ internal static partial class Program
             return 2;
         }
 
+        // Fail fast on broken dumps (0-byte / truncated executables) before the
+        // runtime, HLE warm-up and app0 indexing run, so the user gets an
+        // actionable message — including nearby candidate executables — instead
+        // of an opaque loader exception after a long startup sequence.
+        if (!TryPreflightExecutableImage(ebootPath, out var preflightError))
+        {
+            Log.Error(preflightError);
+            return 2;
+        }
+
         if (!TryGetDebugServerOptions(args, out var debugServerEnabled, out var debugServerOptions, out var debugServerError))
         {
             Log.Error($"Invalid --debug-server endpoint: {debugServerError}");
@@ -376,6 +387,40 @@ internal static partial class Program
             }
 
         }
+    }
+
+    /// <summary>
+    /// Validates that the selected executable image is plausibly loadable before
+    /// the runtime is created. Catches broken dumps (0-byte or truncated
+    /// executables) and reports nearby candidate executables so the failure is
+    /// actionable. Anything that passes here is still fully validated by the
+    /// SELF/ELF loader.
+    /// </summary>
+    private static bool TryPreflightExecutableImage(string ebootPath, out string error)
+    {
+        error = string.Empty;
+        try
+        {
+            var length = new FileInfo(ebootPath).Length;
+            if (length == 0)
+            {
+                error = ExecutableImageDiagnostics.BuildEmptyImageErrorMessage(ebootPath);
+                return false;
+            }
+
+            if (length < ExecutableImageDiagnostics.MinExecutableImageSize)
+            {
+                error = ExecutableImageDiagnostics.BuildTooSmallImageErrorMessage(ebootPath, length);
+                return false;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // The file exists but cannot be stat'd (lock, permission). Let the
+            // runtime's loader surface the detailed failure instead.
+        }
+
+        return true;
     }
 
     private static void EnsureCliConsole()

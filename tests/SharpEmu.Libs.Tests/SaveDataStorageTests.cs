@@ -114,6 +114,58 @@ public sealed class SaveDataStorageTests
         }
     }
 
+    // A crash in the middle of a metadata write must leave the previous
+    // param.json intact (never truncated/empty), which the truncate-then-
+    // write sequence could not guarantee.
+    [Fact]
+    public void WriteMetadataKeepsPreviousContentsWhenTheWriteFailsMidway()
+    {
+        var slot = Path.Combine(Path.GetTempPath(), "sharpemu-savetest-" + Path.GetRandomFileName());
+        try
+        {
+            var original = new SaveDataMetadata
+            {
+                Title = "Original Slot",
+                SubTitle = "kept across a failed write",
+                UserParam = 7,
+            };
+            SaveDataStorage.WriteMetadata(slot, original);
+            var paramPath = SaveDataStorage.ParamPath(slot);
+            var originalJson = File.ReadAllText(paramPath);
+
+            // Simulate a mid-write crash: the staged temporary write throws
+            // after emitting only part of the new document.
+            Assert.Throws<IOException>(() => SaveDataStorage.WriteMetadataAtomically(
+                paramPath,
+                "{\"title\": \"Half-Written",
+                writeFile: (path, text) =>
+                {
+                    File.WriteAllText(path, text.Substring(0, text.Length / 2));
+                    throw new IOException("simulated crash mid-write");
+                }));
+
+            Assert.Equal(originalJson, File.ReadAllText(paramPath));
+            var read = SaveDataStorage.ReadMetadata(slot);
+            Assert.Equal(original.Title, read.Title);
+            Assert.Equal(original.SubTitle, read.SubTitle);
+            Assert.Equal(original.UserParam, read.UserParam);
+
+            // A later successful write replaces the metadata atomically and
+            // cleans up the staged temporary file.
+            var updated = original with { Title = "Updated Slot", UserParam = 8 };
+            SaveDataStorage.WriteMetadata(slot, updated);
+            Assert.Equal(updated.Title, SaveDataStorage.ReadMetadata(slot).Title);
+            Assert.False(File.Exists(paramPath + ".tmp"));
+        }
+        finally
+        {
+            if (Directory.Exists(slot))
+            {
+                Directory.Delete(slot, recursive: true);
+            }
+        }
+    }
+
     [Fact]
     public void LegacyMigrationKeepsTheNewestSaveAndFlattensNumericUsers()
     {

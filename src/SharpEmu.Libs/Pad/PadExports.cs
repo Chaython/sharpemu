@@ -23,6 +23,14 @@ public static class PadExports
     private const int PrimaryPadHandle = 1;
     private const int ControllerInformationSize = 0x1C;
     private const int PadDataSize = 0x78;
+    // scePadReadStateExt fills ScePadData plus the SDK's trailing extension
+    // field (0x78..0x80), which stays zeroed: no orientation-tracking or
+    // trigger-effect payload is emulated beyond the neutral state.
+    private const int PadExtDataSize = 0x80;
+    // scePadGetVersionInfo's out struct shape is not publicly documented; a
+    // zeroed 16-byte blob (like the ext-controller-information tail) is the
+    // safest thing a version probe can consume.
+    private const int PadVersionInfoSize = 0x10;
 
     // Real firmware hands out small non-negative handles; 0 is valid. Some titles
     // (Monster Truck Championship) read pad state with handle 0, and rejecting it
@@ -330,6 +338,164 @@ public static class PadExports
             ? ctx.SetReturn(1)
             : ctx.SetReturn((int)OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
     }
+
+    // scePadReadStateExt is the extended-state read titles prefer on PS5: the
+    // same neutral ScePadData layout scePadReadState writes (buttons, sticks,
+    // motion, touch, timestamp) plus the SDK's trailing extension field, which
+    // is zeroed — mirroring the base read exactly keeps every existing offset
+    // valid for callers that alias the two structs.
+    [SysAbiExport(
+        Nid = "5Wf4q349s+Q",
+        ExportName = "scePadReadStateExt",
+        Target = Generation.Gen4 | Generation.Gen5,
+        LibraryName = "libScePad")]
+    public static int PadReadStateExt(CpuContext ctx)
+    {
+        var handle = unchecked((int)ctx[CpuRegister.Rdi]);
+        var dataAddress = ctx[CpuRegister.Rsi];
+        if (!IsPrimaryPadHandle(handle))
+        {
+            return ctx.SetReturn(OrbisPadErrorInvalidHandle);
+        }
+
+        if (dataAddress == 0)
+        {
+            return ctx.SetReturn((int)OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT);
+        }
+
+        return WriteNeutralPadData(ctx, dataAddress, PadExtDataSize)
+            ? ctx.SetReturn(0)
+            : ctx.SetReturn((int)OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
+    }
+
+    // scePadIsValidHandle(handle): 1 when the handle belongs to the open-pad
+    // table, 0 otherwise (never an error code — the return value IS the answer).
+    [SysAbiExport(
+        Nid = "pFTi-yOrVeQ",
+        ExportName = "scePadIsValidHandle",
+        Target = Generation.Gen4 | Generation.Gen5,
+        LibraryName = "libScePad")]
+    public static int PadIsValidHandle(CpuContext ctx)
+    {
+        var handle = unchecked((int)ctx[CpuRegister.Rdi]);
+        return ctx.SetReturn(IsPrimaryPadHandle(handle) ? 1 : 0);
+    }
+
+    // scePadGetIdleCount(handle, out): the emulated pad session never sleeps,
+    // so the idle counter is a constant zero.
+    [SysAbiExport(
+        Nid = "kiA9bZhbnAg",
+        ExportName = "scePadGetIdleCount",
+        Target = Generation.Gen4 | Generation.Gen5,
+        LibraryName = "libScePad")]
+    public static int PadGetIdleCount(CpuContext ctx)
+    {
+        var handle = unchecked((int)ctx[CpuRegister.Rdi]);
+        var countAddress = ctx[CpuRegister.Rsi];
+        if (!IsPrimaryPadHandle(handle))
+        {
+            return ctx.SetReturn(OrbisPadErrorInvalidHandle);
+        }
+
+        if (countAddress == 0)
+        {
+            return ctx.SetReturn((int)OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT);
+        }
+
+        Span<byte> count = stackalloc byte[sizeof(uint)];
+        BinaryPrimitives.WriteUInt32LittleEndian(count, 0);
+        return ctx.Memory.TryWrite(countAddress, count)
+            ? ctx.SetReturn(0)
+            : ctx.SetReturn((int)OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
+    }
+
+    // scePadGetCapability(handle, capability, out): stub-success — no special
+    // peripheral capabilities (guitar/drums/wheel/…) are emulated, so every
+    // queried capability reports the zeroed "not supported" value. Success
+    // lets the guest's capability probe loop finish instead of spinning.
+    [SysAbiExport(
+        Nid = "qtasqbvwgV4",
+        ExportName = "scePadGetCapability",
+        Target = Generation.Gen4 | Generation.Gen5,
+        LibraryName = "libScePad")]
+    public static int PadGetCapability(CpuContext ctx)
+    {
+        var handle = unchecked((int)ctx[CpuRegister.Rdi]);
+        var valueAddress = ctx[CpuRegister.Rdx];
+        if (!IsPrimaryPadHandle(handle))
+        {
+            return ctx.SetReturn(OrbisPadErrorInvalidHandle);
+        }
+
+        if (valueAddress == 0)
+        {
+            return ctx.SetReturn((int)OrbisGen2Result.ORBIS_GEN2_ERROR_INVALID_ARGUMENT);
+        }
+
+        Span<byte> value = stackalloc byte[sizeof(uint)];
+        BinaryPrimitives.WriteUInt32LittleEndian(value, 0);
+        return ctx.Memory.TryWrite(valueAddress, value)
+            ? ctx.SetReturn(0)
+            : ctx.SetReturn((int)OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
+    }
+
+    // scePadResetOrientation(handle): success no-op — the neutral pad data
+    // already reports the identity orientation, so there is nothing to reset.
+    [SysAbiExport(
+        Nid = "rIZnR6eSpvk",
+        ExportName = "scePadResetOrientation",
+        Target = Generation.Gen4 | Generation.Gen5,
+        LibraryName = "libScePad")]
+    public static int PadResetOrientation(CpuContext ctx)
+    {
+        var handle = unchecked((int)ctx[CpuRegister.Rdi]);
+        return IsPrimaryPadHandle(handle)
+            ? ctx.SetReturn(0)
+            : ctx.SetReturn(OrbisPadErrorInvalidHandle);
+    }
+
+    // scePadGetVersionInfo: reports a zeroed 16-byte version blob (nothing in
+    // the emulator branches on the pad firmware version). The Prospero ABI is
+    // not publicly documented, so the out buffer is resolved defensively from
+    // either argument slot — the (handle, out*) convention's second argument
+    // first, then the single-argument convention's first — mirroring how
+    // AudioOut2Exports.ResolveGuestOutBuffer defends the same ambiguity.
+    [SysAbiExport(
+        Nid = "QuOaoOcSOw0",
+        ExportName = "scePadGetVersionInfo",
+        Target = Generation.Gen4 | Generation.Gen5,
+        LibraryName = "libScePad")]
+    public static int PadGetVersionInfo(CpuContext ctx)
+    {
+        var first = ctx[CpuRegister.Rdi];
+        var second = ctx[CpuRegister.Rsi];
+        var versionInfoAddress = IsWritablePadOutBuffer(second)
+            ? second
+            : IsWritablePadOutBuffer(first)
+                ? first
+                : 0;
+        if (versionInfoAddress == 0)
+        {
+            return ctx.SetReturn(0);
+        }
+
+        Span<byte> versionInfo = stackalloc byte[PadVersionInfoSize];
+        versionInfo.Clear();
+        return ctx.Memory.TryWrite(versionInfoAddress, versionInfo)
+            ? ctx.SetReturn(0)
+            : ctx.SetReturn((int)OrbisGen2Result.ORBIS_GEN2_ERROR_MEMORY_FAULT);
+    }
+
+    // Guest pointers this module is willing to bulk-initialize: heap objects
+    // (never small integers / size constants) and stack out-params.
+    private static bool IsWritablePadOutBuffer(ulong value) =>
+        value != 0 &&
+        value != 0x10000UL &&
+        value >= 0x1000UL &&
+        (value < 0x0000_8000_0000_0000UL || IsGuestStackAddress(value));
+
+    private static bool IsGuestStackAddress(ulong value) =>
+        value >= 0x0000_7FF0_0000_0000UL && value <= 0x0000_7FFF_FFFF_FFFFUL;
 
     [SysAbiExport(
     Nid = "W2G-yoyMF5U",
@@ -644,9 +810,9 @@ public static class PadExports
         return ctx.SetReturn(0);
     }
 
-    private static bool WriteNeutralPadData(CpuContext ctx, ulong dataAddress)
+    private static bool WriteNeutralPadData(CpuContext ctx, ulong dataAddress, int dataSize = PadDataSize)
     {
-        Span<byte> data = stackalloc byte[PadDataSize];
+        Span<byte> data = stackalloc byte[dataSize];
         data.Clear();
         var input = ReadHostInputState();
         var buttons = input.Buttons;

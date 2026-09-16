@@ -5,6 +5,7 @@ using SharpEmu.HLE;
 using SharpEmu.Libs.Kernel;
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Globalization;
 using System.Text;
 
 namespace SharpEmu.Libs.SaveData;
@@ -55,6 +56,11 @@ public static class SaveDataExports
 
         lock (_mountGate)
         {
+            foreach (var mountPoint in _mounts.Keys)
+            {
+                KernelMemoryCompatExports.UnregisterGuestPathMount(mountPoint);
+            }
+
             _mounts.Clear();
         }
     }
@@ -78,8 +84,44 @@ public static class SaveDataExports
     // mountPoint -> live mount, for umount/IsMounted/GetMountInfo.
     private static readonly Dictionary<string, MountEntry> _mounts = new(StringComparer.Ordinal);
 
+    // The platform exposes 16 concurrent save-data mount points (/savedata0-15).
+    // Each slot is registered in the kernel guest-path mount table so guest
+    // file operations resolve through the same table every other mount uses,
+    // with no savedata-specific path matching in the kernel.
+    private const int MountSlotCount = 16;
+
     private readonly record struct SaveDataEvent(uint Type, int ErrorCode, int UserId, string DirName);
     private sealed record MountEntry(string SlotDir, string DirName, int UserId);
+
+    // Takes a mount slot for a dir: a dir that is already mounted keeps its
+    // slot (remounting is idempotent and reports the same mount point),
+    // otherwise the lowest free slot is taken so slot numbering matches the
+    // order games observe on hardware. Returns false when all 16 slots hold a
+    // live mount.
+    private static bool TryTakeMountSlotLocked(string dirName, int userId, out string mountPoint)
+    {
+        foreach (var (existingPoint, entry) in _mounts)
+        {
+            if (entry.DirName == dirName && entry.UserId == userId)
+            {
+                mountPoint = existingPoint;
+                return true;
+            }
+        }
+
+        for (var slot = 0; slot < MountSlotCount; slot++)
+        {
+            var candidate = "/savedata" + slot.ToString(CultureInfo.InvariantCulture);
+            if (!_mounts.ContainsKey(candidate))
+            {
+                mountPoint = candidate;
+                return true;
+            }
+        }
+
+        mountPoint = string.Empty;
+        return false;
+    }
 
     private static void EnqueueEvent(uint type, int userId, string dirName, int errorCode = 0)
     {
@@ -772,11 +814,33 @@ public static class SaveDataExports
                 Directory.CreateDirectory(savePath);
             }
 
-            const string mountPoint = "/savedata0";
-            KernelMemoryCompatExports.RegisterGuestPathMount(mountPoint, savePath);
+            string mountPoint;
             lock (_mountGate)
             {
+                if (!TryTakeMountSlotLocked(dirName, userId, out mountPoint))
+                {
+                    // Every /savedata0-15 slot holds a live mount; the caller
+                    // must umount one before mounting again.
+                    return SetReturn(ctx, OrbisSaveDataErrorBusy);
+                }
+
                 _mounts[mountPoint] = new MountEntry(savePath, dirName, userId);
+            }
+
+            try
+            {
+                KernelMemoryCompatExports.RegisterGuestPathMount(mountPoint, savePath);
+            }
+            catch
+            {
+                // Registration validated the slot by construction; if it ever
+                // fails anyway, release the slot rather than leak it.
+                lock (_mountGate)
+                {
+                    _mounts.Remove(mountPoint);
+                }
+
+                throw;
             }
 
             Span<byte> result = stackalloc byte[MountResultSize];

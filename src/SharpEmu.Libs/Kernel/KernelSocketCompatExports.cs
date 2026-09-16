@@ -140,11 +140,13 @@ internal static class KernelSocketCompatExports
         return (int)OrbisGen2Result.ORBIS_GEN2_OK;
     }
 
-    [SysAbiExport(
-        Nid = "XVL8So3QJUk",
-        ExportName = "connect",
-        Target = Generation.Gen4 | Generation.Gen5,
-        LibraryName = "libKernel")]
+    /// <summary>
+    /// No longer a SysAbi export: NetExports.PosixConnect owns the <c>connect</c>
+    /// NID and routes libSceNet descriptors to the real socket table, handing
+    /// descriptors created by the libKernel <c>socket</c> export (which live in
+    /// this fd space) over to this TCP compat backend so SHARPEMU_NET_REDIRECT
+    /// and the outbound policy keep applying to them.
+    /// </summary>
     public static int Connect(CpuContext ctx)
     {
         var fd = unchecked((int)ctx[CpuRegister.Rdi]);
@@ -209,11 +211,10 @@ internal static class KernelSocketCompatExports
         return (int)OrbisGen2Result.ORBIS_GEN2_OK;
     }
 
-    [SysAbiExport(
-        Nid = "KuOmgKoqCdY",
-        ExportName = "bind",
-        Target = Generation.Gen4 | Generation.Gen5,
-        LibraryName = "libKernel")]
+    /// <summary>
+    /// No longer a SysAbi export: NetExports.PosixBind owns the <c>bind</c> NID and
+    /// delegates the libKernel fd space handled here to this backend.
+    /// </summary>
     public static int Bind(CpuContext ctx)
     {
         var fd = unchecked((int)ctx[CpuRegister.Rdi]);

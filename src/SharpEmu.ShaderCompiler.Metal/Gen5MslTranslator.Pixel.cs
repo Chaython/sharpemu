@@ -419,12 +419,18 @@ public static partial class Gen5MslTranslator
             var opcode = instruction.Opcode;
             var texture = $"tex{bindingIndex}";
             var samplerName = $"sharpemu_samplers.smp{_samplerSlots[bindingIndex]}";
-            var hasOffset = opcode.EndsWith("O", StringComparison.Ordinal);
-            var hasCompare = opcode.Contains("SampleC", StringComparison.Ordinal);
-            var hasGradients = opcode.Contains("SampleD", StringComparison.Ordinal);
-            var hasZeroLod = opcode.Contains("Lz", StringComparison.Ordinal);
-            var hasLod = !hasZeroLod && opcode.Contains("SampleL", StringComparison.Ordinal);
-            var hasBias = opcode.Contains("SampleB", StringComparison.Ordinal);
+            if (!Gen5ShaderTranslator.ParseImageOpcodeFlags(opcode, out var flags))
+            {
+                error = $"unsupported image opcode {opcode}";
+                return false;
+            }
+
+            var hasOffset = flags.Offset;
+            var hasCompare = flags.Compare;
+            var hasGradients = flags.Derivatives;
+            var hasZeroLod = flags.LodZero;
+            var hasLod = flags.Lod;
+            var hasBias = flags.Bias;
 
             // RDNA MIMG address operands are ordered
             // {offset}{bias}{z-compare}{derivatives}{body}; SAMPLE_L carries LOD
@@ -526,8 +532,14 @@ public static partial class Gen5MslTranslator
             var opcode = instruction.Opcode;
             var texture = $"tex{bindingIndex}";
             var samplerName = $"sharpemu_samplers.smp{_samplerSlots[bindingIndex]}";
-            var hasOffset = opcode.EndsWith("O", StringComparison.Ordinal);
-            var hasCompare = opcode.Contains("Gather4C", StringComparison.Ordinal);
+            if (!Gen5ShaderTranslator.ParseImageOpcodeFlags(opcode, out var flags))
+            {
+                error = $"unsupported image opcode {opcode}";
+                return false;
+            }
+
+            var hasOffset = flags.Offset;
+            var hasCompare = flags.Compare;
             var addressCursor = 0;
             var offset = "int2(0)";
             if (hasOffset)

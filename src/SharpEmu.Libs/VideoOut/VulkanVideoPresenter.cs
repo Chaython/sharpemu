@@ -260,6 +260,59 @@ internal static unsafe class VulkanVideoPresenter
                 instructionOffset + wordIndex * sizeof(uint),
                 sizeof(uint)));
 
+    /// <summary>
+    /// Counts the descriptor variables a SPIR-V module declares: OpVariable
+    /// instructions in the UniformConstant (images/samplers), Uniform (UBOs)
+    /// or StorageBuffer (guest global buffers) storage classes. A module that
+    /// declares zero of them is a legitimate pure-ALU compute shader —
+    /// binding nothing and dispatching is valid — while one that declares
+    /// descriptors with empty guest resource tables is a failed SRT/EUD walk
+    /// and would lose the device on QueueSubmit.
+    /// </summary>
+    internal static bool TryCountSpirvDescriptorVariables(
+        ReadOnlySpan<byte> spirv,
+        out uint descriptorCount,
+        out string error)
+    {
+        descriptorCount = 0;
+        error = string.Empty;
+        if (spirv.Length < 5 * sizeof(uint) ||
+            BinaryPrimitives.ReadUInt32LittleEndian(spirv) != 0x07230203u)
+        {
+            error = "invalid-spirv-header";
+            return false;
+        }
+
+        for (var offset = 5 * sizeof(uint); offset < spirv.Length;)
+        {
+            var instruction = BinaryPrimitives.ReadUInt32LittleEndian(
+                spirv.Slice(offset, sizeof(uint)));
+            var wordCount = checked((int)(instruction >> 16));
+            var byteCount = checked(wordCount * sizeof(uint));
+            if (wordCount == 0 || offset + byteCount > spirv.Length)
+            {
+                error = "invalid-spirv-instruction-size";
+                return false;
+            }
+
+            if ((SpirvOp)(instruction & 0xFFFFu) == SpirvOp.Variable &&
+                wordCount >= 4)
+            {
+                var storageClass = ReadSpirvWord(spirv, offset, 3);
+                if (storageClass == (uint)SpirvStorageClass.UniformConstant ||
+                    storageClass == (uint)SpirvStorageClass.Uniform ||
+                    storageClass == (uint)SpirvStorageClass.StorageBuffer)
+                {
+                    descriptorCount++;
+                }
+            }
+
+            offset += byteCount;
+        }
+
+        return true;
+    }
+
     internal static bool TryValidateStorageImageContract(
         SpirvStorageImageContract shaderContract,
         uint guestFormat,
@@ -1967,6 +2020,8 @@ internal static unsafe class VulkanVideoPresenter
     // seam Agc uses instead of enqueueing plane copies on the producer path).
     private static int _cpuWrittenGuestImageSyncRequested;
     private static long _guestImageCpuSyncTraceCount;
+    // One-shot trace for the dualSrcBlend fallback in MapGuestBlendFactor.
+    private static int _dualSrcBlendFallbackTraceCount;
 
     internal static void RequestCpuWrittenGuestImageSync(
         ulong scopeAddress = 0,
@@ -3240,9 +3295,182 @@ internal static unsafe class VulkanVideoPresenter
 
     internal static bool ShouldAttachGuestDepth(
         GuestDepthTarget? target,
-        GuestDepthState state) =>
+        GuestDepthState state,
+        in GuestStencilState stencil = default) =>
         target is not null &&
-        (state.TestEnable || state.WriteEnable || state.ClearEnable);
+        (state.TestEnable || state.WriteEnable || state.ClearEnable ||
+            // A stencil test needs the DB attachment too, even when the depth
+            // test itself is off (stencil ops run against the same surface).
+            stencil.TestEnable);
+
+    // The PS5 GPU backs its DB (depth buffer) surfaces with 32-bit float
+    // depth plus an 8-bit stencil plane natively. When the host Vulkan
+    // device supports D32SfloatS8Uint for depth/stencil attachment and
+    // sampling use, guest depth targets are backed with that combined
+    // format so stencil WRITES have storage (shadows, mirrors, decals);
+    // otherwise the fallback keeps the legacy depth-only D32Sfloat backing
+    // and stencil writes stay dropped exactly as before.
+    internal static Format SelectGuestDepthBackingFormat(
+        bool supportsCombinedDepthStencil) =>
+        supportsCombinedDepthStencil ? Format.D32SfloatS8Uint : Format.D32Sfloat;
+
+    // Whether a guest depth backing format carries a stencil plane. Only
+    // the combined D32SfloatS8Uint backing does; the D32Sfloat fallback
+    // has depth storage only.
+    internal static bool HasStencilPlane(Format backingFormat) =>
+        backingFormat == Format.D32SfloatS8Uint;
+
+    // Aspect set every guest-depth layout transition (and any clear that
+    // initializes the whole backing) must cover. A combined depth/stencil
+    // image must expose BOTH aspects to the attachment view and to each
+    // image-memory barrier — layout transitions of one aspect would leave
+    // the other aspect in its old layout (VUID-VkImageMemoryBarrier-
+    // image-03319), and this presenter does not require the
+    // separateDepthStencilLayouts feature. Depth-only backings keep the
+    // depth aspect alone.
+    internal static ImageAspectFlags GuestDepthAspects(Format backingFormat) =>
+        HasStencilPlane(backingFormat)
+            ? ImageAspectFlags.DepthBit | ImageAspectFlags.StencilBit
+            : ImageAspectFlags.DepthBit;
+
+    internal static CompareOp ToVkCompareOp(uint compare) =>
+        compare switch
+        {
+            1 => CompareOp.Less,
+            2 => CompareOp.Equal,
+            3 => CompareOp.LessOrEqual,
+            4 => CompareOp.Greater,
+            5 => CompareOp.NotEqual,
+            6 => CompareOp.GreaterOrEqual,
+            7 => CompareOp.Always,
+            _ => CompareOp.Never,
+        };
+
+    // GCN DB_DEPTH_CONTROL stencil-op encoding is identical to the Vulkan
+    // StencilOp values: 0=Keep, 1=Zero, 2=Replace, 3=IncrementAndClamp,
+    // 4=DecrementAndClamp, 5=Invert, 6=IncrementAndWrap, 7=DecrementAndWrap.
+    // Unknown codes degrade to Keep (a no-op that cannot corrupt stencil).
+    internal static StencilOp ToVkStencilOp(uint op) =>
+        op switch
+        {
+            1 => StencilOp.Zero,
+            2 => StencilOp.Replace,
+            3 => StencilOp.IncrementAndClamp,
+            4 => StencilOp.DecrementAndClamp,
+            5 => StencilOp.Invert,
+            6 => StencilOp.IncrementAndWrap,
+            7 => StencilOp.DecrementAndWrap,
+            _ => StencilOp.Keep,
+        };
+
+    // Pipeline-baked stencil face: compare func + the three ops. Compare
+    // mask, write mask and reference come from the guest's
+    // DB_STENCILREFMASK(_BF) but are bound as DYNAMIC state
+    // (vkCmdSetStencilCompareMask/WriteMask/Reference) so per-draw updates
+    // never rebuild the pipeline; the static StencilOpState copies stay 0.
+    internal static StencilOpState ToVkStencilOpState(GuestStencilFace face) => new()
+    {
+        FailOp = ToVkStencilOp(face.FailOp),
+        PassOp = ToVkStencilOp(face.PassOp),
+        DepthFailOp = ToVkStencilOp(face.DepthFailOp),
+        CompareOp = ToVkCompareOp(face.CompareFunc),
+    };
+
+    // Stencil test without a depth/stencil attachment is invalid Vulkan,
+    // so the guest's DB_DEPTH_CONTROL.STENCIL_ENABLE only takes effect
+    // when the draw actually bound a DB surface.
+    internal static bool EffectiveStencilTestEnable(
+        bool hasDepthAttachment,
+        in GuestStencilState stencil) =>
+        hasDepthAttachment && stencil.TestEnable;
+
+    // Guest sample count (CB_COLORn_ATTRIB.NUM_SAMPLES) to Vulkan. Only
+    // power-of-two counts 1/2/4/8 exist in the encoding; anything else
+    // degrades to the single-sample pipeline.
+    internal static SampleCountFlags ToVkSampleCount(uint samples) =>
+        samples switch
+        {
+            2 => SampleCountFlags.Count2Bit,
+            4 => SampleCountFlags.Count4Bit,
+            8 => SampleCountFlags.Count8Bit,
+            _ => SampleCountFlags.Count1Bit,
+        };
+
+    // MSAA plumbing: guest render targets can be bound multisampled, and
+    // the pipeline's rasterizationSamples must match the render pass
+    // attachments. Every backing this presenter allocates today is 1x
+    // (guest color images, transient targets and the depth/stencil
+    // attachment are all created SampleCountFlags.Count1Bit), so any
+    // multisample request is clamped to 1x here. The full path —
+    // CB_COLORn_ATTRIB.NUM_SAMPLES decode -> GuestRenderTarget.SampleCount
+    // -> pipeline rasterizationSamples — is in place, so multisample
+    // rendering only needs backing allocations that stop clamping.
+    internal static uint ClampRenderTargetSamples(uint requestedSamples) => 1;
+
+    // Resolves the sample count a draw's pipelines must be created with:
+    // the maximum sample count across the bound color targets. Vulkan
+    // requires every attachment (and the pipeline) to agree, and the
+    // backing clamp above keeps the result at what the attachments
+    // actually allocate today.
+    internal static uint GetGuestRenderTargetSampleCount(
+        IReadOnlyList<GuestRenderTarget> targets)
+    {
+        var samples = 1u;
+        for (var index = 0; index < targets.Count; index++)
+        {
+            samples = Math.Max(samples, targets[index].SampleCount);
+        }
+
+        return samples;
+    }
+
+    // Guest CB_BLEND*_CONTROL blend-factor codes to Vulkan. Factors 15..18
+    // are the dual-source factors (Src1Color / OneMinusSrc1Color / Src1Alpha
+    // / OneMinusSrc1Alpha); using them requires the dualSrcBlend device
+    // feature to be enabled (VUID-VkPipelineColorBlendAttachmentState-
+    // dualSrcBlend-01506), and MoltenVK has no dual-source blending at all,
+    // so without the feature they degrade to the closest single-source
+    // equivalents instead of failing pipeline creation on strict drivers.
+    internal static BlendFactor MapGuestBlendFactor(uint factor, bool hasDualSrcBlend)
+    {
+        if (!hasDualSrcBlend &&
+            factor is >= 15 and <= 18 &&
+            Interlocked.Increment(ref _dualSrcBlendFallbackTraceCount) == 1)
+        {
+            Console.Error.WriteLine(
+                "[LOADER][WARN] GPU does not support dualSrcBlend; guest " +
+                "dual-source blend factors (15..18) degrade to their " +
+                "single-source SrcAlpha equivalents.");
+        }
+
+        return factor switch
+        {
+            0 => BlendFactor.Zero,
+            1 => BlendFactor.One,
+            2 => BlendFactor.SrcColor,
+            3 => BlendFactor.OneMinusSrcColor,
+            4 => BlendFactor.SrcAlpha,
+            5 => BlendFactor.OneMinusSrcAlpha,
+            6 => BlendFactor.DstAlpha,
+            7 => BlendFactor.OneMinusDstAlpha,
+            8 => BlendFactor.DstColor,
+            9 => BlendFactor.OneMinusDstColor,
+            10 => BlendFactor.SrcAlphaSaturate,
+            13 => BlendFactor.ConstantColor,
+            14 => BlendFactor.OneMinusConstantColor,
+            15 => hasDualSrcBlend ? BlendFactor.Src1Color : BlendFactor.SrcAlpha,
+            16 => hasDualSrcBlend
+                ? BlendFactor.OneMinusSrc1Color
+                : BlendFactor.OneMinusSrcAlpha,
+            17 => hasDualSrcBlend ? BlendFactor.Src1Alpha : BlendFactor.SrcAlpha,
+            18 => hasDualSrcBlend
+                ? BlendFactor.OneMinusSrc1Alpha
+                : BlendFactor.OneMinusSrcAlpha,
+            19 => BlendFactor.ConstantAlpha,
+            20 => BlendFactor.OneMinusConstantAlpha,
+            _ => BlendFactor.One,
+        };
+    }
 
     internal static bool RequiresRealFormatConversion(Format from, Format to)
     {
@@ -3251,6 +3479,274 @@ internal static unsafe class VulkanVideoPresenter
         return (from == Format.R8G8B8A8Unorm && Is10Bit(to)) ||
                (Is10Bit(from) && to == Format.R8G8B8A8Unorm);
     }
+
+    private static float HalfToFloat(ushort halfBits) =>
+        (float)BitConverter.UInt16BitsToHalf(halfBits);
+
+    // Unpacks an unsigned 11-bit float (no sign, 5-bit exponent biased 15,
+    // 6-bit mantissa with implicit leading one) as used by the R11G11B10
+    // packed float format.
+    private static float UnpackUnsignedFloat11(uint bits)
+    {
+        var exponent = (int)((bits >> 6) & 0x1Fu);
+        var mantissa = bits & 0x3Fu;
+        if (exponent == 31)
+        {
+            return mantissa == 0 ? float.PositiveInfinity : float.NaN;
+        }
+
+        return exponent == 0
+            ? (float)Math.ScaleB(mantissa / 64.0, -14)
+            : (float)Math.ScaleB(1.0 + mantissa / 64.0, exponent - 15);
+    }
+
+    // Unpacks an unsigned 10-bit float (no sign, 5-bit exponent biased 15,
+    // 5-bit mantissa with implicit leading one) as used by the R11G11B10
+    // packed float format.
+    private static float UnpackUnsignedFloat10(uint bits)
+    {
+        var exponent = (int)((bits >> 5) & 0x1Fu);
+        var mantissa = bits & 0x1Fu;
+        if (exponent == 31)
+        {
+            return mantissa == 0 ? float.PositiveInfinity : float.NaN;
+        }
+
+        return exponent == 0
+            ? (float)Math.ScaleB(mantissa / 32.0, -14)
+            : (float)Math.ScaleB(1.0 + mantissa / 32.0, exponent - 15);
+    }
+
+    /// <summary>
+    /// Decodes a CP DMA image fill word into a VkClearColorImage clear value
+    /// for the target's format. The fill writes one 32-bit pattern to every
+    /// dword of the surface, so the pattern means something different per
+    /// format family: 8-bit UNORM channels are the classic byte/255 packing,
+    /// integer targets take RAW components through the uint member of the
+    /// ClearColorValue union (a float reinterpretation would clear to
+    /// garbage), 16-bit float targets hold two packed f16 channels per word,
+    /// 32-bit float targets hold the raw f32 bits, and packed formats unpack
+    /// their exact component positions. Unknown formats keep the historical
+    /// 8-bit UNORM expansion (see UnpackMetaClearValue for the same fallback).
+    /// </summary>
+    internal static ClearColorValue UnpackGuestFillValue(uint fillValue, Format vkFormat)
+    {
+        // Every dword of the filled surface carries fillValue, so a texel
+        // wider than 32 bits sees the same pattern repeated in each half.
+        var low16 = fillValue & 0xFFFFu;
+        var high16 = fillValue >> 16;
+        switch (vkFormat)
+        {
+            // ---- 8-bit channels: one byte per channel, little-endian R,G,B,A.
+            case Format.R8Unorm:
+            case Format.R8G8Unorm:
+            case Format.R8G8B8A8Unorm:
+            case Format.R8G8B8A8Srgb:
+                return new ClearColorValue(
+                    float32_0: (fillValue & 0xFF) / 255f,
+                    float32_1: ((fillValue >> 8) & 0xFF) / 255f,
+                    float32_2: ((fillValue >> 16) & 0xFF) / 255f,
+                    float32_3: ((fillValue >> 24) & 0xFF) / 255f);
+            case Format.R8G8B8A8Uint:
+                return IntegerFill(
+                    fillValue & 0xFF,
+                    (fillValue >> 8) & 0xFF,
+                    (fillValue >> 16) & 0xFF,
+                    (fillValue >> 24) & 0xFF);
+            case Format.R8G8B8A8Sint:
+                return IntegerFill(
+                    (uint)(int)(sbyte)(fillValue & 0xFF),
+                    (uint)(int)(sbyte)((fillValue >> 8) & 0xFF),
+                    (uint)(int)(sbyte)((fillValue >> 16) & 0xFF),
+                    (uint)(int)(sbyte)((fillValue >> 24) & 0xFF));
+            case Format.R8G8B8A8Uscaled:
+                return new ClearColorValue(
+                    float32_0: (fillValue & 0xFF),
+                    float32_1: ((fillValue >> 8) & 0xFF),
+                    float32_2: ((fillValue >> 16) & 0xFF),
+                    float32_3: ((fillValue >> 24) & 0xFF));
+            case Format.R8G8B8A8Sscaled:
+                return new ClearColorValue(
+                    float32_0: (sbyte)(fillValue & 0xFF),
+                    float32_1: (sbyte)((fillValue >> 8) & 0xFF),
+                    float32_2: (sbyte)((fillValue >> 16) & 0xFF),
+                    float32_3: (sbyte)((fillValue >> 24) & 0xFF));
+
+            // ---- 16-bit channels: two channels per dword; a 4-channel texel
+            // spans two dwords, both carrying the same fill pattern.
+            case Format.R16Unorm:
+            case Format.R16G16Unorm:
+            case Format.R16G16B16A16Unorm:
+                return new ClearColorValue(
+                    float32_0: low16 / 65535f,
+                    float32_1: high16 / 65535f,
+                    float32_2: low16 / 65535f,
+                    float32_3: high16 / 65535f);
+            case Format.R16G16B16A16Uint:
+                return IntegerFill(low16, high16, low16, high16);
+            case Format.R16G16B16A16Sint:
+                return IntegerFill(
+                    (uint)(int)(short)low16,
+                    (uint)(int)(short)high16,
+                    (uint)(int)(short)low16,
+                    (uint)(int)(short)high16);
+            case Format.R16Sfloat:
+            case Format.R16G16Sfloat:
+            case Format.R16G16B16A16Sfloat:
+                return new ClearColorValue(
+                    float32_0: HalfToFloat((ushort)low16),
+                    float32_1: HalfToFloat((ushort)high16),
+                    float32_2: HalfToFloat((ushort)low16),
+                    float32_3: HalfToFloat((ushort)high16));
+
+            // ---- 32-bit channels: every component IS the fill word.
+            case Format.R32Uint:
+                return IntegerFill(fillValue, 0, 0, 0);
+            case Format.R32Sint:
+                return IntegerFill(fillValue, 0, 0, 0);
+            case Format.R32Sfloat:
+                return new ClearColorValue(
+                    float32_0: BitConverter.Int32BitsToSingle((int)fillValue),
+                    float32_1: 0f,
+                    float32_2: 0f,
+                    float32_3: 0f);
+            case Format.R32G32Uint:
+                return IntegerFill(fillValue, fillValue, 0, 0);
+            case Format.R32G32Sint:
+                return IntegerFill(fillValue, fillValue, 0, 0);
+            case Format.R32G32Sfloat:
+                return new ClearColorValue(
+                    float32_0: BitConverter.Int32BitsToSingle((int)fillValue),
+                    float32_1: BitConverter.Int32BitsToSingle((int)fillValue),
+                    float32_2: 0f,
+                    float32_3: 0f);
+            case Format.R32G32B32Uint:
+            case Format.R32G32B32Sint:
+            case Format.R32G32B32A32Uint:
+            case Format.R32G32B32A32Sint:
+                return IntegerFill(fillValue, fillValue, fillValue, fillValue);
+            case Format.R32G32B32Sfloat:
+            case Format.R32G32B32A32Sfloat:
+                var rawFloat = BitConverter.Int32BitsToSingle((int)fillValue);
+                return new ClearColorValue(rawFloat, rawFloat, rawFloat, rawFloat);
+
+            // ---- Packed 10:10:10:2 (A2B10G10R10 packs R in bits 0..9,
+            // A in bits 30..31; A2R10G10B10 packs B in bits 0..9).
+            case Format.A2B10G10R10UnormPack32:
+                return new ClearColorValue(
+                    float32_0: (fillValue & 0x3FF) / 1023f,
+                    float32_1: ((fillValue >> 10) & 0x3FF) / 1023f,
+                    float32_2: ((fillValue >> 20) & 0x3FF) / 1023f,
+                    float32_3: ((fillValue >> 30) & 0x3) / 3f);
+            case Format.A2R10G10B10UnormPack32:
+                return new ClearColorValue(
+                    float32_0: ((fillValue >> 20) & 0x3FF) / 1023f,
+                    float32_1: ((fillValue >> 10) & 0x3FF) / 1023f,
+                    float32_2: (fillValue & 0x3FF) / 1023f,
+                    float32_3: ((fillValue >> 30) & 0x3) / 3f);
+            case Format.A2B10G10R10UintPack32:
+                return IntegerFill(
+                    fillValue & 0x3FF,
+                    (fillValue >> 10) & 0x3FF,
+                    (fillValue >> 20) & 0x3FF,
+                    (fillValue >> 30) & 0x3);
+            case Format.A2B10G10R10SintPack32:
+                return IntegerFill(
+                    (uint)(int)(short)((fillValue & 0x3FF) << 6 >> 6),
+                    (uint)(int)(short)(((fillValue >> 10) & 0x3FF) << 6 >> 6),
+                    (uint)(int)(short)(((fillValue >> 20) & 0x3FF) << 6 >> 6),
+                    (uint)(int)(short)(((fillValue >> 30) & 0x3) << 30 >> 30));
+
+            // ---- Packed float 11:11:10 (B10G11R11: R in bits 0..10,
+            // G in 11..21, B in 22..31).
+            case Format.B10G11R11UfloatPack32:
+                return new ClearColorValue(
+                    float32_0: UnpackUnsignedFloat11(fillValue & 0x7FF),
+                    float32_1: UnpackUnsignedFloat11((fillValue >> 11) & 0x7FF),
+                    float32_2: UnpackUnsignedFloat10((fillValue >> 22) & 0x3FF),
+                    float32_3: 1f);
+
+            // ---- Packed 16-bit (the fill word covers two texels; the first
+            // one, in the low half, is what a uniform clear represents).
+            case Format.B5G6R5UnormPack16:
+                return new ClearColorValue(
+                    float32_0: (fillValue & 0x1F) / 31f,
+                    float32_1: ((fillValue >> 5) & 0x3F) / 63f,
+                    float32_2: ((fillValue >> 11) & 0x1F) / 31f,
+                    float32_3: 1f);
+            case Format.R5G5B5A1UnormPack16:
+                return new ClearColorValue(
+                    float32_0: ((fillValue >> 11) & 0x1F) / 31f,
+                    float32_1: ((fillValue >> 6) & 0x1F) / 31f,
+                    float32_2: ((fillValue >> 1) & 0x1F) / 31f,
+                    float32_3: (fillValue & 0x1));
+            case Format.R4G4B4A4UnormPack16:
+                return new ClearColorValue(
+                    float32_0: ((fillValue >> 12) & 0xF) / 15f,
+                    float32_1: ((fillValue >> 8) & 0xF) / 15f,
+                    float32_2: ((fillValue >> 4) & 0xF) / 15f,
+                    float32_3: (fillValue & 0xF) / 15f);
+
+            default:
+                // SNORM and remaining scaled variants are rare fill targets;
+                // degrade to the historical 8-bit UNORM expansion rather than
+                // guessing a layout the guest never fills through.
+                return new ClearColorValue(
+                    float32_0: (fillValue & 0xFF) / 255f,
+                    float32_1: ((fillValue >> 8) & 0xFF) / 255f,
+                    float32_2: ((fillValue >> 16) & 0xFF) / 255f,
+                    float32_3: ((fillValue >> 24) & 0xFF) / 255f);
+        }
+    }
+
+    private static ClearColorValue IntegerFill(uint r, uint g, uint b, uint a) =>
+        new(
+            uint32_0: r,
+            uint32_1: g,
+            uint32_2: b,
+            uint32_3: a);
+
+    /// <summary>
+    /// Reinterpretation fast-path extent match: the existing image's LOGICAL
+    /// dimensions must match the target's. GuestImageResource.Width/Height are
+    /// the scaled physical backing extents (SHARPEMU_RENDER_SCALE up to 2.0),
+    /// so comparing them against the guest's logical dims never matches under
+    /// any scale != 1.0 — every format reinterpretation then fell through to a
+    /// full recreate, losing the rendered pixels and churning images. The
+    /// create fast path already compares logical extents; this mirrors it.
+    /// </summary>
+    internal static bool MatchesGuestImageLogicalExtent(
+        uint existingLogicalWidth,
+        uint existingLogicalHeight,
+        uint existingMipLevels,
+        uint targetWidth,
+        uint targetHeight,
+        uint targetMipLevels) =>
+        existingLogicalWidth == targetWidth &&
+        existingLogicalHeight == targetHeight &&
+        existingMipLevels == targetMipLevels;
+
+    /// <summary>
+    /// Source scope (access mask + execution stages) for the
+    /// depth-attachment -> shader-read transition in
+    /// RecordGuestDepthForSampling. Depth/stencil tests READ the attachment
+    /// as well as writing it — early-Z rejects fragments before the late
+    /// tests, and both run against the same depth buffer the draw may also
+    /// have written — so a transition out of the attachment layout must wait
+    /// on EarlyFragmentTests AND LateFragmentTests and make both
+    /// DepthStencilAttachmentRead and DepthStencilAttachmentWrite available
+    /// (matching the depth clear/readback transitions elsewhere in this
+    /// file). A just-cleared image (layout TransferDstOptimal) only needs the
+    /// transfer write visible.
+    /// </summary>
+    internal static (AccessFlags SrcAccessMask, PipelineStageFlags SrcStage)
+        GetDepthToSampledBarrierSource(ImageLayout layout) =>
+        layout == ImageLayout.TransferDstOptimal
+            ? (AccessFlags.TransferWriteBit, PipelineStageFlags.TransferBit)
+            : (AccessFlags.DepthStencilAttachmentReadBit |
+               AccessFlags.DepthStencilAttachmentWriteBit,
+               PipelineStageFlags.EarlyFragmentTestsBit |
+               PipelineStageFlags.LateFragmentTestsBit);
 
     private readonly record struct Presentation(
         byte[]? Pixels,
@@ -3295,6 +3791,7 @@ internal static unsafe class VulkanVideoPresenter
         private uint _maxComputeWorkGroupInvocations;
         private ulong _minStorageBufferOffsetAlignment = 1;
         private bool _supportsIndependentBlend;
+        private bool _supportsDualSrcBlend;
         private uint _maxColorAttachments;
         private Device _device;
         private PipelineCache _pipelineCache;
@@ -3502,8 +3999,13 @@ internal static unsafe class VulkanVideoPresenter
         private readonly Dictionary<ComputePipelineKey, Pipeline> _computePipelines = new();
         private readonly Dictionary<GraphicsPipelineKey, Pipeline> _graphicsPipelines = new();
         private readonly Dictionary<GuestSampler, Sampler> _samplers = new();
+        // Digest -> pipeline key strings. Bounded: this map used to retain
+        // every translated SPIR-V variant's bytes for the whole session
+        // (unbounded growth on permutation-heavy titles).
+        private const int MaxCachedShaderDigests = 4096;
         private readonly Dictionary<byte[], string> _shaderDigests =
             new(ReferenceEqualityComparer.Instance);
+        private readonly Queue<byte[]> _shaderDigestEvictionOrder = new();
         private readonly Dictionary<DescriptorLayoutKey, DescriptorLayoutBundle>
             _descriptorLayouts = new();
         private readonly VulkanHostBufferPool _hostBufferPool;
@@ -3531,7 +4033,12 @@ internal static unsafe class VulkanVideoPresenter
             string ResourceLayout,
             string VertexLayout,
             GuestRasterState Raster,
-            GuestDepthState Depth);
+            GuestDepthState Depth,
+            // Only the pipeline-baked slice of the stencil state (enables,
+            // funcs, ops); reference and compare/write masks are dynamic
+            // state, so changing them must not churn this key.
+            GuestStencilPipelineState Stencil,
+            uint SampleCount);
 
         private readonly record struct DescriptorLayoutKey(
             ShaderStageFlags Stages,
@@ -3594,11 +4101,24 @@ internal static unsafe class VulkanVideoPresenter
             public GuestViewport? Viewport;
             public GuestRasterState Raster = GuestRasterState.Default;
             public GuestDepthState Depth = GuestDepthState.Default;
+            public GuestStencilState Stencil = GuestStencilState.Default;
             public bool HasDepthAttachment;
+            // MSAA sample count the pipeline is created with. The guest may
+            // bind multisampled render targets, but every attachment backing
+            // this presenter allocates is 1x (guest images and the depth
+            // attachment are created SampleCountFlags.Count1Bit), so the value
+            // is clamped to 1x in ClampRenderTargetSamples until multisample
+            // backings exist.
+            public uint SampleCount = 1;
             // Layout keys are needed twice per draw (pipeline lookup and
             // descriptor-layout lookup); cache the built strings.
             public string? ResourceLayoutKey;
             public string? VertexLayoutKey;
+            // Same lazy caching as the layout keys above: the pipeline key's
+            // render-target/blend layout strings are built once per resources
+            // object instead of on every key construction.
+            public string? RenderTargetLayoutKey;
+            public string? BlendLayoutKey;
             public RenderPass TransientRenderPass;
             public Framebuffer TransientFramebuffer;
         }
@@ -3680,7 +4200,15 @@ internal static unsafe class VulkanVideoPresenter
             public uint BaseRecord;
         }
 
-        private const Format DepthFormat = Format.D32Sfloat;
+        // Backing format for every guest depth (DB) surface. Decided once
+        // per device in SelectPhysicalDevice via SelectGuestDepthBackingFormat:
+        // D32SfloatS8Uint when the device supports the combined format for
+        // depth/stencil attachment + sampling (giving stencil writes storage,
+        // matching the PS5 GPU's native 32f-depth/8-bit-stencil surfaces),
+        // otherwise the legacy depth-only D32Sfloat. Single source of truth:
+        // the depth images, their views, and every render pass attachment
+        // description derive from this field.
+        private Format _guestDepthBackingFormat = Format.D32Sfloat;
         private const ulong SwapchainAcquireTimeoutNs = 250_000_000;
 
         private sealed class GuestDepthResource
@@ -4343,6 +4871,7 @@ internal static unsafe class VulkanVideoPresenter
             }
 
             LoadComputeDeviceLimits();
+            SelectGuestDepthBacking();
             _vk.GetPhysicalDeviceProperties(_physicalDevice, out var selected);
             _maxColorAttachments = selected.Limits.MaxColorAttachments;
             var selectedName = SilkMarshal.PtrToString((nint)selected.DeviceName) ?? "unknown";
@@ -4352,6 +4881,44 @@ internal static unsafe class VulkanVideoPresenter
             if (_window is not null)
             {
                 _window.SetTitle(VideoOutExports.GetWindowTitle());
+            }
+        }
+
+        /// <summary>
+        /// Decides the backing format for guest depth (DB) surfaces, once
+        /// per device. D32SfloatS8Uint gives stencil writes storage (the PS5
+        /// GPU's native depth layout); it is only used when the device
+        /// supports the combined format for optimal-tiling depth/stencil
+        /// attachment AND sampling — the backing images need both usages.
+        /// Otherwise the depth-only D32Sfloat fallback keeps today's
+        /// behavior (stencil state stays plumbed but writes are dropped).
+        /// </summary>
+        private void SelectGuestDepthBacking()
+        {
+            _vk.GetPhysicalDeviceFormatProperties(
+                _physicalDevice,
+                Format.D32SfloatS8Uint,
+                out var combinedProperties);
+            var requiredFeatures =
+                FormatFeatureFlags.DepthStencilAttachmentBit |
+                FormatFeatureFlags.SampledImageBit;
+            var supportsCombinedDepthStencil =
+                (combinedProperties.OptimalTilingFeatures & requiredFeatures) ==
+                requiredFeatures;
+            _guestDepthBackingFormat = SelectGuestDepthBackingFormat(
+                supportsCombinedDepthStencil);
+            if (supportsCombinedDepthStencil)
+            {
+                Console.Error.WriteLine(
+                    "[LOADER][INFO] Vulkan guest depth backed by D32SfloatS8Uint " +
+                    "(32-bit float depth + 8-bit stencil; stencil writes have storage).");
+            }
+            else
+            {
+                Console.Error.WriteLine(
+                    "[LOADER][WARN] Vulkan device lacks D32SfloatS8Uint " +
+                    "depth/stencil attachment support; guest depth keeps the " +
+                    "D32Sfloat backing and stencil writes have no storage.");
             }
         }
 
@@ -4420,9 +4987,14 @@ internal static unsafe class VulkanVideoPresenter
             };
             _vk.GetPhysicalDeviceFeatures(_physicalDevice, out var supportedFeatures);
             _supportsIndependentBlend = supportedFeatures.IndependentBlend;
+            _supportsDualSrcBlend = supportedFeatures.DualSrcBlend;
             var enabledFeatures = new PhysicalDeviceFeatures
             {
                 IndependentBlend = supportedFeatures.IndependentBlend,
+                // Guest blend factors 15..18 are dual-source factors; without
+                // the feature enabled the Src1* enums are invalid pipeline
+                // state (VUID-VkPipelineColorBlendAttachmentState-dualSrcBlend-01506).
+                DualSrcBlend = supportedFeatures.DualSrcBlend,
                 VertexPipelineStoresAndAtomics = supportedFeatures.VertexPipelineStoresAndAtomics,
                 FragmentStoresAndAtomics = supportedFeatures.FragmentStoresAndAtomics,
                 ShaderInt64 = supportedFeatures.ShaderInt64,
@@ -5445,15 +6017,17 @@ internal static unsafe class VulkanVideoPresenter
 
         private void TransitionNewGuestImageToSampled(Image image, uint mipLevels)
         {
-            var commandBuffer = AllocateGuestCommandBuffer();
-            var beginInfo = new CommandBufferBeginInfo
-            {
-                SType = StructureType.CommandBufferBeginInfo,
-                Flags = CommandBufferUsageFlags.OneTimeSubmitBit,
-            };
-            Check(
-                _vk.BeginCommandBuffer(commandBuffer, &beginInfo),
-                "vkBeginCommandBuffer(guest image init)");
+            // Recorded into the shared batch command buffer (the mechanism
+            // UploadGuestImageInitialData already uses): same-queue
+            // submission order still makes the transition visible to any
+            // later use of the image, and image churn (resize/reinterpret)
+            // no longer costs a queue submit + fence per new image. Recording
+            // order inside the one command buffer keeps the barrier ahead of
+            // any initial-data upload recorded for the same image afterwards
+            // (a fresh image is always Undefined until this barrier defines
+            // it, and the upload path transitions from Undefined again).
+            var commandBuffer = BeginBatchedGuestCommands();
+            CloseOpenTranslatedRenderPass();
             var barrier = new ImageMemoryBarrier
             {
                 SType = StructureType.ImageMemoryBarrier,
@@ -5477,12 +6051,6 @@ internal static unsafe class VulkanVideoPresenter
                 null,
                 1,
                 &barrier);
-            Check(
-                _vk.EndCommandBuffer(commandBuffer),
-                "vkEndCommandBuffer(guest image init)");
-            // Same-queue submission order makes the transition visible to any
-            // later use of the image; no CPU-side wait is needed.
-            SubmitGuestCommandBuffer(commandBuffer, [], []);
         }
 
         private void EnsureGuestSubmissionCapacity()
@@ -7116,7 +7684,8 @@ internal static unsafe class VulkanVideoPresenter
             Extent2D extent,
             IReadOnlyList<GuestImageResource>? feedbackTargets = null,
             bool hasDepthAttachment = false,
-            GuestDepthResource? feedbackDepth = null)
+            GuestDepthResource? feedbackDepth = null,
+            uint renderTargetSampleCount = 1)
         {
             var isTitleDraw = IsTitleDraw(draw.VertexBuffers);
             var forceFullscreenVertex = _forceFullscreenPipeline ||
@@ -7198,8 +7767,10 @@ internal static unsafe class VulkanVideoPresenter
                 Viewport = draw.RenderState.Viewport,
                 Raster = draw.RenderState.Raster,
                 Depth = draw.RenderState.Depth,
+                Stencil = draw.RenderState.Stencil,
                 HasDepthAttachment = hasDepthAttachment,
                 TargetFormats = renderTargetFormats.ToArray(),
+                SampleCount = ClampRenderTargetSamples(renderTargetSampleCount),
             };
             if (forceFullscreenVertex)
             {
@@ -7216,6 +7787,7 @@ internal static unsafe class VulkanVideoPresenter
                 resources.Viewport = null;
                 resources.Raster = GuestRasterState.Default;
                 resources.Depth = GuestDepthState.Default;
+                resources.Stencil = GuestStencilState.Default;
             }
             if (isTitleDraw && _forceTitleDefaultBlend)
             {
@@ -7696,17 +8268,18 @@ internal static unsafe class VulkanVideoPresenter
             var pipelineKey = new GraphicsPipelineKey(
                 GetShaderDigest(vertexSpirv),
                 GetShaderDigest(fragmentSpirv),
-                string.Join(',', renderTargetFormats.Select(format => (uint)format)),
+                GetRenderTargetLayoutKey(resources),
                 resources.HasDepthAttachment,
                 resources.Topology,
-                string.Join(';', resources.Blends.Select(blend =>
-                    $"{(blend.Enable ? 1 : 0)}:{blend.ColorSrcFactor}:{blend.ColorDstFactor}:" +
-                    $"{blend.ColorFunc}:{blend.AlphaSrcFactor}:{blend.AlphaDstFactor}:" +
-                    $"{blend.AlphaFunc}:{(blend.SeparateAlphaBlend ? 1 : 0)}:{blend.WriteMask}")),
+                GetBlendLayoutKey(resources),
                 GetResourceLayoutKey(resources),
                 GetVertexLayoutKey(resources),
                 resources.Raster,
-                resources.HasDepthAttachment ? resources.Depth : GuestDepthState.Default);
+                resources.HasDepthAttachment ? resources.Depth : GuestDepthState.Default,
+                resources.HasDepthAttachment
+                    ? resources.Stencil.PipelineIdentity
+                    : GuestStencilPipelineState.Default,
+                resources.SampleCount);
             if (_graphicsPipelines.TryGetValue(pipelineKey, out var cachedPipeline))
             {
                 resources.Pipeline = cachedPipeline;
@@ -7842,7 +8415,10 @@ internal static unsafe class VulkanVideoPresenter
                     var multisample = new PipelineMultisampleStateCreateInfo
                     {
                         SType = StructureType.PipelineMultisampleStateCreateInfo,
-                        RasterizationSamples = SampleCountFlags.Count1Bit,
+                        // MSAA: resolved from the draw's render targets (see
+                        // ClampRenderTargetSamples). Must match the render
+                        // pass attachment samples, which today are all 1x.
+                        RasterizationSamples = ToVkSampleCount(resources.SampleCount),
                     };
                     var colorBlendAttachments = stackalloc PipelineColorBlendAttachmentState[resources.Blends.Length];
                     for (var index = 0; index < resources.Blends.Length; index++)
@@ -7873,19 +8449,35 @@ internal static unsafe class VulkanVideoPresenter
                         AttachmentCount = (uint)resources.Blends.Length,
                         PAttachments = colorBlendAttachments,
                     };
-                    var dynamicStateValues = stackalloc DynamicState[3];
+                    var dynamicStateValues = stackalloc DynamicState[6];
                     dynamicStateValues[0] = DynamicState.Viewport;
                     dynamicStateValues[1] = DynamicState.Scissor;
                     // CB_BLEND_RED..ALPHA vary per draw without a pipeline
                     // identity change, so the constant stays dynamic.
                     dynamicStateValues[2] = DynamicState.BlendConstants;
+                    // DB_STENCILREFMASK(_BF): reference, compare mask and write
+                    // mask are per-draw values, so they stay dynamic instead of
+                    // rebuilding a pipeline every time the guest changes them.
+                    dynamicStateValues[3] = DynamicState.StencilCompareMask;
+                    dynamicStateValues[4] = DynamicState.StencilWriteMask;
+                    dynamicStateValues[5] = DynamicState.StencilReference;
                     var dynamicState = new PipelineDynamicStateCreateInfo
                     {
                         SType = StructureType.PipelineDynamicStateCreateInfo,
-                        DynamicStateCount = 3,
+                        DynamicStateCount = 6,
                         PDynamicStates = dynamicStateValues,
                     };
                     var depth = resources.Depth;
+                    var stencil = resources.Stencil;
+                    // Stencil test without a depth/stencil attachment is
+                    // invalid Vulkan; the pipeline keeps stencil off unless a
+                    // DB surface is actually bound. The backing is
+                    // D32SfloatS8Uint when the device supports it, so stencil
+                    // writes have real storage; on the D32Sfloat fallback the
+                    // combined state stays plumbed but writes are dropped.
+                    var stencilTestEnable = EffectiveStencilTestEnable(
+                        resources.HasDepthAttachment,
+                        stencil);
                     var depthStencil = new PipelineDepthStencilStateCreateInfo
                     {
                         SType = StructureType.PipelineDepthStencilStateCreateInfo,
@@ -7893,7 +8485,11 @@ internal static unsafe class VulkanVideoPresenter
                         DepthWriteEnable = depth.WriteEnable,
                         DepthCompareOp = ToVkCompareOp(depth.CompareOp),
                         DepthBoundsTestEnable = false,
-                        StencilTestEnable = false,
+                        StencilTestEnable = stencilTestEnable,
+                        Front = ToVkStencilOpState(stencil.Front),
+                        Back = stencil.BackfaceEnable
+                            ? ToVkStencilOpState(stencil.Back)
+                            : ToVkStencilOpState(stencil.Front),
                     };
                     var pipelineInfo = new GraphicsPipelineCreateInfo
                     {
@@ -8043,6 +8639,17 @@ internal static unsafe class VulkanVideoPresenter
 
             digest = Convert.ToHexString(SHA256.HashData(spirv));
             _shaderDigests.Add(spirv, digest);
+            // Bounded by insertion order: entries evicted while still live
+            // merely re-hash on their next sighting (the digest is a pure
+            // function of the bytes, and live pipeline keys hold their own
+            // digest strings), so stale queue entries are harmless.
+            _shaderDigestEvictionOrder.Enqueue(spirv);
+            while (_shaderDigests.Count > MaxCachedShaderDigests &&
+                _shaderDigestEvictionOrder.TryDequeue(out var evicted))
+            {
+                _ = _shaderDigests.Remove(evicted);
+            }
+
             return digest;
         }
 
@@ -8051,6 +8658,19 @@ internal static unsafe class VulkanVideoPresenter
 
         private static string GetVertexLayoutKey(TranslatedDrawResources resources) =>
             resources.VertexLayoutKey ??= BuildVertexLayoutKey(resources);
+
+        private static string GetRenderTargetLayoutKey(TranslatedDrawResources resources) =>
+            resources.RenderTargetLayoutKey ??= string.Join(
+                ',',
+                resources.TargetFormats.Select(static format => (uint)format));
+
+        private static string GetBlendLayoutKey(TranslatedDrawResources resources) =>
+            resources.BlendLayoutKey ??= string.Join(
+                ';',
+                resources.Blends.Select(static blend =>
+                    $"{(blend.Enable ? 1 : 0)}:{blend.ColorSrcFactor}:{blend.ColorDstFactor}:" +
+                    $"{blend.ColorFunc}:{blend.AlphaSrcFactor}:{blend.AlphaDstFactor}:" +
+                    $"{blend.AlphaFunc}:{(blend.SeparateAlphaBlend ? 1 : 0)}:{blend.WriteMask}"));
 
         private static string BuildResourceLayoutKey(TranslatedDrawResources resources)
         {
@@ -8832,7 +9452,10 @@ internal static unsafe class VulkanVideoPresenter
                         SType = StructureType.ImageViewCreateInfo,
                         Image = depth.Image,
                         ViewType = ImageViewType.Type2D,
-                        Format = DepthFormat,
+                        // Depth sampling reads the depth aspect only; with
+                        // the combined D32SfloatS8Uint backing this view
+                        // still yields (depth, 0, 0, 1) per texel.
+                        Format = _guestDepthBackingFormat,
                         Components = ToVkComponentMapping(texture.DstSelect),
                         SubresourceRange = new ImageSubresourceRange(
                             ImageAspectFlags.DepthBit,
@@ -8912,6 +9535,17 @@ internal static unsafe class VulkanVideoPresenter
                 Depth: GetGuestTextureDepth(texture.Type, texture.Depth));
             if (_textureCache.TryGetValue(key, out var cached))
             {
+                // The sampler is excluded from the cache key (samplers are
+                // resolved per draw from the descriptor's own state at
+                // descriptor-write time), so a hit under a different sampler
+                // must refresh the state the write reads and drop the stale
+                // resolved handle so it re-resolves for this draw.
+                if (cached.SamplerState != texture.Sampler)
+                {
+                    cached.SamplerState = texture.Sampler;
+                    cached.Sampler = default;
+                }
+
                 return cached;
             }
 
@@ -9976,7 +10610,10 @@ internal static unsafe class VulkanVideoPresenter
                 {
                     SType = StructureType.ImageCreateInfo,
                     ImageType = ImageType.Type2D,
-                    Format = DepthFormat,
+                    // Same backing format as the guest depth image so the
+                    // depth-aspect copy below is same-format; the snapshot
+                    // is only ever sampled through its depth aspect.
+                    Format = _guestDepthBackingFormat,
                     Extent = new Extent3D(source.Width, source.Height, 1),
                     MipLevels = 1,
                     ArrayLayers = 1,
@@ -10009,7 +10646,7 @@ internal static unsafe class VulkanVideoPresenter
                     SType = StructureType.ImageViewCreateInfo,
                     Image = image,
                     ViewType = ImageViewType.Type2D,
-                    Format = DepthFormat,
+                    Format = _guestDepthBackingFormat,
                     Components = ToVkComponentMapping(texture.DstSelect),
                     SubresourceRange = new ImageSubresourceRange(
                         ImageAspectFlags.DepthBit,
@@ -11053,30 +11690,11 @@ internal static unsafe class VulkanVideoPresenter
                 indexed: indexBuffer is not null,
                 hasVertexBuffers);
 
-        private static BlendFactor ToVkBlendFactor(uint factor) =>
-            factor switch
-            {
-                0 => BlendFactor.Zero,
-                1 => BlendFactor.One,
-                2 => BlendFactor.SrcColor,
-                3 => BlendFactor.OneMinusSrcColor,
-                4 => BlendFactor.SrcAlpha,
-                5 => BlendFactor.OneMinusSrcAlpha,
-                6 => BlendFactor.DstAlpha,
-                7 => BlendFactor.OneMinusDstAlpha,
-                8 => BlendFactor.DstColor,
-                9 => BlendFactor.OneMinusDstColor,
-                10 => BlendFactor.SrcAlphaSaturate,
-                13 => BlendFactor.ConstantColor,
-                14 => BlendFactor.OneMinusConstantColor,
-                15 => BlendFactor.Src1Color,
-                16 => BlendFactor.OneMinusSrc1Color,
-                17 => BlendFactor.Src1Alpha,
-                18 => BlendFactor.OneMinusSrc1Alpha,
-                19 => BlendFactor.ConstantAlpha,
-                20 => BlendFactor.OneMinusConstantAlpha,
-                _ => BlendFactor.One,
-            };
+        // Dual-source factors degrade per MapGuestBlendFactor when the device
+        // lacks dualSrcBlend (the cached _supportsDualSrcBlend was captured in
+        // CreateDevice alongside the feature enable).
+        private BlendFactor ToVkBlendFactor(uint factor) =>
+            MapGuestBlendFactor(factor, _supportsDualSrcBlend);
 
         private static BlendOp ToVkBlendOp(uint function) =>
             function switch
@@ -11142,19 +11760,6 @@ internal static unsafe class VulkanVideoPresenter
 
         private static SamplerMipmapMode ToVkMipFilter(uint filter) =>
             filter == 2 ? SamplerMipmapMode.Linear : SamplerMipmapMode.Nearest;
-
-        private static CompareOp ToVkCompareOp(uint compare) =>
-            compare switch
-            {
-                1 => CompareOp.Less,
-                2 => CompareOp.Equal,
-                3 => CompareOp.LessOrEqual,
-                4 => CompareOp.Greater,
-                5 => CompareOp.NotEqual,
-                6 => CompareOp.GreaterOrEqual,
-                7 => CompareOp.Always,
-                _ => CompareOp.Never,
-            };
 
         private static BorderColor ToVkBorderColor(uint color) =>
             color switch
@@ -11862,6 +12467,16 @@ internal static unsafe class VulkanVideoPresenter
             }
         }
 
+        // Fails closed: if the SPIR-V cannot be parsed the module is treated
+        // as descriptor-declaring so the historical empty-resource rejects
+        // still apply to unparseable modules.
+        private static bool DeclaresSpirvDescriptors(byte[] spirv) =>
+            !TryCountSpirvDescriptorVariables(
+                spirv,
+                out var declaredDescriptors,
+                out _) ||
+            declaredDescriptors != 0;
+
         private bool TryValidateComputeDispatch(
             VulkanComputeGuestDispatch work,
             out string error)
@@ -11930,10 +12545,13 @@ internal static unsafe class VulkanVideoPresenter
             // Empty resource tables with non-trivial SPIR-V usually means the
             // SRT/EUD walk failed (scalar_pointer_fallback / srt=0). Binding
             // nothing while the module still declares descriptors is a common
-            // device-loss trigger on the subsequent QueueSubmit.
+            // device-loss trigger on the subsequent QueueSubmit. A module that
+            // declares zero descriptors is a legitimate pure-ALU compute
+            // shader: dispatch it with nothing bound.
             if (work.Textures.Count == 0 &&
                 work.GlobalMemoryBuffers.Count == 0 &&
-                work.ComputeSpirv.Length > 0)
+                work.ComputeSpirv.Length > 0 &&
+                DeclaresSpirvDescriptors(work.ComputeSpirv))
             {
                 error = "empty-resources";
                 return false;
@@ -11964,7 +12582,9 @@ internal static unsafe class VulkanVideoPresenter
                 }
             }
 
-            if (!hasUsableStorage && !hasUsableGlobal)
+            if (!hasUsableStorage &&
+                !hasUsableGlobal &&
+                DeclaresSpirvDescriptors(work.ComputeSpirv))
             {
                 error = "no-usable-resources";
                 return false;
@@ -12817,7 +13437,8 @@ internal static unsafe class VulkanVideoPresenter
                 var clearDepthSeparately = false;
                 if (ShouldAttachGuestDepth(
                         work.DepthTarget,
-                        draw.RenderState.Depth) &&
+                        draw.RenderState.Depth,
+                        draw.RenderState.Stencil) &&
                     work.DepthTarget is { } depthTarget)
                 {
                     // Logical dims: GetOrCreateGuestDepth below scales itself.
@@ -12919,7 +13540,8 @@ internal static unsafe class VulkanVideoPresenter
                     extent,
                     targets,
                     hasDepthAttachment: depth is not null && !clearDepthSeparately,
-                    feedbackDepth: clearDepthSeparately ? null : depth);
+                    feedbackDepth: clearDepthSeparately ? null : depth,
+                    renderTargetSampleCount: GetGuestRenderTargetSampleCount(work.Targets));
                 resources.TransientRenderPass = transientRenderPass;
                 resources.TransientFramebuffer = transientFramebuffer;
                 transientRenderPass = default;
@@ -13022,8 +13644,10 @@ internal static unsafe class VulkanVideoPresenter
                         SrcQueueFamilyIndex = Vk.QueueFamilyIgnored,
                         DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
                         Image = depth.Image,
+                        // Both aspects: a combined backing must transition
+                        // its stencil plane back to attachment use too.
                         SubresourceRange = new ImageSubresourceRange(
-                            ImageAspectFlags.DepthBit, 0, 1, 0, 1),
+                            GuestDepthAspects(_guestDepthBackingFormat), 0, 1, 0, 1),
                     };
                     _vk.CmdPipelineBarrier(
                         _commandBuffer,
@@ -13074,7 +13698,11 @@ internal static unsafe class VulkanVideoPresenter
                     toShaderRead[index] = new ImageMemoryBarrier
                     {
                         SType = StructureType.ImageMemoryBarrier,
-                        SrcAccessMask = AccessFlags.ColorAttachmentWriteBit,
+                        // Blending READS the attachment as well as writing
+                        // it, so both access bits must be available before
+                        // the shader-read transition.
+                        SrcAccessMask = AccessFlags.ColorAttachmentReadBit |
+                            AccessFlags.ColorAttachmentWriteBit,
                         DstAccessMask = AccessFlags.ShaderReadBit,
                         OldLayout = ImageLayout.ColorAttachmentOptimal,
                         NewLayout = ImageLayout.ShaderReadOnlyOptimal,
@@ -13477,11 +14105,10 @@ internal static unsafe class VulkanVideoPresenter
                 1,
                 &toTransferDst);
 
-            var clearValue = new ClearColorValue(
-                (work.FillValue & 0xFF) / 255f,
-                ((work.FillValue >> 8) & 0xFF) / 255f,
-                ((work.FillValue >> 16) & 0xFF) / 255f,
-                ((work.FillValue >> 24) & 0xFF) / 255f);
+            // The fill pattern means something different per format family
+            // (raw integers, packed f16/f32 bits, per-channel-depth UNORM
+            // scaling); only the plain 8-bit UNORM case is byte/255.
+            var clearValue = UnpackGuestFillValue(work.FillValue, target.Format);
             var range = ColorSubresourceRange(0, target.MipLevels);
             _vk.CmdClearColorImage(
                 commandBuffer,
@@ -13888,9 +14515,13 @@ internal static unsafe class VulkanVideoPresenter
                     return existing;
                 }
 
-                if (existing.Width == target.Width &&
-                    existing.Height == target.Height &&
-                    existing.MipLevels == mipLevels &&
+                if (MatchesGuestImageLogicalExtent(
+                        existing.LogicalWidth,
+                        existing.LogicalHeight,
+                        existing.MipLevels,
+                        target.Width,
+                        target.Height,
+                        mipLevels) &&
                     (!requiresStorage || existing.SupportsStorageUsage) &&
                     IsCompatibleViewFormat(existing.Format, format))
                 {
@@ -14279,16 +14910,29 @@ internal static unsafe class VulkanVideoPresenter
             AttachmentReference depthReference = default;
             if (depth is not null)
             {
+                // With the combined D32SfloatS8Uint backing the attachment
+                // carries a stencil plane: stencil follows the same first-use
+                // clear/load lifecycle as depth (the render-pass clear value
+                // zeroes stencil), and stencil writes are stored so later
+                // passes can test them. On depth-only D32Sfloat the stencil
+                // ops are ignored by the spec; DontCare keeps today's values.
+                var hasStencil = HasStencilPlane(_guestDepthBackingFormat);
                 attachments[formats.Count] = new AttachmentDescription
                 {
-                    Format = DepthFormat,
+                    Format = _guestDepthBackingFormat,
                     Samples = SampleCountFlags.Count1Bit,
                     LoadOp = depthInitialized
                         ? AttachmentLoadOp.Load
                         : AttachmentLoadOp.Clear,
                     StoreOp = AttachmentStoreOp.Store,
-                    StencilLoadOp = AttachmentLoadOp.DontCare,
-                    StencilStoreOp = AttachmentStoreOp.DontCare,
+                    StencilLoadOp = !hasStencil
+                        ? AttachmentLoadOp.DontCare
+                        : depthInitialized
+                            ? AttachmentLoadOp.Load
+                            : AttachmentLoadOp.Clear,
+                    StencilStoreOp = hasStencil
+                        ? AttachmentStoreOp.Store
+                        : AttachmentStoreOp.DontCare,
                     InitialLayout = depthInitialized
                         ? ImageLayout.DepthStencilAttachmentOptimal
                         : ImageLayout.Undefined,
@@ -14346,7 +14990,10 @@ internal static unsafe class VulkanVideoPresenter
             {
                 SType = StructureType.ImageCreateInfo,
                 ImageType = ImageType.Type2D,
-                Format = DepthFormat,
+                // D32SfloatS8Uint when the device supports it: the guest DB
+                // surface then carries a stencil plane for stencil writes
+                // (see SelectGuestDepthBacking).
+                Format = _guestDepthBackingFormat,
                 Extent = new Extent3D(Math.Max(width, 1), Math.Max(height, 1), 1),
                 MipLevels = 1,
                 ArrayLayers = 1,
@@ -14376,8 +15023,12 @@ internal static unsafe class VulkanVideoPresenter
                 SType = StructureType.ImageViewCreateInfo,
                 Image = image,
                 ViewType = ImageViewType.Type2D,
-                Format = DepthFormat,
-                SubresourceRange = new ImageSubresourceRange(ImageAspectFlags.DepthBit, 0, 1, 0, 1),
+                Format = _guestDepthBackingFormat,
+                // Attachment view: a combined backing must expose BOTH aspects
+                // to the framebuffer; sampling goes through separate
+                // depth-aspect views (TryResolveGuestDepthTexture).
+                SubresourceRange = new ImageSubresourceRange(
+                    GuestDepthAspects(_guestDepthBackingFormat), 0, 1, 0, 1),
             };
             Check(_vk.CreateImageView(_device, &viewInfo, null, out var view), "vkCreateImageView(depth)");
             return (image, memory, view);
@@ -14603,12 +15254,20 @@ internal static unsafe class VulkanVideoPresenter
             };
             attachments[1] = new AttachmentDescription
             {
-                Format = DepthFormat,
+                // Combined D32SfloatS8Uint backing: stencil follows the same
+                // clear/load lifecycle as depth (render-pass clear zeroes
+                // stencil on first use) and stencil writes are stored. On the
+                // depth-only fallback the stencil ops stay DontCare/ignored.
+                Format = _guestDepthBackingFormat,
                 Samples = SampleCountFlags.Count1Bit,
                 LoadOp = clearDepth ? AttachmentLoadOp.Clear : AttachmentLoadOp.Load,
                 StoreOp = AttachmentStoreOp.Store,
-                StencilLoadOp = AttachmentLoadOp.DontCare,
-                StencilStoreOp = AttachmentStoreOp.DontCare,
+                StencilLoadOp = !HasStencilPlane(_guestDepthBackingFormat)
+                    ? AttachmentLoadOp.DontCare
+                    : clearDepth ? AttachmentLoadOp.Clear : AttachmentLoadOp.Load,
+                StencilStoreOp = HasStencilPlane(_guestDepthBackingFormat)
+                    ? AttachmentStoreOp.Store
+                    : AttachmentStoreOp.DontCare,
                 InitialLayout = clearDepth
                     ? ImageLayout.Undefined
                     : ImageLayout.DepthStencilAttachmentOptimal,
@@ -16613,8 +17272,11 @@ internal static unsafe class VulkanVideoPresenter
 
             if (!depth.Initialized)
             {
+                // First-use neutral clear: both aspects of the backing, so a
+                // combined image's stencil plane starts at a deterministic 0
+                // alongside the neutral depth value.
                 var depthRange = new ImageSubresourceRange(
-                    ImageAspectFlags.DepthBit,
+                    GuestDepthAspects(_guestDepthBackingFormat),
                     0,
                     1,
                     0,
@@ -16657,12 +17319,16 @@ internal static unsafe class VulkanVideoPresenter
                 depth.Layout = ImageLayout.TransferDstOptimal;
             }
 
+            // The depth attachment is also READ by depth/stencil tests
+            // (early and late fragment tests), so both the read and write
+            // access bits must be made available — matching the depth
+            // clear/readback transition above.
+            var (barrierSrcAccess, barrierSrcStage) =
+                GetDepthToSampledBarrierSource(depth.Layout);
             var barrier = new ImageMemoryBarrier
             {
                 SType = StructureType.ImageMemoryBarrier,
-                SrcAccessMask = depth.Layout == ImageLayout.TransferDstOptimal
-                    ? AccessFlags.TransferWriteBit
-                    : AccessFlags.DepthStencilAttachmentWriteBit,
+                SrcAccessMask = barrierSrcAccess,
                 DstAccessMask = AccessFlags.ShaderReadBit,
                 OldLayout = depth.Layout,
                 NewLayout = ImageLayout.ShaderReadOnlyOptimal,
@@ -16670,7 +17336,7 @@ internal static unsafe class VulkanVideoPresenter
                 DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
                 Image = depth.Image,
                 SubresourceRange = new ImageSubresourceRange(
-                    ImageAspectFlags.DepthBit,
+                    GuestDepthAspects(_guestDepthBackingFormat),
                     0,
                     1,
                     0,
@@ -16678,9 +17344,7 @@ internal static unsafe class VulkanVideoPresenter
             };
             _vk.CmdPipelineBarrier(
                 _commandBuffer,
-                depth.Layout == ImageLayout.TransferDstOptimal
-                    ? PipelineStageFlags.TransferBit
-                    : PipelineStageFlags.LateFragmentTestsBit,
+                barrierSrcStage,
                 shaderStage,
                 0,
                 0,
@@ -16764,7 +17428,18 @@ internal static unsafe class VulkanVideoPresenter
 
         private void RecordStandaloneGuestDepthClear(GuestDepthResource depth)
         {
+            // Layout transitions cover both aspects of the backing (a
+            // combined image must never leave its stencil plane behind),
+            // while the clear below deliberately touches the DEPTH aspect
+            // only — an explicit guest DB depth clear must preserve stencil
+            // contents written by earlier passes.
             var depthRange = new ImageSubresourceRange(
+                GuestDepthAspects(_guestDepthBackingFormat),
+                0,
+                1,
+                0,
+                1);
+            var clearRange = new ImageSubresourceRange(
                 ImageAspectFlags.DepthBit,
                 0,
                 1,
@@ -16829,7 +17504,7 @@ internal static unsafe class VulkanVideoPresenter
                 ImageLayout.TransferDstOptimal,
                 &clearValue,
                 1,
-                &depthRange);
+                &clearRange);
             depth.Initialized = true;
             depth.Layout = ImageLayout.TransferDstOptimal;
             depth.InitializationSource = "guest-depth-clear";
@@ -17011,8 +17686,12 @@ internal static unsafe class VulkanVideoPresenter
                     continue;
                 }
 
+                // Transitions of the snapshot and the guest depth source
+                // both cover the full aspect set of the backing format (a
+                // combined image must never leave its stencil plane in the
+                // old layout); the copy itself selects the depth aspect only.
                 var depthRange = new ImageSubresourceRange(
-                    ImageAspectFlags.DepthBit,
+                    GuestDepthAspects(_guestDepthBackingFormat),
                     0,
                     1,
                     0,
@@ -17122,6 +17801,8 @@ internal static unsafe class VulkanVideoPresenter
                 }
                 else
                 {
+                    // The freshly-created snapshot is fully undefined: clear
+                    // both aspects to a deterministic (depth, stencil 0).
                     var clearValue = new ClearDepthStencilValue(source.ClearDepth, 0);
                     _vk.CmdClearDepthStencilImage(
                         _commandBuffer,
@@ -17755,9 +18436,6 @@ internal static unsafe class VulkanVideoPresenter
             }
         }
 
-        private static float HalfToFloat(ushort halfBits) =>
-            (float)BitConverter.UInt16BitsToHalf(halfBits);
-
         private void BeginTranslatedRenderPass(
             RenderPass renderPass,
             Framebuffer framebuffer,
@@ -17845,6 +18523,36 @@ internal static unsafe class VulkanVideoPresenter
                 resources.BlendConstant.Alpha,
             };
             _vk.CmdSetBlendConstants(_commandBuffer, blendConstants);
+            // Dynamic stencil state (DB_STENCILREFMASK / DB_STENCILREFMASK_BF):
+            // reference, compare mask and write mask per face. The back face
+            // reuses the front values unless the guest enabled separate
+            // back-face state, mirroring the pipeline's StencilOpState.
+            var stencil = resources.Stencil;
+            var stencilBack = stencil.BackfaceEnable ? stencil.Back : stencil.Front;
+            _vk.CmdSetStencilCompareMask(
+                _commandBuffer,
+                StencilFaceFlags.StencilFaceFrontBit,
+                stencil.Front.CompareMask);
+            _vk.CmdSetStencilCompareMask(
+                _commandBuffer,
+                StencilFaceFlags.StencilFaceBackBit,
+                stencilBack.CompareMask);
+            _vk.CmdSetStencilWriteMask(
+                _commandBuffer,
+                StencilFaceFlags.StencilFaceFrontBit,
+                stencil.Front.WriteMask);
+            _vk.CmdSetStencilWriteMask(
+                _commandBuffer,
+                StencilFaceFlags.StencilFaceBackBit,
+                stencilBack.WriteMask);
+            _vk.CmdSetStencilReference(
+                _commandBuffer,
+                StencilFaceFlags.StencilFaceFrontBit,
+                stencil.Front.Reference);
+            _vk.CmdSetStencilReference(
+                _commandBuffer,
+                StencilFaceFlags.StencilFaceBackBit,
+                stencilBack.Reference);
             if (resources.VertexBuffers.Length != 0)
             {
                 var buffers = stackalloc VkBuffer[resources.VertexBuffers.Length];
@@ -18988,6 +19696,7 @@ internal static unsafe class VulkanVideoPresenter
             }
             _samplers.Clear();
             _shaderDigests.Clear();
+            _shaderDigestEvictionOrder.Clear();
             WriteBackAllDirtyGuestBuffers();
             foreach (var allocation in _guestBufferAllocations)
             {
