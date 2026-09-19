@@ -1,0 +1,77 @@
+is_global = true
+build_property.AvaloniaNameGeneratorIsEnabled = true
+build_property.AvaloniaNameGeneratorBehavior = InitializeComponent
+build_property.AvaloniaNameGeneratorDefaultFieldModifier = internal
+build_property.AvaloniaNameGeneratorFilterByPath = *
+build_property.AvaloniaNameGeneratorFilterByNamespace = *
+build_property.AvaloniaNameGeneratorViewFileNamingStrategy = NamespaceAndClassName
+build_property.AvaloniaNameGeneratorAttachDevTools = true
+build_property.AvaloniaUseCompiledBindingsByDefault = true
+build_property.AvaloniaMainPackageVersion = 12.1.0
+build_property.AvaloniaPreviewerNetCoreToolPath = C:\Users\chayt\Downloads\git\sharpemu\.packages\avalonia\12.1.0\buildTransitive\\..\tools\net8.0\designer\Avalonia.Designer.HostApp.dll
+build_property.AvaloniaResourcePaths = C:\Users\chayt\Downloads\git\sharpemu\src\SharpEmu.GUI\Assets\Fonts\MaterialSymbolsRounded-400.ttf,C:\Users\chayt\Downloads\git\sharpemu\assets\images\SharpEmu.ico,C:\Users\chayt\Downloads\git\sharpemu\assets\images\github.png,C:\Users\chayt\Downloads\git\sharpemu\assets\images\discord.png,C:\Users\chayt\Downloads\git\sharpemu\assets\images\update-icon.png,C:\Users\chayt\Downloads\git\sharpemu\assets\images\commit-icon.png,C:\Users\chayt\Downloads\git\sharpemu\assets\images\pic0.png
+build_property.TargetFramework = net10.0
+build_property.TargetFrameworkIdentifier = .NETCoreApp
+build_property.TargetFrameworkVersion = v10.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property.EntryPointFilePath = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = SharpEmu.GUI
+build_property.ProjectDir = C:\Users\chayt\Downloads\git\sharpemu\src\SharpEmu.GUI\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.EffectiveAnalysisLevelStyle = 10.0
+build_property.EnableCodeStyleSeverity = 
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/App.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/MainWindow.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/Themes/Styles/Base.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/Themes/Styles/Buttons.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/Themes/Styles/Chrome.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/Themes/Styles/Console.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/Themes/Styles/GameOptions.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/Themes/Styles/Inputs.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/Themes/Styles/Library.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/Themes/Styles/Options.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/Themes/Styles/OptionsNav.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/Themes/Styles/Surfaces.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/Themes/Templates/OptionsControls.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/Themes/Templates/SettingRow.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/Themes/Templates/SplitNumericUpDown.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/chayt/Downloads/git/sharpemu/src/SharpEmu.GUI/Themes/Tokens.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml

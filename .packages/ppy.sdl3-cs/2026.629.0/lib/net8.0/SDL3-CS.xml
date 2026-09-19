@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SDL3-CS</name>
+    </assembly>
+    <members>
+        <member name="T:SDL.ConstantAttribute">
+            <summary>
+            Denotes a manually defined constant.
+            Such constants should be excluded from ClangSharp generation to prevent warnings or duplicate definitions.
+            Handled by <c>get_manually_written_symbols()</c> in generate_bindings.py.
+            </summary>
+        </member>
+        <member name="T:SDL.MacroAttribute">
+            <summary>
+            Denotes a manually implemented macro function.
+            Such functions should be excluded from ClangSharp generation to prevent warnings.
+            </summary>
+        </member>
+        <member name="T:SDL.NativeTypeNameAttribute">
+            <summary>Defines the type of a member as it was used in the native signature.</summary>
+        </member>
+        <member name="M:SDL.NativeTypeNameAttribute.#ctor(System.String)">
+            <summary>Initializes a new instance of the <see cref="T:SDL.NativeTypeNameAttribute" /> class.</summary>
+            <param name="name">The name of the type that was used in the native signature.</param>
+        </member>
+        <member name="P:SDL.NativeTypeNameAttribute.Name">
+            <summary>Gets the name of the type that was used in the native signature.</summary>
+        </member>
+        <member name="M:SDL.SDL3.PtrToStringUTF8(System.Byte*,System.Boolean)">
+            <summary>
+            Allocates a managed <c>string</c> and copies all characters up to the first null character from an unmanaged UTF-8 string into it.
+            </summary>
+            <param name="ptr">The address of the first character of the unmanaged string.</param>
+            <param name="free">Whether to free the pointer after copying the string.</param>
+            <returns>
+            A managed string that holds a copy of the unmanaged string if the value of the <paramref name="ptr"/> parameter is not <c>null</c>; otherwise, this method returns <c>null</c>.
+            </returns>
+        </member>
+        <member name="M:SDL.SDL3.SDL_GetGamepadMappings">
+            <returns>
+            An array of <see cref="T:System.IntPtr"/> that can be passed to <see cref="M:System.Runtime.InteropServices.Marshal.PtrToStringUTF8(System.IntPtr)"/>.
+            </returns>
+        </member>
+        <member name="M:SDL.SDL3.SDL_GlobStorageDirectory(SDL.SDL_Storage*,System.Byte*,System.Byte*,SDL.SDL_GlobFlags)">
+            <returns>
+            An array of <see cref="T:System.IntPtr"/> that can be passed to <see cref="M:System.Runtime.InteropServices.Marshal.PtrToStringUTF8(System.IntPtr)"/>.
+            </returns>
+        </member>
+        <member name="T:SDL.TypedefAttribute">
+            <summary>
+            Denotes a C <c>typedef</c> that is expressed as an enum in C#.
+            These need to be manually signaled to ClangSharp so it uses the custom enum type instead of the underlying type.
+            Handled by <c>get_typedefs()</c> in generate_bindings.py.
+            </summary>
+        </member>
+        <member name="T:SDL.Utf8String">
+            <summary>
+            Null pointer or a null-byte terminated UTF8 string suitable for use in native methods.
+            </summary>
+            <remarks>Should only be instantiated through implicit conversions or with <c>null</c>.</remarks>
+        </member>
+        <member name="P:JetBrains.Annotations.MustDisposeResourceAttribute.Value">
+            <summary>
+            When set to <c>false</c>, disposing of the resource is not obligatory.
+            The main use-case for explicit <c>[MustDisposeResource(false)]</c> annotation
+            is to loosen the annotation for inheritors.
+            </summary>
+        </member>
+    </members>
+</doc>

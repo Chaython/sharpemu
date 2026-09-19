@@ -1,0 +1,188 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:c29d7435-3e40-4e7a-8120-99f4567deaef",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-07-09T10:58:23Z",
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "authors": [
+            {
+              "name": "CycloneDX"
+            }
+          ],
+          "name": "CycloneDX module for .NET",
+          "version": "6.2.0.0",
+          "externalReferences": [
+            {
+              "url": "https://github.com/CycloneDX/cyclonedx-dotnet",
+              "type": "website"
+            }
+          ]
+        }
+      ]
+    },
+    "component": {
+      "type": "library",
+      "bom-ref": "Avalonia.Native@12.1.0",
+      "name": "Avalonia.Native",
+      "version": "12.1.0",
+      "purl": "pkg:nuget/Avalonia.Native@12.1.0",
+      "description": "Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.",
+      "copyright": "Copyright 2013-2026 \u00A9 The AvaloniaUI Project",
+      "publisher": "Avalonia Team",
+      "author": "Avalonia Team",
+      "supplier": {
+        "name": "Avalonia Team",
+        "url": [
+          "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link"
+        ]
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "url": "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/AvaloniaUI/Avalonia/",
+          "type": "vcs"
+        }
+      ]
+    },
+    "supplier": {
+      "name": "Avalonia Team",
+      "url": [
+        "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link"
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "authors": [
+        {
+          "name": "Avalonia Team"
+        }
+      ],
+      "name": "Avalonia.BuildServices",
+      "version": "11.3.2",
+      "description": "Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "233F868E74AB91E56818004AD0AA7D0BB6E978044DDCF0061E373ADA06A1846B17A82E94C777AB907BA484C1873D2212B47D3539D2694E89A415F1AF047C3045"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "Copyright 2023-2025 \u00A9 The AvaloniaUI Project",
+      "purl": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "externalReferences": [
+        {
+          "url": "https://avaloniaui.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/AvaloniaUI/Avalonia.BuildServices",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "authors": [
+        {
+          "name": "MicroCom.Runtime"
+        }
+      ],
+      "name": "MicroCom.Runtime",
+      "version": "0.11.6",
+      "description": "IDL-based COM interop codegen. Consumes MIDL-like IDL file, generates efficient cross-platform C# interop and C\u002B\u002B header files.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6357E26E35BDCC31A1ADB458F1EBA1273026E138865B7F7098CE0CDF29135C317F58AFA0A8C015B64C5B6315CE02C496413BC178BFD726935D8D32AF63F732C1"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "Copyright 2021 \u00A9 Nikita Tsukanov",
+      "purl": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "externalReferences": [
+        {
+          "url": "https://github.com/kekekeks/MicroCom",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:libAvaloniaNative@12.1.0",
+      "name": "libAvaloniaNative",
+      "version": "12.1.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "B4075002FD77175435F0B825E4D8A8F2C22C3E82DA8E6C5DAA1D63E3078DEDED99A93442C28E8150266B7BE4989A7B0C914A7F86557F8995579E74806E5ACC21"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "runtimes/osx/native/libAvaloniaNative.dylib"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "Avalonia.Native@12.1.0",
+      "dependsOn": [
+        "pkg:nuget/Avalonia.BuildServices@11.3.2",
+        "pkg:nuget/MicroCom.Runtime@0.11.6"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "dependsOn": []
+    }
+  ],
+  "compositions": [
+    {
+      "aggregate": "complete",
+      "assemblies": [
+        "Avalonia.Native@12.1.0",
+        "binary:libAvaloniaNative@12.1.0"
+      ]
+    }
+  ]
+}

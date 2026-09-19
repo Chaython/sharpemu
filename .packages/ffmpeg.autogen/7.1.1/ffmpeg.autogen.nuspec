@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>FFmpeg.AutoGen</id>
+    <version>7.1.1</version>
+    <authors>Ruslan Balanukhin</authors>
+    <license type="file">LICENSE.txt</license>
+    <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
+    <readme>README.md</readme>
+    <projectUrl>https://github.com/Ruslan-B/FFmpeg.AutoGen</projectUrl>
+    <description>FFmpeg auto generated unsafe bindings for C#/.NET and Mono.</description>
+    <copyright>Copyright © Ruslan Balanukhin 2023 All rights reserved.</copyright>
+    <tags>ffmpeg</tags>
+    <repository type="Git" commit="d90d69ba6287e040ea09e68e0fc66c641ec77a34" />
+    <dependencies>
+      <group targetFramework=".NETStandard2.0" />
+      <group targetFramework=".NETStandard2.1" />
+    </dependencies>
+  </metadata>
+</package>

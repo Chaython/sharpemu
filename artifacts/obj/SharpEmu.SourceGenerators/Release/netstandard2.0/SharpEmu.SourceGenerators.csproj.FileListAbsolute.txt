@@ -1,0 +1,8 @@
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\netstandard2.0\SharpEmu.SourceGenerators.deps.json
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\netstandard2.0\SharpEmu.SourceGenerators.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.SourceGenerators\Release\netstandard2.0\SharpEmu.SourceGenerators.csproj.AssemblyReference.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.SourceGenerators\Release\netstandard2.0\SharpEmu.SourceGenerators.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.SourceGenerators\Release\netstandard2.0\SharpEmu.SourceGenerators.AssemblyInfoInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.SourceGenerators\Release\netstandard2.0\SharpEmu.SourceGenerators.AssemblyInfo.cs
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.SourceGenerators\Release\netstandard2.0\SharpEmu.SourceGenerators.csproj.CoreCompileInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.SourceGenerators\Release\netstandard2.0\SharpEmu.SourceGenerators.dll

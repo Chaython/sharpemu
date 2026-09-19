@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "SharpEmu.LibAtrac9/0.0.3-release.4": {
+        "runtime": {
+          "SharpEmu.LibAtrac9.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "SharpEmu.LibAtrac9/0.0.3-release.4": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

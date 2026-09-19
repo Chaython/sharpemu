@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Avalonia.Headless.XUnit</name>
+    </assembly>
+    <members>
+        <member name="T:Avalonia.Headless.XUnit.AvaloniaFactAttribute">
+            <summary>
+            Identifies an xunit test that starts on Avalonia Dispatcher
+            such that awaited expressions resume on the test's "main thread".
+            </summary>
+        </member>
+        <member name="M:Avalonia.Headless.XUnit.AvaloniaFactAttribute.#ctor(System.String,System.Int32)">
+            <summary>
+            Identifies an xunit test that starts on Avalonia Dispatcher
+            such that awaited expressions resume on the test's "main thread".
+            </summary>
+        </member>
+        <member name="T:Avalonia.Headless.XUnit.AvaloniaTestFrameworkAttribute">
+            <summary>
+            Sets up global avalonia test framework using avalonia application builder passed as a parameter.
+            </summary>
+            <remarks>
+            It is an alternative to using [AvaloniaFact] or [AvaloniaTheory] attributes on every test method.
+            </remarks>
+        </member>
+        <member name="T:Avalonia.Headless.XUnit.AvaloniaTheoryAttribute">
+            <summary>
+            Identifies an xunit theory that starts on Avalonia Dispatcher
+            such that awaited expressions resume on the test's "main thread".
+            </summary>
+        </member>
+    </members>
+</doc>

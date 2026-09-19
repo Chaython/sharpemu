@@ -1,0 +1,11 @@
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\SharpEmu.ShaderCompiler.deps.json
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\SharpEmu.ShaderCompiler.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler\Release\net10.0\SharpEmu.ShaderCompiler.csproj.AssemblyReference.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler\Release\net10.0\SharpEmu.ShaderCompiler.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler\Release\net10.0\SharpEmu.ShaderCompiler.AssemblyInfoInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler\Release\net10.0\SharpEmu.ShaderCompiler.AssemblyInfo.cs
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler\Release\net10.0\SharpEmu.ShaderCompiler.csproj.CoreCompileInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler\Release\net10.0\SharpEmu.68232950.Up2Date
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler\Release\net10.0\SharpEmu.ShaderCompiler.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler\Release\net10.0\refint\SharpEmu.ShaderCompiler.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler\Release\net10.0\ref\SharpEmu.ShaderCompiler.dll

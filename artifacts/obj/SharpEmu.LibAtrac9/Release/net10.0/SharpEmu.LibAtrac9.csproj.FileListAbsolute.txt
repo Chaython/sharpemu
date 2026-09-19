@@ -1,0 +1,9 @@
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\SharpEmu.LibAtrac9.deps.json
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\SharpEmu.LibAtrac9.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.LibAtrac9\Release\net10.0\SharpEmu.LibAtrac9.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.LibAtrac9\Release\net10.0\SharpEmu.LibAtrac9.AssemblyInfoInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.LibAtrac9\Release\net10.0\SharpEmu.LibAtrac9.AssemblyInfo.cs
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.LibAtrac9\Release\net10.0\SharpEmu.LibAtrac9.csproj.CoreCompileInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.LibAtrac9\Release\net10.0\SharpEmu.LibAtrac9.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.LibAtrac9\Release\net10.0\refint\SharpEmu.LibAtrac9.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.LibAtrac9\Release\net10.0\ref\SharpEmu.LibAtrac9.dll

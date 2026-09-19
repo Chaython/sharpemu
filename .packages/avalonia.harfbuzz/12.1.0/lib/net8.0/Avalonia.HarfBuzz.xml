@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Avalonia.HarfBuzz</name>
+    </assembly>
+    <members>
+        <member name="T:Avalonia.HarfBuzzApplicationExtensions">
+            <summary>
+            Configures the application to use HarfBuzz for text shaping.
+            </summary>
+            <remarks>This method adds a HarfBuzz-based text shaper implementation to the application, enabling
+            advanced text shaping capabilities.</remarks>
+        </member>
+        <member name="M:Avalonia.HarfBuzzApplicationExtensions.UseHarfBuzz(Avalonia.AppBuilder)">
+            <summary>
+            Configures the application to use HarfBuzz for text shaping.
+            </summary>
+            <remarks>This method integrates HarfBuzz, a text shaping engine, into the application,
+            enabling advanced text layout and rendering capabilities.</remarks>
+            <param name="builder">The <see cref="T:Avalonia.AppBuilder"/> instance to configure.</param>
+            <returns>The configured <see cref="T:Avalonia.AppBuilder"/> instance.</returns>
+        </member>
+    </members>
+</doc>

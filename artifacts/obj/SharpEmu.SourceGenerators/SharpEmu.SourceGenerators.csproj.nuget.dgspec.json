@@ -1,0 +1,116 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\src\\SharpEmu.SourceGenerators\\SharpEmu.SourceGenerators.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\src\\SharpEmu.SourceGenerators\\SharpEmu.SourceGenerators.csproj": {
+      "version": "0.0.3-release.4",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\src\\SharpEmu.SourceGenerators\\SharpEmu.SourceGenerators.csproj",
+        "projectName": "SharpEmu.SourceGenerators",
+        "projectPath": "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\src\\SharpEmu.SourceGenerators\\SharpEmu.SourceGenerators.csproj",
+        "packagesPath": "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\.packages",
+        "outputPath": "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\artifacts/obj/SharpEmu.SourceGenerators/",
+        "projectStyle": "PackageReference",
+        "centralPackageVersionsManagementEnabled": true,
+        "configFilePaths": [
+          "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\NuGet.Config",
+          "C:\\Users\\chayt\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netstandard2.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netstandard2.0": {
+            "framework": "netstandard2.0",
+            "targetAlias": "netstandard2.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.400"
+      },
+      "frameworks": {
+        "netstandard2.0": {
+          "framework": "netstandard2.0",
+          "targetAlias": "netstandard2.0",
+          "dependencies": {
+            "Microsoft.Build.Framework": {
+              "include": "Compile, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[17.14.8, )",
+              "versionCentrallyManaged": true
+            },
+            "Microsoft.CodeAnalysis.Analyzers": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[3.11.0, )",
+              "versionCentrallyManaged": true
+            },
+            "Microsoft.CodeAnalysis.CSharp": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[4.12.0, )",
+              "versionCentrallyManaged": true
+            },
+            "NETStandard.Library": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.0.3, )",
+              "autoReferenced": true
+            }
+          },
+          "centralPackageVersions": {
+            "Avalonia": "12.1.0",
+            "Avalonia.Desktop": "12.1.0",
+            "Avalonia.Fonts.Inter": "12.1.0",
+            "Avalonia.Headless": "12.1.0",
+            "Avalonia.Headless.XUnit": "12.1.0",
+            "Avalonia.Themes.Fluent": "12.1.0",
+            "FFmpeg.AutoGen": "7.1.1",
+            "Iced": "1.21.0",
+            "Microsoft.Build.Framework": "17.14.8",
+            "Microsoft.CodeAnalysis.Analyzers": "3.11.0",
+            "Microsoft.CodeAnalysis.CSharp": "4.12.0",
+            "Microsoft.NET.Test.Sdk": "17.14.1",
+            "NLayer": "1.14.0",
+            "ppy.SDL3-CS": "2026.629.0",
+            "Silk.NET.Vulkan": "2.23.0",
+            "Silk.NET.Vulkan.Extensions.EXT": "2.23.0",
+            "Silk.NET.Vulkan.Extensions.KHR": "2.23.0",
+            "Tmds.DBus.Protocol": "0.94.1",
+            "xunit": "2.9.3",
+            "xunit.runner.visualstudio": "3.1.1",
+            "xunit.v3": "3.2.2"
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.400\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

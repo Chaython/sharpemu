@@ -1,0 +1,116 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:1224d2bb-97be-400e-935a-7c6ef5bb0316",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-07-09T10:57:37Z",
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "authors": [
+            {
+              "name": "CycloneDX"
+            }
+          ],
+          "name": "CycloneDX module for .NET",
+          "version": "6.2.0.0",
+          "externalReferences": [
+            {
+              "url": "https://github.com/CycloneDX/cyclonedx-dotnet",
+              "type": "website"
+            }
+          ]
+        }
+      ]
+    },
+    "component": {
+      "type": "library",
+      "bom-ref": "Avalonia.Remote.Protocol@12.1.0",
+      "name": "Avalonia.Remote.Protocol",
+      "version": "12.1.0",
+      "purl": "pkg:nuget/Avalonia.Remote.Protocol@12.1.0",
+      "description": "Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.",
+      "copyright": "Copyright 2013-2026 \u00A9 The AvaloniaUI Project",
+      "publisher": "Avalonia Team",
+      "author": "Avalonia Team",
+      "supplier": {
+        "name": "Avalonia Team",
+        "url": [
+          "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link"
+        ]
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "url": "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/AvaloniaUI/Avalonia/",
+          "type": "vcs"
+        }
+      ]
+    },
+    "supplier": {
+      "name": "Avalonia Team",
+      "url": [
+        "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link"
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "Microsoft.NETCore.Platforms",
+      "version": "1.1.0",
+      "description": "Provides runtime information required to resolve target framework, platform, and runtime specific implementations of .NETCore packages. \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6BF892C274596FE2C7164E3D8503B24E187F64D0B7BEC6D9B05EB95F04086FCEB7A85EA6B2685D42DC465C52F6F0E6F636C0B3FDDAC48F6F0125DFD83E92D106"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "Avalonia.Remote.Protocol@12.1.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+      "dependsOn": []
+    }
+  ]
+}

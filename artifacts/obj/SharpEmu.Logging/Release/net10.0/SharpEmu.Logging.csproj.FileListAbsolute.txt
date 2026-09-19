@@ -1,0 +1,9 @@
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\SharpEmu.Logging.deps.json
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\SharpEmu.Logging.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Logging\Release\net10.0\SharpEmu.Logging.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Logging\Release\net10.0\SharpEmu.Logging.AssemblyInfoInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Logging\Release\net10.0\SharpEmu.Logging.AssemblyInfo.cs
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Logging\Release\net10.0\SharpEmu.Logging.csproj.CoreCompileInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Logging\Release\net10.0\SharpEmu.Logging.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Logging\Release\net10.0\refint\SharpEmu.Logging.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Logging\Release\net10.0\ref\SharpEmu.Logging.dll

@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "dgSpecHash": "PkAkULYGnKk=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\src\\SharpEmu.Core\\SharpEmu.Core.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\.packages\\ffmpeg.autogen\\7.1.1\\ffmpeg.autogen.7.1.1.nupkg.sha512",
+    "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\.packages\\iced\\1.21.0\\iced.1.21.0.nupkg.sha512",
+    "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\.packages\\microsoft.dotnet.platformabstractions\\3.1.6\\microsoft.dotnet.platformabstractions.3.1.6.nupkg.sha512",
+    "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\.packages\\microsoft.extensions.dependencymodel\\9.0.9\\microsoft.extensions.dependencymodel.9.0.9.nupkg.sha512",
+    "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\.packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\.packages\\netstandard.library\\1.6.1\\netstandard.library.1.6.1.nupkg.sha512",
+    "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\.packages\\nlayer\\1.14.0\\nlayer.1.14.0.nupkg.sha512",
+    "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\.packages\\ppy.sdl3-cs\\2026.629.0\\ppy.sdl3-cs.2026.629.0.nupkg.sha512",
+    "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\.packages\\silk.net.core\\2.23.0\\silk.net.core.2.23.0.nupkg.sha512",
+    "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\.packages\\silk.net.vulkan\\2.23.0\\silk.net.vulkan.2.23.0.nupkg.sha512",
+    "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\.packages\\silk.net.vulkan.extensions.ext\\2.23.0\\silk.net.vulkan.extensions.ext.2.23.0.nupkg.sha512",
+    "C:\\Users\\chayt\\Downloads\\git\\sharpemu\\.packages\\silk.net.vulkan.extensions.khr\\2.23.0\\silk.net.vulkan.extensions.khr.2.23.0.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,422 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "SharpEmu.Debugger/0.0.3-release.4": {
+        "dependencies": {
+          "SharpEmu.Core": "0.0.3-release.4",
+          "SharpEmu.HLE": "0.0.3-release.4",
+          "SharpEmu.Logging": "0.0.3-release.4"
+        },
+        "runtime": {
+          "SharpEmu.Debugger.dll": {}
+        }
+      },
+      "FFmpeg.AutoGen/7.1.1": {
+        "runtime": {
+          "lib/netstandard2.1/FFmpeg.AutoGen.dll": {
+            "assemblyVersion": "7.1.1.0",
+            "fileVersion": "7.1.1.0"
+          }
+        }
+      },
+      "Iced/1.21.0": {
+        "runtime": {
+          "lib/netstandard2.1/Iced.dll": {
+            "assemblyVersion": "1.21.0.0",
+            "fileVersion": "1.21.0.0"
+          }
+        }
+      },
+      "Microsoft.DotNet.PlatformAbstractions/3.1.6": {
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.DotNet.PlatformAbstractions.dll": {
+            "assemblyVersion": "3.1.6.0",
+            "fileVersion": "3.100.620.31604"
+          }
+        }
+      },
+      "Microsoft.Extensions.DependencyModel/9.0.9": {
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.DependencyModel.dll": {
+            "assemblyVersion": "9.0.0.9",
+            "fileVersion": "9.0.925.41916"
+          }
+        }
+      },
+      "NLayer/1.14.0": {
+        "runtime": {
+          "lib/netstandard1.3/NLayer.dll": {
+            "assemblyVersion": "1.14.0.0",
+            "fileVersion": "1.14.0.0"
+          }
+        }
+      },
+      "ppy.SDL3-CS/2026.629.0": {
+        "runtime": {
+          "lib/net8.0/SDL3-CS.dll": {
+            "assemblyVersion": "2026.629.0.0",
+            "fileVersion": "2026.629.0.0"
+          }
+        },
+        "runtimeTargets": {
+          "runtimes/android-arm/native/libSDL3.so": {
+            "rid": "android-arm",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/android-arm64/native/libSDL3.so": {
+            "rid": "android-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/android-x64/native/libSDL3.so": {
+            "rid": "android-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/android-x86/native/libSDL3.so": {
+            "rid": "android-x86",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/ios/native/SDL3.xcframework/Info.plist": {
+            "rid": "ios",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/ios/native/SDL3.xcframework/ios-arm64/SDL3.framework/Info.plist": {
+            "rid": "ios",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/ios/native/SDL3.xcframework/ios-arm64/SDL3.framework/SDL3": {
+            "rid": "ios",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/ios/native/SDL3.xcframework/ios-arm64_x86_64-simulator/SDL3.framework/Info.plist": {
+            "rid": "ios",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/ios/native/SDL3.xcframework/ios-arm64_x86_64-simulator/SDL3.framework/SDL3": {
+            "rid": "ios",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm/native/libSDL3.so": {
+            "rid": "linux-arm",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm64/native/libSDL3.so": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-x64/native/libSDL3.so": {
+            "rid": "linux-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-x86/native/libSDL3.so": {
+            "rid": "linux-x86",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/osx-arm64/native/libSDL3.dylib": {
+            "rid": "osx-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/osx-x64/native/libSDL3.dylib": {
+            "rid": "osx-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-arm64/native/SDL3.dll": {
+            "rid": "win-arm64",
+            "assetType": "native",
+            "fileVersion": "3.5.0.0"
+          },
+          "runtimes/win-x64/native/SDL3.dll": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "3.5.0.0"
+          },
+          "runtimes/win-x86/native/SDL3.dll": {
+            "rid": "win-x86",
+            "assetType": "native",
+            "fileVersion": "3.5.0.0"
+          }
+        }
+      },
+      "Silk.NET.Core/2.23.0": {
+        "dependencies": {
+          "Microsoft.DotNet.PlatformAbstractions": "3.1.6",
+          "Microsoft.Extensions.DependencyModel": "9.0.9"
+        },
+        "runtime": {
+          "lib/net6.0/Silk.NET.Core.dll": {
+            "assemblyVersion": "2.23.0.0",
+            "fileVersion": "2.23.0.0"
+          }
+        }
+      },
+      "Silk.NET.Vulkan/2.23.0": {
+        "dependencies": {
+          "Silk.NET.Core": "2.23.0"
+        },
+        "runtime": {
+          "lib/net5.0/Silk.NET.Vulkan.dll": {
+            "assemblyVersion": "2.23.0.0",
+            "fileVersion": "2.23.0.0"
+          }
+        }
+      },
+      "Silk.NET.Vulkan.Extensions.EXT/2.23.0": {
+        "dependencies": {
+          "Silk.NET.Core": "2.23.0",
+          "Silk.NET.Vulkan": "2.23.0"
+        },
+        "runtime": {
+          "lib/net5.0/Silk.NET.Vulkan.Extensions.EXT.dll": {
+            "assemblyVersion": "2.23.0.0",
+            "fileVersion": "2.23.0.0"
+          }
+        }
+      },
+      "Silk.NET.Vulkan.Extensions.KHR/2.23.0": {
+        "dependencies": {
+          "Silk.NET.Core": "2.23.0",
+          "Silk.NET.Vulkan": "2.23.0"
+        },
+        "runtime": {
+          "lib/net5.0/Silk.NET.Vulkan.Extensions.KHR.dll": {
+            "assemblyVersion": "2.23.0.0",
+            "fileVersion": "2.23.0.0"
+          }
+        }
+      },
+      "SharpEmu.Core/0.0.3-release.4": {
+        "dependencies": {
+          "Iced": "1.21.0",
+          "SharpEmu.HLE": "0.0.3-release.4",
+          "SharpEmu.Libs": "0.0.3-release.4",
+          "SharpEmu.Logging": "0.0.3-release.4"
+        },
+        "runtime": {
+          "SharpEmu.Core.dll": {
+            "assemblyVersion": "0.0.3.0",
+            "fileVersion": "0.0.3.0"
+          }
+        }
+      },
+      "SharpEmu.HLE/0.0.3-release.4": {
+        "dependencies": {
+          "SharpEmu.Logging": "0.0.3-release.4",
+          "ppy.SDL3-CS": "2026.629.0"
+        },
+        "runtime": {
+          "SharpEmu.HLE.dll": {
+            "assemblyVersion": "0.0.3.0",
+            "fileVersion": "0.0.3.0"
+          }
+        }
+      },
+      "SharpEmu.LibAtrac9/0.0.3-release.4": {
+        "runtime": {
+          "SharpEmu.LibAtrac9.dll": {
+            "assemblyVersion": "0.0.3.0",
+            "fileVersion": "0.0.3.0"
+          }
+        }
+      },
+      "SharpEmu.Libs/0.0.3-release.4": {
+        "dependencies": {
+          "FFmpeg.AutoGen": "7.1.1",
+          "NLayer": "1.14.0",
+          "SharpEmu.HLE": "0.0.3-release.4",
+          "SharpEmu.LibAtrac9": "0.0.3-release.4",
+          "SharpEmu.Logging": "0.0.3-release.4",
+          "SharpEmu.ShaderCompiler": "0.0.3-release.4",
+          "SharpEmu.ShaderCompiler.Metal": "0.0.3-release.4",
+          "SharpEmu.ShaderCompiler.Vulkan": "0.0.3-release.4",
+          "Silk.NET.Vulkan": "2.23.0",
+          "Silk.NET.Vulkan.Extensions.EXT": "2.23.0",
+          "Silk.NET.Vulkan.Extensions.KHR": "2.23.0",
+          "ppy.SDL3-CS": "2026.629.0"
+        },
+        "runtime": {
+          "SharpEmu.Libs.dll": {
+            "assemblyVersion": "0.0.3.0",
+            "fileVersion": "0.0.3.0"
+          }
+        }
+      },
+      "SharpEmu.Logging/0.0.3-release.4": {
+        "runtime": {
+          "SharpEmu.Logging.dll": {
+            "assemblyVersion": "0.0.3.0",
+            "fileVersion": "0.0.3.0"
+          }
+        }
+      },
+      "SharpEmu.ShaderCompiler/0.0.3-release.4": {
+        "dependencies": {
+          "SharpEmu.HLE": "0.0.3-release.4"
+        },
+        "runtime": {
+          "SharpEmu.ShaderCompiler.dll": {
+            "assemblyVersion": "0.0.3.0",
+            "fileVersion": "0.0.3.0"
+          }
+        }
+      },
+      "SharpEmu.ShaderCompiler.Metal/0.0.3-release.4": {
+        "dependencies": {
+          "SharpEmu.ShaderCompiler": "0.0.3-release.4"
+        },
+        "runtime": {
+          "SharpEmu.ShaderCompiler.Metal.dll": {
+            "assemblyVersion": "0.0.3.0",
+            "fileVersion": "0.0.3.0"
+          }
+        }
+      },
+      "SharpEmu.ShaderCompiler.Vulkan/0.0.3-release.4": {
+        "dependencies": {
+          "SharpEmu.ShaderCompiler": "0.0.3-release.4"
+        },
+        "runtime": {
+          "SharpEmu.ShaderCompiler.Vulkan.dll": {
+            "assemblyVersion": "0.0.3.0",
+            "fileVersion": "0.0.3.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "SharpEmu.Debugger/0.0.3-release.4": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "FFmpeg.AutoGen/7.1.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-p4FGdG654zut4Iseg7PeYo7sxFMOTuLTEKl/vX+44UQ6NmezF3wHcR6JzjH8xzK4VDPLJe5Xz563kXamMQj7Jg==",
+      "path": "ffmpeg.autogen/7.1.1",
+      "hashPath": "ffmpeg.autogen.7.1.1.nupkg.sha512"
+    },
+    "Iced/1.21.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-dv5+81Q1TBQvVMSOOOmRcjJmvWcX3BZPZsIq31+RLc5cNft0IHAyNlkdb7ZarOWG913PyBoFDsDXoCIlKmLclg==",
+      "path": "iced/1.21.0",
+      "hashPath": "iced.1.21.0.nupkg.sha512"
+    },
+    "Microsoft.DotNet.PlatformAbstractions/3.1.6": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-jek4XYaQ/PGUwDKKhwR8K47Uh1189PFzMeLqO83mXrXQVIpARZCcfuDedH50YDTepBkfijCZN5U/vZi++erxtg==",
+      "path": "microsoft.dotnet.platformabstractions/3.1.6",
+      "hashPath": "microsoft.dotnet.platformabstractions.3.1.6.nupkg.sha512"
+    },
+    "Microsoft.Extensions.DependencyModel/9.0.9": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-fNGvKct2De8ghm0Bpfq0iWthtzIWabgOTi+gJhNOPhNJIowXNEUE2eZNW/zNCzrHVA3PXg2yZ+3cWZndC2IqYA==",
+      "path": "microsoft.extensions.dependencymodel/9.0.9",
+      "hashPath": "microsoft.extensions.dependencymodel.9.0.9.nupkg.sha512"
+    },
+    "NLayer/1.14.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-brv6M0Z+2zhOndFqGXaUa+r3/ihGrcp4NubRaaNxVRHFoFO+bUwSq3zxYotdBv/vVJrsiwH4wpzPevVz/PNkIw==",
+      "path": "nlayer/1.14.0",
+      "hashPath": "nlayer.1.14.0.nupkg.sha512"
+    },
+    "ppy.SDL3-CS/2026.629.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-HgnHCdsOu7OiMbU+OG7E7rpkNajs4tm9ovejyc56AD1NNSJD8OLqXh+mGKlDBYem8+MBTrNKUWVcdKG76HhOVQ==",
+      "path": "ppy.sdl3-cs/2026.629.0",
+      "hashPath": "ppy.sdl3-cs.2026.629.0.nupkg.sha512"
+    },
+    "Silk.NET.Core/2.23.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-D7AT/nnwlB+4RZ84XY8QNGBZMJI5z9l4CSSETIJ1wCfRJzRt/341y3MRZ4HbnFz4r/IGaWOEZr86iE+0/65yyQ==",
+      "path": "silk.net.core/2.23.0",
+      "hashPath": "silk.net.core.2.23.0.nupkg.sha512"
+    },
+    "Silk.NET.Vulkan/2.23.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3/irtlSWXZ3eTi8N6nelI6L34NTB8ZJHpqVMNzZx2aX7Ek9YEQ34NoQW8/Tljrtmkg8KRhHW8hKTEzZaKV8PgA==",
+      "path": "silk.net.vulkan/2.23.0",
+      "hashPath": "silk.net.vulkan.2.23.0.nupkg.sha512"
+    },
+    "Silk.NET.Vulkan.Extensions.EXT/2.23.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-+Oth189ksRiL6HvGCwIdnsYHawqrbO8y49u1H61z3wsfcHhQZeVDYe/wF5LD7fk3NcdgDvwFD3mLm1QWhdZySw==",
+      "path": "silk.net.vulkan.extensions.ext/2.23.0",
+      "hashPath": "silk.net.vulkan.extensions.ext.2.23.0.nupkg.sha512"
+    },
+    "Silk.NET.Vulkan.Extensions.KHR/2.23.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-uRaf4j+SmH3DumjSSSUbFg33BnsGZUyXGj93O9NgGKZSJN3OTmNmQDxRew+/KiVLcgH6qzbto8aNGZ++j9GFWg==",
+      "path": "silk.net.vulkan.extensions.khr/2.23.0",
+      "hashPath": "silk.net.vulkan.extensions.khr.2.23.0.nupkg.sha512"
+    },
+    "SharpEmu.Core/0.0.3-release.4": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SharpEmu.HLE/0.0.3-release.4": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SharpEmu.LibAtrac9/0.0.3-release.4": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SharpEmu.Libs/0.0.3-release.4": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SharpEmu.Logging/0.0.3-release.4": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SharpEmu.ShaderCompiler/0.0.3-release.4": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SharpEmu.ShaderCompiler.Metal/0.0.3-release.4": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SharpEmu.ShaderCompiler.Vulkan/0.0.3-release.4": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

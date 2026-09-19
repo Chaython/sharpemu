@@ -1,0 +1,376 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:e0fa1305-705a-4628-ab43-83a924ebda5f",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-07-09T10:57:22Z",
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "authors": [
+            {
+              "name": "CycloneDX"
+            }
+          ],
+          "name": "CycloneDX module for .NET",
+          "version": "6.2.0.0",
+          "externalReferences": [
+            {
+              "url": "https://github.com/CycloneDX/cyclonedx-dotnet",
+              "type": "website"
+            }
+          ]
+        }
+      ]
+    },
+    "component": {
+      "type": "library",
+      "bom-ref": "Avalonia.HarfBuzz@12.1.0",
+      "name": "Avalonia.HarfBuzz",
+      "version": "12.1.0",
+      "purl": "pkg:nuget/Avalonia.HarfBuzz@12.1.0",
+      "description": "Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.",
+      "copyright": "Copyright 2013-2026 \u00A9 The AvaloniaUI Project",
+      "publisher": "Avalonia Team",
+      "author": "Avalonia Team",
+      "supplier": {
+        "name": "Avalonia Team",
+        "url": [
+          "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link"
+        ]
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "url": "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/AvaloniaUI/Avalonia/",
+          "type": "vcs"
+        }
+      ]
+    },
+    "supplier": {
+      "name": "Avalonia Team",
+      "url": [
+        "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link"
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "authors": [
+        {
+          "name": "Avalonia Team"
+        }
+      ],
+      "name": "Avalonia.BuildServices",
+      "version": "11.3.2",
+      "description": "Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "233F868E74AB91E56818004AD0AA7D0BB6E978044DDCF0061E373ADA06A1846B17A82E94C777AB907BA484C1873D2212B47D3539D2694E89A415F1AF047C3045"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "Copyright 2023-2025 \u00A9 The AvaloniaUI Project",
+      "purl": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "externalReferences": [
+        {
+          "url": "https://avaloniaui.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/AvaloniaUI/Avalonia.BuildServices",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/HarfBuzzSharp@8.3.1.3",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "HarfBuzzSharp",
+      "version": "8.3.1.3",
+      "description": "HarfBuzzSharp is a cross-platform OpenType text shaping engine for .NET platforms.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8493B36E88BEEDFC80E12F13E3B986FB1E5560C4C8DF86E672C1CAD24A623FA36ADC9A1A82F566FDA3784F7A2D58975D10273EA65B7BCB119AFC126B11A452C8"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/HarfBuzzSharp@8.3.1.3",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.Linux@8.3.1.3",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "HarfBuzzSharp.NativeAssets.Linux",
+      "version": "8.3.1.3",
+      "description": "HarfBuzzSharp is a cross-platform OpenType text shaping engine for .NET platforms.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "C413A4244F1FCF0CADDD8E039F7E96324CEE45EC0970AAE23FC324BF40A8808C5FCF9E2B386BE5A920F95E37CC2EE03A68D3DD7092FB9091C155E52A729AC8D7"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/HarfBuzzSharp.NativeAssets.Linux@8.3.1.3",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.macOS@8.3.1.3",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "HarfBuzzSharp.NativeAssets.macOS",
+      "version": "8.3.1.3",
+      "description": "HarfBuzzSharp is a cross-platform OpenType text shaping engine for .NET platforms.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "64222E104F945CC284C08FD98FEAA4DBB355B92990EB77858D4179AB6EA112D1E6A127198075E9274745044FD41E99F691C4C68A138DDFD438C5EBDBB0571602"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/HarfBuzzSharp.NativeAssets.macOS@8.3.1.3",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.WebAssembly@8.3.1.3",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "HarfBuzzSharp.NativeAssets.WebAssembly",
+      "version": "8.3.1.3",
+      "description": "HarfBuzzSharp is a cross-platform OpenType text shaping engine for .NET platforms.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "A7991DC993E42EF2E10785D41193CDD731C03C135E8DB4C09CB493A3D364A634A07F47AB035CB63ADA41E643FF089CD461F1AB5844402F4CD30EECD3AD68B200"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/HarfBuzzSharp.NativeAssets.WebAssembly@8.3.1.3",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.Win32@8.3.1.3",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "HarfBuzzSharp.NativeAssets.Win32",
+      "version": "8.3.1.3",
+      "description": "HarfBuzzSharp is a cross-platform OpenType text shaping engine for .NET platforms.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "156AB246A79AEB509672B10C109A1FA29E59B3AD1EB9713AC331E2F11B6BAC4B7A96BCB765A8E2DA4D3F59BB54D5B648E870AEAE4D22543BACA28B17CB046FCF"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/HarfBuzzSharp.NativeAssets.Win32@8.3.1.3",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "authors": [
+        {
+          "name": "MicroCom.Runtime"
+        }
+      ],
+      "name": "MicroCom.Runtime",
+      "version": "0.11.6",
+      "description": "IDL-based COM interop codegen. Consumes MIDL-like IDL file, generates efficient cross-platform C# interop and C\u002B\u002B header files.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6357E26E35BDCC31A1ADB458F1EBA1273026E138865B7F7098CE0CDF29135C317F58AFA0A8C015B64C5B6315CE02C496413BC178BFD726935D8D32AF63F732C1"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "Copyright 2021 \u00A9 Nikita Tsukanov",
+      "purl": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "externalReferences": [
+        {
+          "url": "https://github.com/kekekeks/MicroCom",
+          "type": "vcs"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "Avalonia.HarfBuzz@12.1.0",
+      "dependsOn": [
+        "pkg:nuget/Avalonia.BuildServices@11.3.2",
+        "pkg:nuget/HarfBuzzSharp@8.3.1.3",
+        "pkg:nuget/HarfBuzzSharp.NativeAssets.Linux@8.3.1.3",
+        "pkg:nuget/HarfBuzzSharp.NativeAssets.WebAssembly@8.3.1.3",
+        "pkg:nuget/MicroCom.Runtime@0.11.6"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.Linux@8.3.1.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.macOS@8.3.1.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.WebAssembly@8.3.1.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.Win32@8.3.1.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/HarfBuzzSharp@8.3.1.3",
+      "dependsOn": [
+        "pkg:nuget/HarfBuzzSharp.NativeAssets.Win32@8.3.1.3",
+        "pkg:nuget/HarfBuzzSharp.NativeAssets.macOS@8.3.1.3"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "dependsOn": []
+    }
+  ]
+}

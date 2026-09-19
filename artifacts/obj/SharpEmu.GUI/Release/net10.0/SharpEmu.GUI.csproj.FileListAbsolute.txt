@@ -1,0 +1,14 @@
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\licenses\Apache-2.0.txt
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\SharpEmu.GUI.deps.json
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\SharpEmu.GUI.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.GUI\Release\net10.0\SharpEmu.GUI.csproj.AssemblyReference.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.GUI\Release\net10.0\Avalonia\Resources.Inputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.GUI\Release\net10.0\Avalonia\resources
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.GUI\Release\net10.0\SharpEmu.GUI.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.GUI\Release\net10.0\SharpEmu.GUI.AssemblyInfoInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.GUI\Release\net10.0\SharpEmu.GUI.AssemblyInfo.cs
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.GUI\Release\net10.0\SharpEmu.GUI.csproj.CoreCompileInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.GUI\Release\net10.0\SharpEmu.0F9C6D1E.Up2Date
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.GUI\Release\net10.0\SharpEmu.GUI.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.GUI\Release\net10.0\refint\SharpEmu.GUI.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.GUI\Release\net10.0\ref\SharpEmu.GUI.dll

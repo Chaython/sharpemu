@@ -1,0 +1,11 @@
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\SharpEmu.ShaderCompiler.Vulkan.deps.json
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\SharpEmu.ShaderCompiler.Vulkan.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler.Vulkan\Release\net10.0\SharpEmu.ShaderCompiler.Vulkan.csproj.AssemblyReference.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler.Vulkan\Release\net10.0\SharpEmu.ShaderCompiler.Vulkan.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler.Vulkan\Release\net10.0\SharpEmu.ShaderCompiler.Vulkan.AssemblyInfoInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler.Vulkan\Release\net10.0\SharpEmu.ShaderCompiler.Vulkan.AssemblyInfo.cs
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler.Vulkan\Release\net10.0\SharpEmu.ShaderCompiler.Vulkan.csproj.CoreCompileInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler.Vulkan\Release\net10.0\SharpEmu.3D3D78F9.Up2Date
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler.Vulkan\Release\net10.0\SharpEmu.ShaderCompiler.Vulkan.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler.Vulkan\Release\net10.0\refint\SharpEmu.ShaderCompiler.Vulkan.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.ShaderCompiler.Vulkan\Release\net10.0\ref\SharpEmu.ShaderCompiler.Vulkan.dll

@@ -1,0 +1,11 @@
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\SharpEmu.HLE.deps.json
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\SharpEmu.HLE.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.HLE\Release\net10.0\SharpEmu.HLE.csproj.AssemblyReference.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.HLE\Release\net10.0\SharpEmu.HLE.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.HLE\Release\net10.0\SharpEmu.HLE.AssemblyInfoInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.HLE\Release\net10.0\SharpEmu.HLE.AssemblyInfo.cs
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.HLE\Release\net10.0\SharpEmu.HLE.csproj.CoreCompileInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.HLE\Release\net10.0\SharpEmu.3151D705.Up2Date
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.HLE\Release\net10.0\SharpEmu.HLE.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.HLE\Release\net10.0\refint\SharpEmu.HLE.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.HLE\Release\net10.0\ref\SharpEmu.HLE.dll

@@ -1,0 +1,1065 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Avalonia.FreeDesktop.AtSpi</name>
+    </assembly>
+    <members>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.ApplicationAccessibleHandler">
+            <summary>
+            <see cref="T:Avalonia.FreeDesktop.AtSpi.DBusXml.IOrgA11yAtspiAccessible"/> implementation for <see cref="T:Avalonia.FreeDesktop.AtSpi.ApplicationAtSpiNode"/>.
+            </summary>
+        </member>
+        <member name="M:Avalonia.FreeDesktop.AtSpi.ApplicationAccessibleHandler.#ctor(Avalonia.FreeDesktop.AtSpi.AtSpiServer,Avalonia.FreeDesktop.AtSpi.ApplicationAtSpiNode)">
+            <summary>
+            <see cref="T:Avalonia.FreeDesktop.AtSpi.DBusXml.IOrgA11yAtspiAccessible"/> implementation for <see cref="T:Avalonia.FreeDesktop.AtSpi.ApplicationAtSpiNode"/>.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.ApplicationAtSpiNode">
+            <summary>
+            Synthetic application root node that is not backed by an <see cref="T:Avalonia.Automation.Peers.AutomationPeer"/>.
+            Registered at <c>/org/a11y/atspi/accessible/root</c> and serves as the AT-SPI tree root.
+            </summary>
+        </member>
+        <member name="M:Avalonia.FreeDesktop.AtSpi.ApplicationAtSpiNode.#ctor(System.String)">
+            <summary>
+            Synthetic application root node that is not backed by an <see cref="T:Avalonia.Automation.Peers.AutomationPeer"/>.
+            Registered at <c>/org/a11y/atspi/accessible/root</c> and serves as the AT-SPI tree root.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.ApplicationNodeApplicationHandler">
+            <summary>
+            <see cref="T:Avalonia.FreeDesktop.AtSpi.DBusXml.IOrgA11yAtspiApplication"/> implementation for <see cref="T:Avalonia.FreeDesktop.AtSpi.ApplicationAtSpiNode"/>.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.AtSpiAccessibilityWatcher">
+            <summary>
+            Monitors the session bus to detect whether a screen reader is active.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.AtSpiCacheHandler">
+            <summary>
+            Registers a dummy AT-SPI cache interface at /org/a11y/atspi/cache.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.AtSpiConstants">
+            <summary>
+            Well-known AT-SPI2 D-Bus paths, interface names, and utility methods.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.AtSpiNode">
+            <summary>
+            Represents an element in the AT-SPI tree, backed by an AutomationPeer.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.AtSpiRegistryEventTracker">
+            <summary>
+            Monitors the AT-SPI registry to determine if any screen reader is listening for events.
+            </summary>
+        </member>
+        <member name="P:Avalonia.FreeDesktop.AtSpi.AtSpiRegistryEventTracker.HasEventListeners">
+            <summary>
+            Indicates whether any screen reader is currently listening for object events.
+            Defaults to true (chatty) until registry tracking confirms otherwise.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.AtSpiRole">
+            <summary>
+            AT-SPI2 role IDs
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.AtSpiServer">
+            <summary>
+            Manages the AT-SPI D-Bus connection, node registration, and event emission.
+            </summary>
+        </member>
+        <member name="P:Avalonia.FreeDesktop.AtSpi.AtSpiServer.HasEventListeners">
+            <summary>
+            Indicates whether any screen reader is currently listening for object events.
+            Defaults to true (chatty) until registry tracking confirms otherwise.
+            </summary>
+        </member>
+        <member name="M:Avalonia.FreeDesktop.AtSpi.AtSpiServer.StartAsync">
+            <summary>
+            Starts the AT-SPI server.
+            Must be called on the UI thread.
+            <remarks>
+            Call order in this method is important because
+            AT's are sensitive and/or broken.
+            </remarks>
+            </summary>
+        </member>
+        <member name="M:Avalonia.FreeDesktop.AtSpi.AtSpiServer.AddWindow(Avalonia.Automation.Peers.AutomationPeer)">
+            <summary>
+            Adds a window to the AT-SPI tree.
+            </summary>
+        </member>
+        <member name="M:Avalonia.FreeDesktop.AtSpi.AtSpiServer.RemoveWindow(Avalonia.Automation.Peers.AutomationPeer)">
+            <summary>
+            Removes a window from the AT-SPI tree.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.AtSpiState">
+            <summary>
+            AT-SPI2 state IDs from atspi-constants.h.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiAccessibleHandler">
+            <summary>
+            Implements the AT-SPI Accessible interface for an AutomationPeer-backed node.
+            </summary>
+        </member>
+        <member name="M:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiAccessibleHandler.#ctor(Avalonia.FreeDesktop.AtSpi.AtSpiServer,Avalonia.FreeDesktop.AtSpi.AtSpiNode)">
+            <summary>
+            Implements the AT-SPI Accessible interface for an AutomationPeer-backed node.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiActionHandler">
+            <summary>
+            Implements the AT-SPI Action interface (invoke, toggle, expand/collapse, scroll).
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiActionHandler.ActionEntry">
+            <summary>
+            Describes a single AT-SPI action exposed by a node.
+            </summary>
+        </member>
+        <member name="M:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiActionHandler.ActionEntry.#ctor(System.String,System.String,System.String,System.String)">
+            <summary>
+            Describes a single AT-SPI action exposed by a node.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiCollectionHandler">
+            <summary>
+            Implements the AT-SPI Collection interface for match-based node queries.
+            </summary>
+        </member>
+        <member name="M:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiCollectionHandler.#ctor(Avalonia.FreeDesktop.AtSpi.AtSpiServer,Avalonia.FreeDesktop.AtSpi.AtSpiNode)">
+            <summary>
+            Implements the AT-SPI Collection interface for match-based node queries.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiComponentHandler">
+            <summary>
+            Implements the AT-SPI Component interface (geometry and focus).
+            </summary>
+        </member>
+        <member name="M:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiComponentHandler.#ctor(Avalonia.FreeDesktop.AtSpi.AtSpiServer,Avalonia.FreeDesktop.AtSpi.AtSpiNode)">
+            <summary>
+            Implements the AT-SPI Component interface (geometry and focus).
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiCoordinateHelper">
+            <summary>
+            Coordinate translation utilities between screen, window, and parent frames.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiEditableTextHandler">
+            <summary>
+            Implements the AT-SPI EditableText interface for writable text content.
+            </summary>
+        </member>
+        <member name="M:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiEditableTextHandler.#ctor(Avalonia.FreeDesktop.AtSpi.AtSpiNode)">
+            <summary>
+            Implements the AT-SPI EditableText interface for writable text content.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiEventObjectHandler">
+            <summary>
+            Emits AT-SPI Event.Object signals (children-changed, state-changed, property-change).
+            </summary>
+        </member>
+        <member name="M:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiEventObjectHandler.#ctor(Avalonia.FreeDesktop.AtSpi.AtSpiServer,System.String)">
+            <summary>
+            Emits AT-SPI Event.Object signals (children-changed, state-changed, property-change).
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiEventWindowHandler">
+            <summary>
+            Emits AT-SPI Event.Window signals (activate, deactivate).
+            </summary>
+        </member>
+        <member name="M:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiEventWindowHandler.#ctor(Avalonia.FreeDesktop.AtSpi.AtSpiServer,System.String)">
+            <summary>
+            Emits AT-SPI Event.Window signals (activate, deactivate).
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiImageHandler">
+            <summary>
+            Implements the AT-SPI Image interface for image controls.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiTextHandler">
+            <summary>
+            Implements the AT-SPI Text interface for read-only text content.
+            </summary>
+        </member>
+        <member name="M:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiTextHandler.#ctor(Avalonia.FreeDesktop.AtSpi.AtSpiNode)">
+            <summary>
+            Implements the AT-SPI Text interface for read-only text content.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.Handlers.AtSpiValueHandler">
+            <summary>
+            Implements the AT-SPI Value interface for range-based controls.
+            </summary>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.AtSpi.RootAtSpiNode">
+            <summary>
+            AT-SPI node for a top-level window with coordinate translation support.
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.BuiltInIntrospectionHandler">
+            <summary>
+            Built-in handler for <c>org.freedesktop.DBus.Introspectable</c>.
+            Auto-generates introspection XML from the registered handler keys
+            for the target path, including child sub-paths.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.BuiltInIntrospectionHandler.#ctor(System.Func{System.String,Avalonia.DBus.IntrospectionData})">
+            <summary>
+            Built-in handler for <c>org.freedesktop.DBus.Introspectable</c>.
+            Auto-generates introspection XML from the registered handler keys
+            for the target path, including child sub-paths.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.BuiltInIntrospectionHandler.BoundPath">
+            <summary>
+            The path this handler is bound to.  Set after construction by the
+            registration helper so we can look up our own path.
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.IntrospectionData">
+            <summary>
+            Introspection data resolved for a given object path.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.IntrospectionData.Interfaces">
+            <summary>
+            D-Bus interfaces registered at this exact path.
+            Each entry is (interfaceName, introspection-writer-or-null).
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.IntrospectionData.ChildSegments">
+            <summary>
+            Immediate child path segments (e.g. for path "/org" this might
+            contain "a11y" if "/org/a11y/..." is registered).
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.ChannelsDBusWireConnection">
+            <summary>
+            An <see cref="T:Avalonia.DBus.IDBusWireConnection"/> implementation that exchanges
+            <see cref="T:Avalonia.DBus.DBusSerializedMessage"/> values through channels, assigns
+            request serials, and correlates replies on a background receive loop.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.ChannelsDBusWireConnection.#ctor(System.Threading.Channels.ChannelReader{Avalonia.DBus.DBusSerializedMessage},System.Threading.Channels.ChannelWriter{Avalonia.DBus.DBusSerializedMessage},System.Net.Sockets.Socket,System.Threading.CancellationTokenSource,System.String,System.Boolean)">
+            <summary>
+            Creates a channel-backed wire connection.
+            </summary>
+            <param name="reader">Produces serialized inbound messages.</param>
+            <param name="writer">Consumes serialized outbound messages.</param>
+            <param name="socket">An optional socket to dispose with the connection.</param>
+            <param name="cts">An optional cancellation source controlling the underlying transport tasks.</param>
+            <param name="uniqueName">
+            The bus-assigned unique name for this connection, or <see langword="null"/> for peer-to-peer transports.
+            </param>
+            <param name="isPeerToPeer"><see langword="true"/> when the connection is not attached to a message bus.</param>
+        </member>
+        <member name="M:Avalonia.DBus.ChannelsDBusWireConnection.#ctor(System.Threading.Channels.ChannelReader{Avalonia.DBus.DBusSerializedMessage},System.Threading.Channels.ChannelWriter{Avalonia.DBus.DBusSerializedMessage},System.Net.Sockets.Socket,System.Threading.CancellationTokenSource,System.String,System.Boolean,Avalonia.DBus.IDBusDiagnostics)">
+            <summary>
+            Creates a channel-backed wire connection with diagnostics hooks.
+            </summary>
+            <param name="reader">Produces serialized inbound messages.</param>
+            <param name="writer">Consumes serialized outbound messages.</param>
+            <param name="socket">An optional socket to dispose with the connection.</param>
+            <param name="cts">An optional cancellation source controlling the underlying transport tasks.</param>
+            <param name="uniqueName">
+            The bus-assigned unique name for this connection, or <see langword="null"/> for peer-to-peer transports.
+            </param>
+            <param name="isPeerToPeer"><see langword="true"/> when the connection is not attached to a message bus.</param>
+            <param name="diagnostics">Receives transport warnings such as malformed inbound messages.</param>
+        </member>
+        <member name="P:Avalonia.DBus.ChannelsDBusWireConnection.IsPeerToPeer">
+            <summary>
+            Gets a value indicating whether this connection is peer-to-peer and therefore has no message bus.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.ChannelsDBusWireConnection.ReceivingReader">
+            <summary>
+            Gets the reader for inbound messages that were not matched to a pending reply.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.ChannelsDBusWireConnection.GetUniqueNameAsync">
+            <summary>
+            Returns the bus-assigned unique name supplied at construction time, or <see langword="null"/> for peer-to-peer transports.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.ChannelsDBusWireConnection.SendAsync(Avalonia.DBus.DBusMessage,System.Threading.CancellationToken)">
+            <summary>
+            Serializes and sends a message without waiting for a reply.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.ChannelsDBusWireConnection.SendWithReplyAsync(Avalonia.DBus.DBusMessage,System.Threading.CancellationToken)">
+            <summary>
+            Serializes and sends a message, then waits for a reply whose reply serial matches the request serial.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.ChannelsDBusWireConnection.DisposeAsync">
+            <summary>
+            Stops the receive loop, shuts down the underlying transport, and fails outstanding reply waiters.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusConnection.#ctor(Avalonia.DBus.IDBusWireConnection,Avalonia.DBus.IDBusDiagnostics)">
+            <summary>
+            Creates a connection using the specified wire transport.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusConnection.ConnectAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Connects to a D-Bus address or one of the built-in <c>session</c>/<c>system</c> aliases.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusConnection.ConnectAsync(System.String,Avalonia.DBus.IDBusDiagnostics,System.Threading.CancellationToken)">
+            <summary>
+            Connects to a D-Bus address or one of the built-in <c>session</c>/<c>system</c> aliases.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusConnection.ConnectSessionAsync(System.Threading.CancellationToken)">
+            <summary>
+            Connects to the session bus.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusConnection.ConnectSessionAsync(Avalonia.DBus.IDBusDiagnostics,System.Threading.CancellationToken)">
+            <summary>
+            Connects to the session bus.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusConnection.ConnectSystemAsync(System.Threading.CancellationToken)">
+            <summary>
+            Connects to the system bus.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusConnection.ConnectSystemAsync(Avalonia.DBus.IDBusDiagnostics,System.Threading.CancellationToken)">
+            <summary>
+            Connects to the system bus.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusConnection.RegisterObjects(Avalonia.DBus.DBusObjectPath,System.Collections.Generic.IEnumerable{System.Object},System.Threading.SynchronizationContext)">
+            <summary>
+            Registers all generated D-Bus interfaces implemented by the provided <paramref name="targets"/> at the specified object path.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusConnection.CallMethodAsync(System.String,Avalonia.DBus.DBusObjectPath,System.String,System.String,System.Threading.CancellationToken,System.Object[])">
+            <summary>
+            Calls a method on a remote object and returns the reply.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusConnection.SubscribeAsync(System.String,System.Nullable{Avalonia.DBus.DBusObjectPath},System.String,System.String,System.Func{Avalonia.DBus.DBusMessage,System.Threading.Tasks.Task},System.Threading.SynchronizationContext)">
+            <summary>
+            Subscribes to signals matching the specified criteria.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusConnection.DisposeAsync">
+            <summary>
+            Closes the connection and releases resources.
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.DBusException">
+            <summary>
+            Exception thrown when a D-Bus method call returns an ERROR message.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusException.ErrorName">
+            <summary>
+            The D-Bus error name (e.g., "org.freedesktop.DBus.Error.ServiceUnknown").
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusException.ErrorReply">
+            <summary>
+            The original ERROR message, if available.
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.DBusMessage">
+            <summary>
+            A pure managed class representing a D-Bus message.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusMessage.Type">
+            <summary>
+            The message type.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusMessage.Flags">
+            <summary>
+            Message flags.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusMessage.Serial">
+            <summary>
+            Message serial number. Assigned by the connection when sent.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusMessage.ReplySerial">
+            <summary>
+            For METHOD_RETURN and ERROR: the serial of the METHOD_CALL being replied to.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusMessage.Path">
+            <summary>
+            Object path (for METHOD_CALL and SIGNAL).
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusMessage.Interface">
+            <summary>
+            Interface name.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusMessage.Member">
+            <summary>
+            Method or signal name.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusMessage.ErrorName">
+            <summary>
+            Error name (for ERROR messages).
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusMessage.Destination">
+            <summary>
+            Destination bus name.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusMessage.Sender">
+            <summary>
+            Sender's unique bus name. Set by the message bus.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusMessage.Signature">
+            <summary>
+            Type signature of the message body. Computed from Body contents.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusMessage.Body">
+            <summary>
+            Message body as a list of typed values.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusMessage.CreateMethodCall(System.String,Avalonia.DBus.DBusObjectPath,System.String,System.String,System.Object[])">
+            <summary>
+            Creates a METHOD_CALL message.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusMessage.CreateSignal(Avalonia.DBus.DBusObjectPath,System.String,System.String,System.Object[])">
+            <summary>
+            Creates a SIGNAL message.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusMessage.CreateReply(System.Object[])">
+            <summary>
+            Creates a METHOD_RETURN message in reply to this message.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusMessage.CreateReplyWithSignature(System.String,System.Object[])">
+            <summary>
+            Creates a METHOD_RETURN message with an explicit D-Bus body signature.
+            Use when the signature is known at compile time to avoid inference failures on empty arrays.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusMessage.CreateSignalWithSignature(Avalonia.DBus.DBusObjectPath,System.String,System.String,System.String,System.Object[])">
+            <summary>
+            Creates a SIGNAL message with an explicit D-Bus body signature.
+            Use when the signature is known at compile time to avoid inference failures on empty arrays.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusMessage.CreateError(System.String,System.String)">
+            <summary>
+            Creates an ERROR message in reply to this message.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusMessage.IsMethodCall(System.String,System.String)">
+            <summary>
+            Returns true if this is a METHOD_CALL for the specified interface and member.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusMessage.IsSignal(System.String,System.String)">
+            <summary>
+            Returns true if this is a SIGNAL for the specified interface and member.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusMessage.IsError(System.String)">
+            <summary>
+            Returns true if this is an ERROR with the specified error name.
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.DBusObjectPath">
+            <summary>
+            Represents a D-Bus object path.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusObjectPath.#ctor(System.String)">
+            <summary>
+            Represents a D-Bus object path.
+            </summary>
+        </member>
+        <member name="F:Avalonia.DBus.DBusRequestNameFlags.AllowReplacement">
+            <summary>
+            Allow other connections to take over this name.
+            </summary>
+        </member>
+        <member name="F:Avalonia.DBus.DBusRequestNameFlags.ReplaceExisting">
+            <summary>
+            Try to take over the name from the current owner.
+            </summary>
+        </member>
+        <member name="F:Avalonia.DBus.DBusRequestNameFlags.DoNotQueue">
+            <summary>
+            Don't queue for the name if it's already owned.
+            </summary>
+        </member>
+        <member name="F:Avalonia.DBus.DBusRequestNameReply.PrimaryOwner">
+            <summary>
+            The caller is now the primary owner of the name.
+            </summary>
+        </member>
+        <member name="F:Avalonia.DBus.DBusRequestNameReply.InQueue">
+            <summary>
+            The caller is in the queue to own the name.
+            </summary>
+        </member>
+        <member name="F:Avalonia.DBus.DBusRequestNameReply.Exists">
+            <summary>
+            The name already has an owner and DoNotQueue was specified.
+            </summary>
+        </member>
+        <member name="F:Avalonia.DBus.DBusRequestNameReply.AlreadyOwner">
+            <summary>
+            The caller already owns the name.
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.DBusSerializedMessage">
+            <summary>
+            Represents a D-Bus message in wire format together with any ancillary Unix file descriptors
+            that were transported outside the byte payload.
+            </summary>
+            <param name="Message">The serialized D-Bus message bytes, including the header and body.</param>
+            <param name="Fds">Ancillary Unix file descriptors referenced by the serialized payload.</param>
+        </member>
+        <member name="M:Avalonia.DBus.DBusSerializedMessage.#ctor(System.Byte[],System.Int32[])">
+            <summary>
+            Represents a D-Bus message in wire format together with any ancillary Unix file descriptors
+            that were transported outside the byte payload.
+            </summary>
+            <param name="Message">The serialized D-Bus message bytes, including the header and body.</param>
+            <param name="Fds">Ancillary Unix file descriptors referenced by the serialized payload.</param>
+        </member>
+        <member name="P:Avalonia.DBus.DBusSerializedMessage.Message">
+            <summary>The serialized D-Bus message bytes, including the header and body.</summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusSerializedMessage.Fds">
+            <summary>Ancillary Unix file descriptors referenced by the serialized payload.</summary>
+        </member>
+        <member name="T:Avalonia.DBus.DBusSignature">
+            <summary>
+            Represents a D-Bus type signature.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusSignature.#ctor(System.String)">
+            <summary>
+            Represents a D-Bus type signature.
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.DBusStruct">
+            <summary>
+            Represents a D-Bus struct (sequence of typed fields).
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusStruct.#ctor(System.Collections.Generic.IEnumerable{System.Object})">
+            <summary>
+            Represents a D-Bus struct (sequence of typed fields).
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.DBusUnixFd">
+            <summary>
+            Represents a Unix file descriptor passed over D-Bus.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusUnixFd.#ctor(System.Int32)">
+            <summary>
+            Represents a Unix file descriptor passed over D-Bus.
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.DBusVariant">
+            <summary>
+            Represents a D-Bus variant (dynamically typed value).
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusVariant.Signature">
+            <summary>
+            The D-Bus type signature of the contained value.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.DBusVariant.Value">
+            <summary>
+            The contained value.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusVariant.#ctor(System.Object)">
+            <summary>
+            Creates a variant with an inferred signature based on the value's .NET type.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusVariant.#ctor(System.Object,System.String)">
+            <summary>
+            Creates a variant with an explicit D-Bus signature, bypassing inference.
+            Use when the signature is known at compile time to avoid inference failures on empty arrays.
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.IDBusMessageSerializer">
+            <summary>
+            Converts between logical <see cref="T:Avalonia.DBus.DBusMessage"/> instances and serialized D-Bus wire payloads.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.IDBusMessageSerializer.Serialize(Avalonia.DBus.DBusMessage)">
+            <summary>
+            Serializes a message into D-Bus wire bytes plus any ancillary Unix file descriptors.
+            </summary>
+            <param name="message">The message to serialize.</param>
+            <returns>The serialized payload for <paramref name="message"/>.</returns>
+        </member>
+        <member name="M:Avalonia.DBus.IDBusMessageSerializer.Deserialize(Avalonia.DBus.DBusSerializedMessage)">
+            <summary>
+            Deserializes a wire payload and its ancillary Unix file descriptors into a logical D-Bus message.
+            </summary>
+            <param name="serialized">The serialized message payload to deserialize.</param>
+            <returns>The deserialized message.</returns>
+        </member>
+        <member name="T:Avalonia.DBus.IDBusStructConvertible">
+            <summary>
+            Represents a value that can be converted to a D-Bus struct payload.
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.IDBusWireConnection">
+            <summary>
+            Abstraction for low-level D-Bus message transport.
+            Implement this interface to provide a custom transport (e.g., named pipes, TCP).
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.IDBusWireConnection.SendAsync(Avalonia.DBus.DBusMessage,System.Threading.CancellationToken)">
+            <summary>
+            Sends a message without waiting for a reply.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.IDBusWireConnection.SendWithReplyAsync(Avalonia.DBus.DBusMessage,System.Threading.CancellationToken)">
+            <summary>
+            Sends a message and waits for a reply.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.IDBusWireConnection.ReceivingReader">
+            <summary>
+            Reader for incoming messages (METHOD_CALL, SIGNAL, etc.).
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.IDBusWireConnection.GetUniqueNameAsync">
+            <summary>
+            The unique name assigned by the message bus (e.g., ":1.42").
+            Null if not connected to a message bus or in peer-to-peer mode.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.IDBusWireConnection.IsPeerToPeer">
+            <summary>
+            Returns true if this connection is peer-to-peer (no message bus).
+            When true, AddMatch/RemoveMatch bus methods are skipped.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusMessageMarshaler.AppendValueWithSignature(Avalonia.DBus.Native.DBusMessageIter@,System.Object,System.String)">
+            <summary>
+            Appends a value using a known D-Bus signature to guide array/dict serialization.
+            Falls back to inference-based AppendValue for non-container types.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusMessageMarshaler.AppendArrayWithSignature(Avalonia.DBus.Native.DBusMessageIter@,System.Object,System.String)">
+            <summary>
+            Appends an array using a known element signature, avoiding inference on the value.
+            This handles empty arrays of struct types correctly.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.DBusMessageMarshaler.AppendDictWithSignature(Avalonia.DBus.Native.DBusMessageIter@,System.Object,System.String)">
+            <summary>
+            Appends a dictionary using a known entry signature, avoiding inference on the value.
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.LibDBusWireConnection">
+            <summary>
+            A libdbus-backed <see cref="T:Avalonia.DBus.IDBusWireConnection"/> implementation.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.LibDBusWireConnection.ConnectAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Connects to a D-Bus address or one of the built-in <c>session</c>/<c>system</c> aliases.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.LibDBusWireConnection.ConnectSessionAsync(System.Threading.CancellationToken)">
+            <summary>
+            Connects to the session bus.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.LibDBusWireConnection.ConnectSystemAsync(System.Threading.CancellationToken)">
+            <summary>
+            Connects to the system bus.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.LibDBusWireConnection.GetUniqueNameAsync">
+            <summary>
+            The unique name assigned by the message bus (e.g., ":1.42").
+            Null if the connection is not attached to a message bus.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.LibDBusWireConnection.SendAsync(Avalonia.DBus.DBusMessage,System.Threading.CancellationToken)">
+            <summary>
+            Sends a message without waiting for a reply.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.LibDBusWireConnection.SendWithReplyAsync(Avalonia.DBus.DBusMessage,System.Threading.CancellationToken)">
+            <summary>
+            Sends a message and waits for a reply.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.LibDBusWireConnection.ReceivingReader">
+            <summary>
+            Reader for incoming messages (METHOD_CALL, SIGNAL, etc.).
+            Used by higher-level connection workers.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.LibDBusWireConnection.DisposeAsync">
+            <summary>
+            Closes the connection and releases resources.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.LibDBusWireWorker.LogOrTrace(System.String)">
+            <summary>
+            Logs a message that should never be silently lost. Uses diagnostics if available,
+            otherwise falls back to stderr so errors are always observable.
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.Managed.DBusWireReader">
+            <summary>
+            Reads CLR primitives from D-Bus wire format bytes.
+            This is the deserialize half of the managed marshaller — the inverse of <see cref="T:Avalonia.DBus.Managed.DBusWireWriter"/>.
+            Supports both little-endian and big-endian byte order.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.#ctor(System.Byte[],System.Boolean)">
+            <summary>
+            Creates a new reader over the given byte array.
+            </summary>
+            <param name="data">The raw bytes to read from.</param>
+            <param name="bigEndian">If true, reads multi-byte values as big-endian; otherwise little-endian.</param>
+        </member>
+        <member name="P:Avalonia.DBus.Managed.DBusWireReader.Position">
+            <summary>
+            Gets or sets the current read position.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.Managed.DBusWireReader.Length">
+            <summary>
+            Total buffer length.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.ReadByte">
+            <summary>
+            Reads a single byte. No alignment required.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.ReadBoolean">
+            <summary>
+            Reads a boolean from a uint32 (4-byte aligned). Returns true if non-zero.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.ReadInt16">
+            <summary>
+            Reads a 2-byte aligned signed 16-bit integer using the configured byte order.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.ReadUInt16">
+            <summary>
+            Reads a 2-byte aligned unsigned 16-bit integer using the configured byte order.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.ReadInt32">
+            <summary>
+            Reads a 4-byte aligned signed 32-bit integer using the configured byte order.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.ReadUInt32">
+            <summary>
+            Reads a 4-byte aligned unsigned 32-bit integer using the configured byte order.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.ReadInt64">
+            <summary>
+            Reads an 8-byte aligned signed 64-bit integer using the configured byte order.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.ReadUInt64">
+            <summary>
+            Reads an 8-byte aligned unsigned 64-bit integer using the configured byte order.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.ReadDouble">
+            <summary>
+            Reads an 8-byte aligned IEEE 754 double using the configured byte order.
+            Reads as int64 and converts via <see cref="M:System.BitConverter.Int64BitsToDouble(System.Int64)"/>.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.ReadString">
+            <summary>
+            Reads a D-Bus STRING: uint32 length prefix (4-byte aligned), UTF-8 bytes, null terminator.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.ReadObjectPath">
+            <summary>
+            Reads a D-Bus OBJECT_PATH: same wire format as STRING.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.ReadSignature">
+            <summary>
+            Reads a D-Bus SIGNATURE: byte length prefix (NOT uint32), ASCII bytes, null terminator.
+            No alignment padding.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.ReadPad(System.Int32)">
+            <summary>
+            Advances the read position to the next multiple of the specified alignment.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireReader.ReadNull">
+            <summary>
+            Reads and verifies a single zero byte (null terminator).
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.Managed.DBusWireWriter">
+            <summary>
+            Writes CLR primitives into D-Bus wire format bytes (little-endian).
+            This is the serialize half of the managed marshaller.
+            </summary>
+        </member>
+        <member name="P:Avalonia.DBus.Managed.DBusWireWriter.Position">
+            <summary>
+            Gets the current write position in the stream.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.SetPosition(System.Int64)">
+            <summary>
+            Seeks to the specified position. Used for backpatching array lengths.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.ToArray">
+            <summary>
+            Returns all written bytes as a byte array.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.WriteByte(System.Byte)">
+            <summary>
+            Writes a single byte. No alignment required.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.WriteBoolean(System.Boolean)">
+            <summary>
+            Writes a boolean as a uint32 (0 or 1), 4-byte aligned.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.WriteInt16(System.Int16)">
+            <summary>
+            Writes a signed 16-bit integer, 2-byte aligned, little-endian.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.WriteUInt16(System.UInt16)">
+            <summary>
+            Writes an unsigned 16-bit integer, 2-byte aligned, little-endian.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.WriteInt32(System.Int32)">
+            <summary>
+            Writes a signed 32-bit integer, 4-byte aligned, little-endian.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.WriteUInt32(System.UInt32)">
+            <summary>
+            Writes an unsigned 32-bit integer, 4-byte aligned, little-endian.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.WriteInt64(System.Int64)">
+            <summary>
+            Writes a signed 64-bit integer, 8-byte aligned, little-endian.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.WriteUInt64(System.UInt64)">
+            <summary>
+            Writes an unsigned 64-bit integer, 8-byte aligned, little-endian.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.WriteDouble(System.Double)">
+            <summary>
+            Writes a double as 8 bytes, 8-byte aligned, little-endian.
+            Uses BitConverter.DoubleToInt64Bits then writes as int64.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.WriteString(System.String)">
+            <summary>
+            Writes a D-Bus STRING: 4-byte aligned uint32 length prefix, UTF-8 bytes, null terminator.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.WriteObjectPath(System.String)">
+            <summary>
+            Writes a D-Bus OBJECT_PATH: same wire format as STRING.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.WriteSignature(System.String)">
+            <summary>
+            Writes a D-Bus SIGNATURE: byte length prefix (NOT uint32), ASCII bytes, null terminator.
+            No alignment padding.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.WritePad(System.Int32)">
+            <summary>
+            Advances the write position to the next multiple of the specified alignment,
+            writing zero bytes for padding.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Managed.DBusWireWriter.WriteNull">
+            <summary>
+            Writes a single zero byte.
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.Managed.ManagedDBusMessageSerializer">
+            <summary>
+            Converts between <see cref="T:Avalonia.DBus.DBusMessage"/> and <see cref="T:Avalonia.DBus.DBusSerializedMessage"/>
+            using the managed <see cref="T:Avalonia.DBus.Managed.DBusWireWriter"/> and <see cref="T:Avalonia.DBus.Managed.DBusWireReader"/>.
+            Serialization emits little-endian D-Bus messages; deserialization accepts either D-Bus byte order.
+            </summary>
+        </member>
+        <member name="T:Avalonia.DBus.ReceivedUnixFdCloser">
+            <summary>
+            Closes Unix file descriptors carried by a received D-Bus message.
+            </summary> 
+        </member>
+        <member name="T:Avalonia.DBus.Transport.DBusTransport">
+            <summary>
+            Provides factory methods for bridging connected stream sockets to raw D-Bus wire framing.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Transport.DBusTransport.FromSocket(System.Net.Sockets.Socket)">
+            <summary>
+            Bridges a connected <see cref="T:System.Net.Sockets.Socket"/> to a pair of channels carrying
+            <see cref="T:Avalonia.DBus.DBusSerializedMessage"/> using D-Bus wire framing.
+            </summary>
+            <param name="socket">Any already-connected stream socket supplied by the caller.</param>
+            <returns>
+            A 5-tuple of (Reader, Writer, Cts, ReaderTask, WriterTask) where:
+            <list type="bullet">
+              <item><c>Reader</c> — read D-Bus messages arriving on the socket</item>
+              <item><c>Writer</c> — write D-Bus messages to send over the socket</item>
+              <item><c>Cts</c> — the <see cref="T:System.Threading.CancellationTokenSource"/> controlling the background tasks</item>
+              <item><c>ReaderTask</c> — the background task reading from the socket</item>
+              <item><c>WriterTask</c> — the background task writing to the socket</item>
+            </list>
+            This helper transports only the inline D-Bus message bytes.
+            Inbound ancillary Unix file descriptors are not reconstructed on the returned reader,
+            and outbound file descriptors are logged and dropped by the writer path.
+            </returns>
+        </member>
+        <member name="M:Avalonia.DBus.Transport.DBusTransport.FromSocket(System.Net.Sockets.Socket,Avalonia.DBus.IDBusDiagnostics)">
+            <summary>
+            Bridges a connected <see cref="T:System.Net.Sockets.Socket"/> to a pair of channels carrying
+            <see cref="T:Avalonia.DBus.DBusSerializedMessage"/> using D-Bus wire framing.
+            </summary>
+            <param name="socket">Any already-connected stream socket supplied by the caller.</param>
+            <param name="diagnostics">Receives warnings and unobserved background task failures from the transport.</param>
+            <returns>
+            A 5-tuple of (Reader, Writer, Cts, ReaderTask, WriterTask) where:
+            <list type="bullet">
+              <item><c>Reader</c> reads D-Bus messages arriving on the socket.</item>
+              <item><c>Writer</c> writes D-Bus messages to send over the socket.</item>
+              <item><c>Cts</c> controls the background reader and writer tasks.</item>
+              <item><c>ReaderTask</c> is the background task reading from the socket.</item>
+              <item><c>WriterTask</c> is the background task writing to the socket.</item>
+            </list>
+            This helper transports only the inline D-Bus message bytes.<br/><br/>
+            For now, inbound ancillary Unix file descriptors are not reconstructed on the returned reader,
+            and outbound file descriptors are logged and dropped by the writer path.
+            </returns>
+        </member>
+        <member name="M:Avalonia.DBus.Transport.DBusTransport.ConnectUnix(System.String)">
+            <summary>
+            Convenience helper that opens a Unix domain stream socket and returns a
+            peer-to-peer <see cref="T:Avalonia.DBus.ChannelsDBusWireConnection"/> using raw D-Bus wire framing over it.
+            This helper does not perform D-Bus authentication or the bus <c>Hello</c> exchange.
+            </summary>
+            <param name="socketPath">The file-system path of the Unix domain socket.</param>
+            <returns>A <see cref="T:Avalonia.DBus.ChannelsDBusWireConnection"/> connected to the socket.</returns>
+        </member>
+        <member name="M:Avalonia.DBus.Transport.DBusTransport.ConnectUnix(System.String,Avalonia.DBus.IDBusDiagnostics)">
+            <summary>
+            Convenience helper that opens a Unix domain stream socket and returns a
+            peer-to-peer <see cref="T:Avalonia.DBus.ChannelsDBusWireConnection"/> using raw D-Bus wire framing over it.
+            This helper does not perform D-Bus authentication or the bus <c>Hello</c> exchange.
+            </summary>
+            <param name="socketPath">The file-system path of the Unix domain socket.</param>
+            <param name="diagnostics">Receives warnings and unobserved background task failures from the transport.</param>
+            <returns>A <see cref="T:Avalonia.DBus.ChannelsDBusWireConnection"/> connected to the socket.</returns>
+        </member>
+        <member name="M:Avalonia.DBus.Transport.DBusTransport.ConnectUnixAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Async convenience helper that opens a Unix domain stream socket and returns a
+            peer-to-peer <see cref="T:Avalonia.DBus.ChannelsDBusWireConnection"/> using raw D-Bus wire framing over it.
+            The connect is performed asynchronously, allowing the kernel to queue the request
+            until the server's accept loop is ready.
+            </summary>
+            <param name="socketPath">The file-system path of the Unix domain socket.</param>
+            <param name="cancellationToken">Token to cancel the connect attempt.</param>
+            <returns>A <see cref="T:Avalonia.DBus.ChannelsDBusWireConnection"/> connected to the socket.</returns>
+        </member>
+        <member name="M:Avalonia.DBus.Transport.DBusTransport.ConnectUnixAsync(System.String,Avalonia.DBus.IDBusDiagnostics,System.Threading.CancellationToken)">
+            <summary>
+            Async convenience helper that opens a Unix domain stream socket and returns a
+            peer-to-peer <see cref="T:Avalonia.DBus.ChannelsDBusWireConnection"/> using raw D-Bus wire framing over it.
+            The connect is performed asynchronously, allowing the kernel to queue the request
+            until the server's accept loop is ready.
+            </summary>
+            <param name="socketPath">The file-system path of the Unix domain socket.</param>
+            <param name="diagnostics">Receives warnings and unobserved background task failures from the transport.</param>
+            <param name="cancellationToken">Token to cancel the connect attempt.</param>
+            <returns>A <see cref="T:Avalonia.DBus.ChannelsDBusWireConnection"/> connected to the socket.</returns>
+        </member>
+        <member name="T:Avalonia.DBus.Transport.UnixSocketDBusTransport">
+            <summary>
+            Internal helper that pumps serialized D-Bus messages between a connected
+            <see cref="T:System.Net.Sockets.Socket"/> and channel-based transport endpoints.
+            This managed socket transport does not transfer ancillary Unix file descriptors.
+            </summary>
+        </member>
+        <member name="F:Avalonia.DBus.Transport.UnixSocketDBusTransport.MaxMessageLength">
+            <summary>
+            Maximum accepted message size in bytes. Totals above 128 MiB are rejected.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Transport.UnixSocketDBusTransport.StartReaderAsync(System.Net.Sockets.Socket,System.Threading.Channels.ChannelWriter{Avalonia.DBus.DBusSerializedMessage},System.Threading.CancellationToken,Avalonia.DBus.IDBusDiagnostics)">
+            <summary>
+            Starts a background reader task that reads D-Bus messages from the socket
+            and writes them to the inbound channel.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Transport.UnixSocketDBusTransport.StartWriterAsync(System.Net.Sockets.Socket,System.Threading.Channels.ChannelReader{Avalonia.DBus.DBusSerializedMessage},System.Threading.CancellationToken,Avalonia.DBus.IDBusDiagnostics)">
+            <summary>
+            Starts a background writer task that reads messages from the outbound channel
+            and sends them to the socket.
+            </summary>
+        </member>
+        <member name="M:Avalonia.DBus.Transport.UnixSocketDBusTransport.ReadExactAsync(System.Net.Sockets.Socket,System.Memory{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Reads exactly <paramref name="buffer"/>.Length bytes from the socket,
+            handling partial reads.
+            </summary>
+        </member>
+    </members>
+</doc>

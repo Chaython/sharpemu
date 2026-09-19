@@ -1,0 +1,255 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Avalonia.Headless</name>
+    </assembly>
+    <members>
+        <member name="M:Avalonia.Headless.AvaloniaHeadlessPlatform.ForceRenderTimerTick(System.Int32)">
+            <summary>
+            Forces renderer to process a rendering timer tick.
+            Use this method before calling <see cref="M:Avalonia.Headless.HeadlessWindowExtensions.GetLastRenderedFrame(Avalonia.Controls.TopLevel)"/>. 
+            </summary>
+            <param name="count">Count of frames to be ticked on the timer.</param>
+        </member>
+        <member name="T:Avalonia.Headless.AvaloniaHeadlessPlatformOptions">
+            <summary>
+            Options for configuring the Avalonia headless platform.
+            </summary>
+        </member>
+        <member name="P:Avalonia.Headless.AvaloniaHeadlessPlatformOptions.Fps">
+            <summary>
+            Gets or sets the number of frames per second at which the renderer should run.
+            Default 60.
+            </summary>
+        </member>
+        <member name="P:Avalonia.Headless.AvaloniaHeadlessPlatformOptions.ShouldRenderOnUIThread">
+            <summary>
+            Render directly on the UI thread instead of using a dedicated render thread.
+            This can be usable if your device doesn't have multiple cores to begin with.
+            This setting is false by default.
+            </summary>
+        </member>
+        <member name="P:Avalonia.Headless.AvaloniaHeadlessPlatformOptions.UseHeadlessDrawing">
+            <summary>
+            Gets or sets a value indicating whether to use headless drawing mode, which allows rendering without creating an actual window.
+            </summary>
+            <remarks>
+            Disable this option if you are using Avalonia.Skia or another drawing backend.
+            </remarks>
+        </member>
+        <member name="P:Avalonia.Headless.AvaloniaHeadlessPlatformOptions.FrameBufferFormat">
+            <summary>
+            Gets or sets the pixel format to be used for the headless Window framebuffers.
+            </summary>
+        </member>
+        <member name="T:Avalonia.Headless.AvaloniaTestApplicationAttribute">
+            <summary>
+            Sets up global avalonia test framework using avalonia application builder passed as a parameter.
+            </summary>
+        </member>
+        <member name="M:Avalonia.Headless.AvaloniaTestApplicationAttribute.#ctor(System.Type)">
+            <summary>
+            Creates instance of <see cref="T:Avalonia.Headless.AvaloniaTestApplicationAttribute"/>. 
+            </summary>
+            <param name="appBuilderEntryPointType">
+            Parameter from which <see cref="T:Avalonia.AppBuilder"/> should be created.
+            It either needs to have BuildAvaloniaApp -> AppBuilder method or inherit Application.
+            </param>
+        </member>
+        <member name="T:Avalonia.Headless.HeadlessRenderTimer">
+            <summary>
+            A render timer implementation for headless environments that uses a DispatcherTimer to schedule ticks on the UI thread.
+            Can be controlled with <see cref="M:Avalonia.Headless.HeadlessRenderTimer.ForceTick"/> method. 
+            </summary>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessRenderTimer.#ctor(System.Int32)">
+            <summary>
+            A render timer implementation for headless environments that uses a DispatcherTimer to schedule ticks on the UI thread.
+            Can be controlled with <see cref="M:Avalonia.Headless.HeadlessRenderTimer.ForceTick"/> method. 
+            </summary>
+        </member>
+        <member name="T:Avalonia.Headless.AvaloniaTestIsolationLevel">
+            <summary>
+            Defines the isolation level for headless unit tests,
+            controlling how <see cref="T:Avalonia.Application"/> and its
+            associated <see cref="T:Avalonia.Threading.Dispatcher"/> are managed
+            between test runs.
+            </summary>
+        </member>
+        <member name="F:Avalonia.Headless.AvaloniaTestIsolationLevel.PerAssembly">
+            <summary>
+            Reuses a single <see cref="T:Avalonia.Application"/> and <see cref="T:Avalonia.Threading.Dispatcher"/>
+            instance across all tests within the assembly.
+            </summary>
+            <remarks>
+            Tests must not rely on any global or persistent state that could leak between runs.
+            Headless framework won't dispose any resources after tests when using this mode.
+            </remarks>
+        </member>
+        <member name="F:Avalonia.Headless.AvaloniaTestIsolationLevel.PerTest">
+            <summary>
+            Recreates the <see cref="T:Avalonia.Application"/> and  <see cref="T:Avalonia.Threading.Dispatcher"/>
+            for each individual test method.
+            </summary>
+            <remarks>
+            This mode ensures complete test isolation, and should be used for tests that modify global
+            application state or rely on a clean dispatcher environment.
+            This is the default isolation level if none is specified.
+            </remarks>
+        </member>
+        <member name="T:Avalonia.Headless.AvaloniaTestIsolationAttribute">
+            <summary>
+            Specifies how headless unit tests should be isolated from each other,
+            defining when the test runtime should recreate the
+            <see cref="T:Avalonia.Application"/> and <see cref="T:Avalonia.Threading.Dispatcher"/> instances.
+            </summary>
+        </member>
+        <member name="M:Avalonia.Headless.AvaloniaTestIsolationAttribute.#ctor(Avalonia.Headless.AvaloniaTestIsolationLevel)">
+            <summary>
+            Specifies how headless unit tests should be isolated from each other,
+            defining when the test runtime should recreate the
+            <see cref="T:Avalonia.Application"/> and <see cref="T:Avalonia.Threading.Dispatcher"/> instances.
+            </summary>
+        </member>
+        <member name="P:Avalonia.Headless.AvaloniaTestIsolationAttribute.IsolationLevel">
+            <summary>
+            Gets the isolation level for headless tests.
+            </summary>
+        </member>
+        <member name="T:Avalonia.Headless.HeadlessUnitTestSession">
+            <summary>
+            Headless unit test session that needs to be used by the actual testing framework.
+            All UI tests are supposed to be executed from one of the <see cref="M:Avalonia.Headless.HeadlessUnitTestSession.Dispatch(System.Action,System.Threading.CancellationToken)"/> methods to keep execution flow on the UI thread.
+            Disposing unit test session stops internal dispatcher loop.
+            </summary>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessUnitTestSession.Dispatch(System.Action,System.Threading.CancellationToken)">
+            <inheritdoc cref="M:Avalonia.Headless.HeadlessUnitTestSession.DispatchCore``1(System.Func{System.Threading.Tasks.Task{``0}},System.Boolean,System.Threading.CancellationToken)"/>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessUnitTestSession.Dispatch``1(System.Func{``0},System.Threading.CancellationToken)">
+            <inheritdoc cref="M:Avalonia.Headless.HeadlessUnitTestSession.DispatchCore``1(System.Func{System.Threading.Tasks.Task{``0}},System.Boolean,System.Threading.CancellationToken)"/>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessUnitTestSession.Dispatch``1(System.Func{System.Threading.Tasks.Task{``0}},System.Threading.CancellationToken)">
+            <inheritdoc cref="M:Avalonia.Headless.HeadlessUnitTestSession.DispatchCore``1(System.Func{System.Threading.Tasks.Task{``0}},System.Boolean,System.Threading.CancellationToken)"/>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessUnitTestSession.DispatchCore``1(System.Func{System.Threading.Tasks.Task{``0}},System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Dispatch method queues an async operation on the dispatcher thread, creates a new application instance,
+            setting app avalonia services, and runs <paramref name="action"/> parameter.
+            </summary>
+            <param name="action">Action to execute on the dispatcher thread with avalonia services.</param>
+            <param name="captureExecutionContext">Whether dispatch should capture ExecutionContext.</param>
+            <param name="cancellationToken">Cancellation token to cancel execution.</param>
+            <exception cref="T:System.ObjectDisposedException">
+            If global session was already cancelled and thread killed, it's not possible to dispatch any actions again
+            </exception>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessUnitTestSession.StartNew(System.Type)">
+            <summary>
+            Creates instance of <see cref="T:Avalonia.Headless.HeadlessUnitTestSession"/>.
+            </summary>
+            <param name="entryPointType">
+            Parameter from which <see cref="T:Avalonia.AppBuilder"/> should be created.
+            It either needs to have BuildAvaloniaApp -> AppBuilder method or inherit Application.
+            </param>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessUnitTestSession.StartNew(System.Type,Avalonia.Headless.AvaloniaTestIsolationLevel)">
+            <summary>
+            Creates instance of <see cref="T:Avalonia.Headless.HeadlessUnitTestSession"/>.
+            </summary>
+            <param name="entryPointType">
+            Parameter from which <see cref="T:Avalonia.AppBuilder"/> should be created.
+            It either needs to have BuildAvaloniaApp -> AppBuilder method or inherit Application.
+            </param>
+            <param name="isolationLevel">Defines the isolation level for headless unit tests</param>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessUnitTestSession.GetOrStartForAssembly(System.Reflection.Assembly)">
+            <summary>
+            Creates a session from AvaloniaTestApplicationAttribute attribute or reuses any existing.
+            If AvaloniaTestApplicationAttribute doesn't exist, empty application is used.
+            </summary>
+        </member>
+        <member name="T:Avalonia.Headless.HeadlessWindowExtensions">
+            <summary>
+            Set of extension methods to simplify usage of Avalonia.Headless platform.
+            </summary>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessWindowExtensions.CaptureRenderedFrame(Avalonia.Controls.TopLevel)">
+            <summary>
+            Triggers a renderer timer tick and captures last rendered frame.
+            </summary>
+            <returns>Bitmap with last rendered frame. Null, if nothing was rendered.</returns>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessWindowExtensions.GetLastRenderedFrame(Avalonia.Controls.TopLevel)">
+            <summary>
+            Reads last rendered frame.
+            Note, in order to trigger rendering timer, call <see cref="M:Avalonia.Headless.AvaloniaHeadlessPlatform.ForceRenderTimerTick(System.Int32)"/> method.  
+            </summary>
+            <returns>Bitmap with last rendered frame. Null, if nothing was rendered.</returns>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessWindowExtensions.KeyPress(Avalonia.Controls.TopLevel,Avalonia.Input.Key,Avalonia.Input.RawInputModifiers,Avalonia.Input.PhysicalKey,System.String)">
+            <summary>
+            Simulates keyboard press on the headless window/toplevel.
+            </summary>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessWindowExtensions.KeyPressQwerty(Avalonia.Controls.TopLevel,Avalonia.Input.PhysicalKey,Avalonia.Input.RawInputModifiers)">
+            <summary>
+            Simulates keyboard press on the headless window/toplevel, as if typed on a QWERTY keyboard.
+            </summary>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessWindowExtensions.KeyRelease(Avalonia.Controls.TopLevel,Avalonia.Input.Key,Avalonia.Input.RawInputModifiers,Avalonia.Input.PhysicalKey,System.String)">
+            <summary>
+            Simulates keyboard release on the headless window/toplevel.
+            </summary>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessWindowExtensions.KeyReleaseQwerty(Avalonia.Controls.TopLevel,Avalonia.Input.PhysicalKey,Avalonia.Input.RawInputModifiers)">
+            <summary>
+            Simulates keyboard release on the headless window/toplevel, as if typed on a QWERTY keyboard.
+            </summary>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessWindowExtensions.KeyTextInput(Avalonia.Controls.TopLevel,System.String)">
+            <summary>
+            Simulates a text input event on the headless window/toplevel.
+            </summary>
+            <remarks>
+            This event is independent of KeyPress and KeyRelease. If you need to simulate text input to a TextBox or a similar control, please use KeyTextInput.
+            </remarks>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessWindowExtensions.MouseDown(Avalonia.Controls.TopLevel,Avalonia.Point,Avalonia.Input.MouseButton,Avalonia.Input.RawInputModifiers)">
+            <summary>
+            Simulates a mouse down on the headless window/toplevel.
+            </summary>
+            <remarks>
+            In the headless platform, there is a single mouse pointer. There are no helper methods for touch or pen input.
+            </remarks>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessWindowExtensions.MouseMove(Avalonia.Controls.TopLevel,Avalonia.Point,Avalonia.Input.RawInputModifiers)">
+            <summary>
+            Simulates a mouse move on the headless window/toplevel.
+            </summary>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessWindowExtensions.MouseUp(Avalonia.Controls.TopLevel,Avalonia.Point,Avalonia.Input.MouseButton,Avalonia.Input.RawInputModifiers)">
+            <summary>
+            Simulates a mouse up on the headless window/toplevel.
+            </summary>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessWindowExtensions.MouseWheel(Avalonia.Controls.TopLevel,Avalonia.Point,Avalonia.Vector,Avalonia.Input.RawInputModifiers)">
+            <summary>
+            Simulates a mouse wheel on the headless window/toplevel.
+            </summary>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessWindowExtensions.DragDrop(Avalonia.Controls.TopLevel,Avalonia.Point,Avalonia.Input.Raw.RawDragEventType,Avalonia.Input.IDataTransfer,Avalonia.Input.DragDropEffects,Avalonia.Input.RawInputModifiers)">
+            <summary>
+            Simulates a drag and drop target event on the headless window/toplevel. This event simulates a user moving files from another app to the current app.
+            </summary>
+        </member>
+        <member name="M:Avalonia.Headless.HeadlessWindowExtensions.SetRenderScaling(Avalonia.Controls.TopLevel,System.Double)">
+            <summary>
+            Changes the render scaling (DPI) of the headless window/toplevel.
+            This simulates a DPI change, triggering scaling changed notifications and a layout pass.
+            </summary>
+            <param name="topLevel">The target headless top level.</param>
+            <param name="scaling">The new render scaling factor. Must be greater than zero.</param>
+        </member>
+    </members>
+</doc>

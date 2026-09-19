@@ -1,0 +1,2394 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:46e46e24-fc26-44cf-8819-e091b6e16dc4",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-07-09T10:56:50Z",
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "authors": [
+            {
+              "name": "CycloneDX"
+            }
+          ],
+          "name": "CycloneDX module for .NET",
+          "version": "6.2.0.0",
+          "externalReferences": [
+            {
+              "url": "https://github.com/CycloneDX/cyclonedx-dotnet",
+              "type": "website"
+            }
+          ]
+        }
+      ]
+    },
+    "component": {
+      "type": "library",
+      "bom-ref": "Avalonia@12.1.0",
+      "name": "Avalonia",
+      "version": "12.1.0",
+      "purl": "pkg:nuget/Avalonia@12.1.0",
+      "description": "Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.",
+      "copyright": "Copyright 2013-2026 \u00A9 The AvaloniaUI Project",
+      "publisher": "Avalonia Team",
+      "author": "Avalonia Team",
+      "supplier": {
+        "name": "Avalonia Team",
+        "url": [
+          "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link"
+        ]
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "url": "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/AvaloniaUI/Avalonia/",
+          "type": "vcs"
+        }
+      ]
+    },
+    "supplier": {
+      "name": "Avalonia Team",
+      "url": [
+        "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link"
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "authors": [
+        {
+          "name": "Avalonia Team"
+        }
+      ],
+      "name": "Avalonia.BuildServices",
+      "version": "11.3.2",
+      "description": "Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "233F868E74AB91E56818004AD0AA7D0BB6E978044DDCF0061E373ADA06A1846B17A82E94C777AB907BA484C1873D2212B47D3539D2694E89A415F1AF047C3045"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "Copyright 2023-2025 \u00A9 The AvaloniaUI Project",
+      "purl": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "externalReferences": [
+        {
+          "url": "https://avaloniaui.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/AvaloniaUI/Avalonia.BuildServices",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "authors": [
+        {
+          "name": "MicroCom.Runtime"
+        }
+      ],
+      "name": "MicroCom.Runtime",
+      "version": "0.11.6",
+      "description": "IDL-based COM interop codegen. Consumes MIDL-like IDL file, generates efficient cross-platform C# interop and C\u002B\u002B header files.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6357E26E35BDCC31A1ADB458F1EBA1273026E138865B7F7098CE0CDF29135C317F58AFA0A8C015B64C5B6315CE02C496413BC178BFD726935D8D32AF63F732C1"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "Copyright 2021 \u00A9 Nikita Tsukanov",
+      "purl": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "externalReferences": [
+        {
+          "url": "https://github.com/kekekeks/MicroCom",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Mono.Cecil@0.11.6",
+      "authors": [
+        {
+          "name": "Jb Evain"
+        }
+      ],
+      "name": "Mono.Cecil",
+      "version": "0.11.6",
+      "description": "Cecil is a library written by Jb Evain to generate and inspect programs and libraries in the ECMA CIL format.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "1C5932246B23C9F317690A25CE3E1416D168D885871063D2F604CF997ED9E99D41BCCDD0E22D4BE6E4A5EA729D06BD92CC543686DBBD75AB0199DB60E0912FB4"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:nuget/Mono.Cecil@0.11.6",
+      "externalReferences": [
+        {
+          "url": "http://github.com/jbevain/cecil/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Humanizer.Core@2.14.1",
+      "authors": [
+        {
+          "name": "Mehdi Khalili, Claire Novotny"
+        }
+      ],
+      "name": "Humanizer.Core",
+      "version": "2.14.1",
+      "description": "Humanizer core package that contains the library and the neutral language (English) resources",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "CB3A8653F1CA34B67D52FAFA92F49CDF0615FD2E4EFC8BE4948516E5617B32E8AF18B63CC12E486672CF92DEC3D4A5BC12DD849E5D08DCBCE0DAF196336E17B3"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "Copyright (c) .NET Foundation and Contributors",
+      "purl": "pkg:nuget/Humanizer.Core@2.14.1",
+      "externalReferences": [
+        {
+          "url": "https://github.com/Humanizr/Humanizer",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/Humanizr/Humanizer",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Microsoft.Bcl.AsyncInterfaces@9.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "version": "9.0.0",
+      "description": "Provides the IAsyncEnumerable\u003CT\u003E and IAsyncDisposable interfaces and helper types for .NET Standard 2.0. This package is not required starting with .NET Standard 2.1 and .NET Core 3.0.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6D8A7692C491E6E07AC6A39AE0DC83DA004E785ADCDA7F05016A21EFCD4C34C0DC3E3935CAC0FB0CDA6FEEBEEC40E5DF745253E85FECC97EDF37896652C9FE45"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/Microsoft.Bcl.AsyncInterfaces@9.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/runtime",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Microsoft.CodeAnalysis.Common@4.14.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "Microsoft.CodeAnalysis.Common",
+      "version": "4.14.0",
+      "description": "A shared package used by the Microsoft .NET Compiler Platform (\u0022Roslyn\u0022).\n      Do not install this package manually, it will be added as a prerequisite by other packages that require it.\n    \n      More details at https://aka.ms/roslyn-packages\n      This package was built from the source at https://github.com/dotnet/roslyn/commit/8edf7bcd4f1594c3d68a6a567469f41dbd33dd1b.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "93D008CCEAED71956AAFDFA599C116D2F63CD1E9B25F1E4907FEF9ECAD07505F7A19E51E8930FE7633A5145DB2EE4E173D9A36D0BAEEE2D0E0428B3E54A06BD3"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/Microsoft.CodeAnalysis.Common@4.14.0",
+      "externalReferences": [
+        {
+          "url": "https://github.com/dotnet/roslyn",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/roslyn",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "Microsoft.NETCore.Platforms",
+      "version": "1.1.0",
+      "description": "Provides runtime information required to resolve target framework, platform, and runtime specific implementations of .NETCore packages. \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6BF892C274596FE2C7164E3D8503B24E187F64D0B7BEC6D9B05EB95F04086FCEB7A85EA6B2685D42DC465C52F6F0E6F636C0B3FDDAC48F6F0125DFD83E92D106"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Buffers@4.5.1",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Buffers",
+      "version": "4.5.1",
+      "description": "Provides resource pooling of any type for performance-critical applications that allocate and deallocate objects frequently.\n\nCommonly Used Types:\nSystem.Buffers.ArrayPool\u003CT\u003E\n \n7601f4f6225089ffb291dc7d58293c7bbf5c5d4f \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "80DA6158E55B9BCF7E0B5E6379B9CF45A632914F037B53C5BF5609576E3CD7821F7861956B73D74470D2D0C2E56DD235A5EF4CA6FFE7E192B820DC2D023AAFF2"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "https://github.com/dotnet/corefx/blob/master/LICENSE.TXT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Buffers@4.5.1",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Collections.Immutable@9.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Collections.Immutable",
+      "version": "9.0.0",
+      "description": "This package provides collections that are thread safe and guaranteed to never change their contents, also known as immutable collections. Like strings, any methods that perform modifications will not change the existing instance but instead return a new instance. For efficiency reasons, the implementation uses a sharing mechanism to ensure that newly created instances share as much data as possible with the previous instance while ensuring that operations have a predictable time complexity.\n\nThe System.Collections.Immutable library is built-in as part of the shared framework in .NET Runtime. The package can be installed when you need to use it in other target frameworks.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "CFF3A8EE7C56999D18E7BF2F8FC11456B1496770D7E8E32E50696079881E79464E1464FCF577DA33C7C314CBC9CBAFA6388A96EAEC7935D3731279539D0189EC"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Collections.Immutable@9.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/runtime",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Composition@9.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Composition",
+      "version": "9.0.0",
+      "description": "Provides a version of the Managed Extensibility Framework (MEF) that is lightweight and specifically optimized for high throughput scenarios, such as the web.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6967322BDD27202847CB1ABBAE943CDC16EFB7FB7D9755FAC90B64BCE0DA67EAC99581D4315A528E2D185C86535F956571644255115D78463BEBB0423B3B9E6B"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Composition@9.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/runtime",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Composition.AttributedModel@9.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Composition.AttributedModel",
+      "version": "9.0.0",
+      "description": "Provides the foundational attributes that allow you to declare parts for composition, such as imports, exports, and metadata with the Managed Extensibility Framework (MEF).",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "A18B90CE522F3B7D46C52953A3A34253E4672BD7556F59B5E7804D13B5469BD3D4C8933E46B390B2CF1C35B323FA221655CA7A5519F2265049DCC7F3628D7800"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Composition.AttributedModel@9.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/runtime",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Composition.Convention@9.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Composition.Convention",
+      "version": "9.0.0",
+      "description": "Provides types that support using Managed Extensibility Framework (MEF) with a convention-based configuration model.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "DDE7E1C67FFB85023D90DCBA33A514C16ACC242CDD059678864612DCC531A97C86750DAC2C2593A17D672E79EB45869F71D45230E6369DA30F36544010A0C018"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Composition.Convention@9.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/runtime",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Composition.Hosting@9.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Composition.Hosting",
+      "version": "9.0.0",
+      "description": "Provides Managed Extensibility Framework (MEF) types that are useful to developers of extensible applications, or hosts.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "CCB3C66CC630EB2D86A0D0637283E7BD7B7BC1224CFEA206D5F5360E8F240CE6C34D85871BA7C53A1BA5495897D08A768FEA867AE0844AA12CC02446FB10EFC0"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Composition.Hosting@9.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/runtime",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Composition.Runtime@9.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Composition.Runtime",
+      "version": "9.0.0",
+      "description": "Contains runtime components of the Managed Extensibility Framework (MEF).",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "3FBEFB6813C8C262EF2F443C98F03B4628A899F8EA2D36E95FFC732A993B61324B72F3C3313BD121F345A209C4A5F25844B69D07299A04853CD6F5B73336589C"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Composition.Runtime@9.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/runtime",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Composition.TypedParts@9.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Composition.TypedParts",
+      "version": "9.0.0",
+      "description": "Provides container configuration and some extension methods for the Managed Extensibility Framework (MEF).",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "EDBEE6927E07D35E3D8CD283D6D651506DA09A4B333733BA600195FB112CC5D7C853EE522E1C56458269AA6D732B328D773A4A516F77A3210519C4EEA0DBEA1A"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Composition.TypedParts@9.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/runtime",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.IO.Pipelines@9.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.IO.Pipelines",
+      "version": "9.0.0",
+      "description": "Single producer single consumer byte buffer management.\n\nCommonly Used Types:\nSystem.IO.Pipelines.Pipe\nSystem.IO.Pipelines.PipeWriter\nSystem.IO.Pipelines.PipeReader",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "5C8795291F34C2E0E5D390C8E07B9FC9EED34F80F509AD419B8CC93DCEE6827A1DAC2CB439F710D42D3403BB1EE7A74CBE0E3C708EB84CC0FE60A71997EA8E68"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.IO.Pipelines@9.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/runtime",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Memory@4.5.5",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Memory",
+      "version": "4.5.5",
+      "description": "Provides types for efficient representation and pooling of managed, stack, and native memory segments and sequences of such segments, along with primitives to parse and format UTF-8 encoded text stored in those memory segments.\n\nCommonly Used Types:\nSystem.Span\nSystem.ReadOnlySpan\nSystem.Memory\nSystem.ReadOnlyMemory\nSystem.Buffers.MemoryPool\nSystem.Buffers.ReadOnlySequence\nSystem.Buffers.Text.Utf8Parser\nSystem.Buffers.Text.Utf8Formatter\n \n32b491939fbd125f304031c35038b1e14b4e3958 \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "E8C8E536C97B94AC3443C940B30DAD43CF6E97DC7A8C3D989371048FE74E168606384F5E0143BDC0D86F7783BF9FDEE8417964CB3A8A5D752713E90B125172DC"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "https://github.com/dotnet/corefx/blob/master/LICENSE.TXT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Memory@4.5.5",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Numerics.Vectors@4.5.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Numerics.Vectors",
+      "version": "4.5.0",
+      "description": "Provides hardware-accelerated numeric types, suitable for high-performance processing and graphics applications.\n\nCommonly Used Types:\nSystem.Numerics.Matrix3x2\nSystem.Numerics.Matrix4x4\nSystem.Numerics.Plane\nSystem.Numerics.Quaternion\nSystem.Numerics.Vector2\nSystem.Numerics.Vector3\nSystem.Numerics.Vector4\nSystem.Numerics.Vector\nSystem.Numerics.Vector\u003CT\u003E\n \n30ab651fcb4354552bd4891619a0bdd81e0ebdbf",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "9C04EC0530F608AAF801837A791B33857E2CA6D2265A6049C01FD4E972825967E709CAD3070F174829B7400F608E9A641D3AFC3A45D4636D4C47DD43DD0657B3"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "https://github.com/dotnet/corefx/blob/master/LICENSE.TXT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/System.Numerics.Vectors@4.5.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Reflection.Metadata@9.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Reflection.Metadata",
+      "version": "9.0.0",
+      "description": "This package provides a low-level .NET (ECMA-335) metadata reader and writer. It\u0027s geared for performance and is the ideal choice for building higher-level libraries that intend to provide their own object model, such as compilers. The metadata format is defined by the ECMA-335 - Common Language Infrastructure (CLI) specification.\n\nThe System.Reflection.Metadata library is built-in as part of the shared framework in .NET Runtime. The package can be installed when you need to use it in other target frameworks.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8F3F98DA6FC2A5D3EF76308D46282258960A16EB1D91F265C43C785797165F64EE6C031ACF9099A4E0C10FF3F6FB6D12A56BE6646E89DD462397E476620EF217"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Reflection.Metadata@9.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/runtime",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Runtime.CompilerServices.Unsafe@6.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Runtime.CompilerServices.Unsafe",
+      "version": "6.0.0",
+      "description": "Provides the System.Runtime.CompilerServices.Unsafe class, which provides generic, low-level functionality for manipulating pointers.\n\nCommonly Used Types:\nSystem.Runtime.CompilerServices.Unsafe",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "D4057301BE4EC4936F24B9CE003B5EC4D99681AB6D9B65D5393DD38D04CDEC37784AAA12C1A8B50AC3767ED878DAE425749490773FEC01E734F93CF1045822B3"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Runtime.CompilerServices.Unsafe@6.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/runtime",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Text.Encoding.CodePages@7.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Text.Encoding.CodePages",
+      "version": "7.0.0",
+      "description": "Provides support for code-page based encodings, including Windows-1252, Shift-JIS, and GB2312.\n\nCommonly Used Types:\nSystem.Text.CodePagesEncodingProvider",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "485ABFAEB1F9DAC307249B2D84375A7D63C4BB175109107BA59E3AB6B476C52A62D677CA3C06F0E9A999AFD5BF2F21D396A4B4D534563BB9DA8D1B8ED6FC458A"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Text.Encoding.CodePages@7.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/runtime",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Threading.Channels@7.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Threading.Channels",
+      "version": "7.0.0",
+      "description": "Provides types for passing data between producers and consumers.\n\nCommonly Used Types:\nSystem.Threading.Channel\nSystem.Threading.Channel\u003CT\u003E",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "5D79A97496F25426A05A0DDB19F506353C4AA7810AFF70B806DF295E12956192B01CF8DE1CF3A0D2EDB076A1C5B288D4E2EE22F4A0720094F2CEA2C232AC2952"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Threading.Channels@7.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/runtime",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Threading.Tasks.Extensions@4.5.4",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Threading.Tasks.Extensions",
+      "version": "4.5.4",
+      "description": "Provides additional types that simplify the work of writing concurrent and asynchronous code.\n\nCommonly Used Types:\nSystem.Threading.Tasks.ValueTask\u003CTResult\u003E\n \n7601f4f6225089ffb291dc7d58293c7bbf5c5d4f",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "68052086E77D3C7198737A3DA163D67740B7C44F93250C39659B3BF21B6547A9ABF64CBF40481F5C78F24361AF3AAF47D52D188B371554A0928A7F7665C1FC14"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "https://github.com/dotnet/corefx/blob/master/LICENSE.TXT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Threading.Tasks.Extensions@4.5.4",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Microsoft.NETCore.Targets@1.0.1",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "Microsoft.NETCore.Targets",
+      "version": "1.0.1",
+      "description": "Provides supporting infrastructure for portable projects: support identifiers that define framework and runtime for support targets and packages that reference the minimum supported package versions when targeting these. \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6ED8E75F945A18651066FE9EE31CF6C8257A5974340FE4D262438903C4959A479F4A515A4D1389E6D3D3AB34F09A3C7BC2009AADA2E8A7F697B6655A82D3BFC9"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/Microsoft.NETCore.Targets@1.0.1",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Collections@4.0.11",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Collections",
+      "version": "4.0.11",
+      "description": "Provides classes that define generic collections, which allow developers to create strongly typed collections that provide better type safety and performance than non-generic strongly typed collections.\n\nCommonly Used Types:\nSystem.Collections.Generic.List\u003CT\u003E\nSystem.Collections.Generic.Dictionary\u003CTKey, TValue\u003E\nSystem.Collections.Generic.Queue\u003CT\u003E\nSystem.Collections.Generic.Stack\u003CT\u003E\nSystem.Collections.Generic.HashSet\u003CT\u003E\nSystem.Collections.Generic.LinkedList\u003CT\u003E\nSystem.Collections.Generic.EqualityComparer\u003CT\u003E\nSystem.Collections.Generic.Comparer\u003CT\u003E\nSystem.Collections.Generic.SortedDictionary\u003CTKey, TValue\u003E\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "F61B75329BA5D7C0E688AA9D110B2200C8934C3A1888F6B1B5F198BAA7AB93F23835E8380853E8C046F257172B5060578ED86DF26E5FE0EF34D8C4408A02C33F"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/System.Collections@4.0.11",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Diagnostics.Debug@4.0.11",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Diagnostics.Debug",
+      "version": "4.0.11",
+      "description": "Provides classes and attributes that allows basic interaction with a debugger.\n\nCommonly Used Types:\nSystem.Diagnostics.Debug\nSystem.Diagnostics.DebuggerStepThroughAttribute\nSystem.Diagnostics.Debugger\nSystem.Diagnostics.DebuggerDisplayAttribute\nSystem.Diagnostics.DebuggerBrowsableAttribute\nSystem.Diagnostics.DebuggerBrowsableState\nSystem.Diagnostics.DebuggerHiddenAttribute\nSystem.Diagnostics.DebuggerNonUserCodeAttribute\nSystem.Diagnostics.DebuggerTypeProxyAttribute\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "02F4D0BF969EB1A876DEF21C1FFD75F8ED5F979AED9A1169F409E60A6E07016854E2154DA5C0164FABAEAF6527A18D8E67282DB1B69327A1B3581E9C0C742F58"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/System.Diagnostics.Debug@4.0.11",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Globalization@4.0.11",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Globalization",
+      "version": "4.0.11",
+      "description": "Provides classes that define culture-related information, including language, country/region, calendars in use, format patterns for dates, currency, and numbers, and sort order for strings.\n\nCommonly Used Types:\nSystem.Globalization.DateTimeFormatInfo\nSystem.Globalization.CultureInfo\nSystem.Globalization.NumberFormatInfo\nSystem.Globalization.CalendarWeekRule\nSystem.Globalization.TextInfo\nSystem.Globalization.Calendar\nSystem.Globalization.CompareInfo\nSystem.Globalization.CompareOptions\nSystem.Globalization.UnicodeCategory\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "66BC21667F5F839BC711EDA3B0463863D70E0AD86770FD5410E0123006D6F031755CF7220187FB7CEFED69B3F4A9EAB8F0868CAE765CB1425C8BF60427F395E6"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/System.Globalization@4.0.11",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.IO@4.1.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.IO",
+      "version": "4.1.0",
+      "description": "Provides base input and output (I/O) types, including System.IO.Stream, System.IO.StreamReader and System.IO.StreamWriter, that allow reading and writing to data streams\n\nCommonly Used Types:\nSystem.IO.Stream\nSystem.IO.EndOfStreamException\nSystem.IO.MemoryStream\nSystem.IO.StreamReader\nSystem.IO.StreamWriter\nSystem.IO.StringWriter\nSystem.IO.TextWriter\nSystem.IO.TextReader\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "E01B432F3D715F3C88D5D7F3E7CC1CEEE78CAF99407A11C3306F9103AEE78963F818417F14EEC52F0096FA247900A31E53BD3226E06F0C0F93870DB0B2B78331"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/System.IO@4.1.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Numerics.Vectors@4.6.1",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Numerics.Vectors",
+      "version": "4.6.1",
+      "description": "System.Numerics.Vectors",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "FEB92FA547943E5098FF6A985502A252C8F920A69765CCB6F924001807DE980772105E408088183853524CC5835E8D3D256157F4707EC15D720B28B63308B74C"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.Numerics.Vectors@4.6.1",
+      "externalReferences": [
+        {
+          "url": "https://github.com/dotnet/maintenance-packages",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/maintenance-packages",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Reflection@4.1.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Reflection",
+      "version": "4.1.0",
+      "description": "Provides types that retrieve information about assemblies, modules, members, parameters, and other entities in managed code by examining their metadata. These types also can be used to manipulate instances of loaded types, for example to hook up events or to invoke methods.\n\nCommonly Used Types:\nSystem.Reflection.MethodInfo\nSystem.Reflection.PropertyInfo\nSystem.Reflection.ParameterInfo\nSystem.Reflection.FieldInfo\nSystem.Reflection.ConstructorInfo\nSystem.Reflection.Assembly\nSystem.Reflection.MemberInfo\nSystem.Reflection.EventInfo\nSystem.Reflection.Module\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "67143EF8F6FB1044830C70C66E9A2B4F1850F50DF5DADFAA5177338362EA7B9E9FE4B0BA59CD4EAC6E1C8DB4E0C285C239E4C2B3CE61391618B411AAFF45F7C2"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/System.Reflection@4.1.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Reflection.Primitives@4.0.1",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Reflection.Primitives",
+      "version": "4.0.1",
+      "description": "Provides common enumerations for reflection-based libraries.\n\nCommonly Used Types:\nSystem.Reflection.FieldAttributes\nSystem.Reflection.Emit.OpCode\nSystem.Reflection.TypeAttributes\nSystem.Reflection.MethodAttributes\nSystem.Reflection.CallingConventions\nSystem.Reflection.PropertyAttributes\nSystem.Reflection.EventAttributes\nSystem.Reflection.ParameterAttributes\nSystem.Reflection.GenericParameterAttributes\nSystem.Reflection.MethodImplAttributes\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "08AD6F78C5F68AF95A47B0854B4EE4360C4BAD6E83946C2E45EAA88B48D27D06618C6B7479BD813EB5F30A2DB486590D17645E9C0E06A72DBE12FFD37730707E"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/System.Reflection.Primitives@4.0.1",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Runtime@4.1.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Runtime",
+      "version": "4.1.0",
+      "description": "Provides the fundamental primitives, classes and base classes that define commonly-used value and reference data types, events and event handlers, interfaces, attributes, and exceptions. This packages represents the core package, and provides the minimal set of types required to build a managed application.\n\nCommonly Used Types:\nSystem.Object\nSystem.Exception\nSystem.Int16\nSystem.Int32\nSystem.Int64\nSystem.Enum\nSystem.String\nSystem.Char\nSystem.Boolean\nSystem.SByte\nSystem.Byte\nSystem.DateTime\nSystem.DateTimeOffset\nSystem.Single\nSystem.Double\nSystem.UInt16\nSystem.UInt32\nSystem.UInt64\nSystem.IDisposable\nSystem.Uri\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "4B05EB68BB485846707C4FE3393F9616D3FFB6C5F62A121D81142DDF7D0241C931FE96D193B7BF02281A9368458E0764466766557CFA9709035DC76D8FDD7706"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/System.Runtime@4.1.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Runtime.Handles@4.0.1",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Runtime.Handles",
+      "version": "4.0.1",
+      "description": "Provides base classes, including System.Runtime.InteropServices.CriticalHandle and System.Runtime.InteropServices.SafeHandle, for types that represent operating system handles.\n\nCommonly Used Types:\nSystem.Runtime.InteropServices.SafeHandle\nMicrosoft.Win32.SafeHandles.SafeWaitHandle\nSystem.Runtime.InteropServices.CriticalHandle\nSystem.Threading.WaitHandleExtensions\nSystem.IO.HandleInheritability\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "966A943195B66118277A340075609676E951216D404478AC55196760F0B7B2BD9314BFBB38051204A1517C53097BD656E588E8AB1EC336CE264957956695848A"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/System.Runtime.Handles@4.0.1",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Runtime.InteropServices@4.1.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Runtime.InteropServices",
+      "version": "4.1.0",
+      "description": "Provides types that support COM interop and platform invoke services.\n\nCommonly Used Types:\nSystem.Runtime.InteropServices.GCHandle\nSystem.Runtime.InteropServices.GuidAttribute\nSystem.Runtime.InteropServices.COMException\nSystem.DllNotFoundException\nSystem.Runtime.InteropServices.DllImportAttribute\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "E8511E6A4CD40F3C603DF4FFBBF6A4AAC4D10BE79BCFD0249A9AF90D55CF2A02543AD9B82E607A4665D58F28C7CE9BDB0F7F3FF9BC8DED8A252213916A771BD2"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/System.Runtime.InteropServices@4.1.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Text.Encoding@4.0.11",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Text.Encoding",
+      "version": "4.0.11",
+      "description": "Provides base abstract encoding classes for converting blocks of characters to and from blocks of bytes.\n\nCommonly Used Types:\nSystem.Text.Encoding\nSystem.Text.DecoderFallbackException\nSystem.Text.Decoder\nSystem.Text.EncoderFallbackException\nSystem.Text.Encoder\nSystem.Text.EncoderFallback\nSystem.Text.EncoderFallbackBuffer\nSystem.Text.DecoderFallback\nSystem.Text.DecoderFallbackBuffer\nSystem.Text.DecoderExceptionFallback\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "F974335143F36B318ABF040ED535887F28089D749B1FA55056345DF5243DFBD56D27B74C6E4D87A737FDBB8E699C5291BD25F1E5DB4700BB00BF53330C7E3E9A"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/System.Text.Encoding@4.0.11",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Threading@4.0.11",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Threading",
+      "version": "4.0.11",
+      "description": "Provides the fundamental synchronization primitives, including System.Threading.Monitor and System.Threading.Mutex, that are required when writing asynchronous code.\n\nCommonly Used Types:\nSystem.Threading.Monitor\nSystem.Threading.SynchronizationContext\nSystem.Threading.ManualResetEvent\nSystem.Threading.AutoResetEvent\nSystem.Threading.ThreadLocal\u003CT\u003E\nSystem.Threading.EventWaitHandle\nSystem.Threading.SemaphoreSlim\nSystem.Threading.Mutex\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "05C0DD1BBCFCEDB6FC6C5F311C41920A4775F8A28A61CA246B6C65AD8AFD9B04881D3357880AF000AC056FD121FC5C3EC0B56D6FD607E0C27E7A639157C85E3E"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/System.Threading@4.0.11",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Threading.Tasks@4.0.11",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Threading.Tasks",
+      "version": "4.0.11",
+      "description": "Provides types that simplify the work of writing concurrent and asynchronous code.\n\nCommonly Used Types:\nSystem.Threading.Tasks.Task\u003CTResult\u003E\nSystem.Runtime.CompilerServices.TaskAwaiter\u003CTResult\u003E\nSystem.Threading.Tasks.TaskCompletionSource\u003CTResult\u003E\nSystem.Threading.Tasks.Task\nSystem.OperationCanceledException\nSystem.AggregateException\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "FB66C496A5B4C88C5CB6E9D7B7D220E10F2FC0AED181420390F12F8D9986A1BD2829E9F1BF080BB6361CD8B8B4FFC9B622288DFA42124859E1BE1E981B5CFA7B"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/System.Threading.Tasks@4.0.11",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.Threading.Thread@4.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.Threading.Thread",
+      "version": "4.0.0",
+      "description": "Provides the System.Threading.Thread class, which allows developers to create and control a thread, set its priority, and get its state.\n\nCommonly Used Types:\nSystem.Threading.Thread\nSystem.Threading.ThreadStart\nSystem.Threading.ParameterizedThreadStart\n \nWhen using NuGet 3.x this package requires at least version 3.4.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "9EE52992EA7615B0785DFEB69F058046D9B5C10E39EDF13247D2AF2EC0B30528F5C904ED2AEAA6952830FDEE9A8B00770A25040146D9D48804BF36BF9B6498C4"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "http://go.microsoft.com/fwlink/?LinkId=329770"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation.  All rights reserved.",
+      "purl": "pkg:nuget/System.Threading.Thread@4.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:npm/mobx@6.15.0",
+      "name": "mobx",
+      "version": "6.15.0",
+      "purl": "pkg:npm/mobx@6.15.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:npm/mobx-react@7.6.0",
+      "name": "mobx-react",
+      "version": "7.6.0",
+      "purl": "pkg:npm/mobx-react@7.6.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:npm/mobx-react-lite@3.4.3",
+      "name": "mobx-react-lite",
+      "version": "3.4.3",
+      "purl": "pkg:npm/mobx-react-lite@3.4.3",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:npm/react@17.0.2",
+      "name": "react",
+      "version": "17.0.2",
+      "purl": "pkg:npm/react@17.0.2",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:npm/loose-envify@1.4.0",
+      "name": "loose-envify",
+      "version": "1.4.0",
+      "purl": "pkg:npm/loose-envify@1.4.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:npm/js-tokens@4.0.0",
+      "name": "js-tokens",
+      "version": "4.0.0",
+      "purl": "pkg:npm/js-tokens@4.0.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:npm/object-assign@4.1.1",
+      "name": "object-assign",
+      "version": "4.1.1",
+      "purl": "pkg:npm/object-assign@4.1.1",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:npm/react-dom@17.0.2",
+      "name": "react-dom",
+      "version": "17.0.2",
+      "purl": "pkg:npm/react-dom@17.0.2",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:npm/scheduler@0.20.2",
+      "name": "scheduler",
+      "version": "0.20.2",
+      "purl": "pkg:npm/scheduler@0.20.2",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.Generators@12.1.0.0",
+      "name": "Avalonia.Generators",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "0286DC04D1EAA495C38316476AC3CDB834C1E4999FAD88C39A559F3F71F16C3F70A3772DD448C0286326015250F6A53F848245296D75D77CB1E16834E2617861"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "analyzers/dotnet/cs/Avalonia.Generators.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.Designer.HostApp@12.1.0.0",
+      "name": "Avalonia.Designer.HostApp",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8C8DC44D82A1C8F412F8D36CB4E2FE34D37ACB969FC6A23DE7E4162130A0C0FF6A428BB33B9A5D8DD6C07C6A87BF6A98D13B80872E12040D3221D4AD1BE3372E"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "tools/net10.0/designer/Avalonia.Designer.HostApp.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.Build.Tasks.36f14a32e02e41d1953b149ddbf3306d@0.0.0.0",
+      "name": "Avalonia.Build.Tasks.36f14a32e02e41d1953b149ddbf3306d",
+      "version": "0.0.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "02A470661C23A9A36497911CC3C2C03639F0C1D7E2C94A598823E020E5D7E1600B708B5D1AB010E4C693B148DB27822DF3BE402DD51B1BBBB3FD55178ADFD734"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "tools/netstandard2.0/Avalonia.Build.Tasks.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.Analyzers.CSharp@12.1.0.0",
+      "name": "Avalonia.Analyzers.CSharp",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "14EC857F3C85067971EB44F472F9F1F3139A74825073BD90E9537A1DC78552070F2580880501BE4B6079CB4428C10F239F305E0FB1DD3CD40FA6D23CE324C9F5"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "analyzers/dotnet/cs/Avalonia.Analyzers.CSharp.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.Analyzers.VisualBasic@12.1.0.0",
+      "name": "Avalonia.Analyzers.VisualBasic",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "B94A081D4FB5D043BCFDBD157B81AD280063BD114A093B07E3861764DB02A8202434877CB76D4B1DC3C6BB9AA001BEC35A33ED685FF21BE034C68DB3CCBBF5A3"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "analyzers/dotnet/cs/Avalonia.Analyzers.VisualBasic.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.Analyzers.CodeFixes.CSharp@12.1.0.0",
+      "name": "Avalonia.Analyzers.CodeFixes.CSharp",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "95318A7017D37A5CF205932D3B92122B0EB1956FE86E3C3E44496A87E18E983EC1D266AE7805C0FF7E905F5EF55DEB9AD5B2A269042D560BA10AD31CFD655888"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "analyzers/dotnet/cs/Avalonia.Analyzers.CodeFixes.CSharp.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.Base@12.1.0.0",
+      "name": "Avalonia.Base",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "597E7C9EED023801A74445761C034DD5C41D1B0F1F41E3BB2CBE44A79A7719B9940D7CFBF1F45EA11FFED1526AEAD5A28597A7209847B26344201DF73FEF7412"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "lib/net10.0/Avalonia.Base.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.Controls@12.1.0.0",
+      "name": "Avalonia.Controls",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "0F388DBF488925F9F14F808021823FEE56958AD776D660D113BFC8DE396D924FF79C9956CD162DBFDDAB757782B75225C0CB235F0EF59BDF04739CF7FEE4CAD2"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "lib/net10.0/Avalonia.Controls.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.DesignerSupport@0.7.0.0",
+      "name": "Avalonia.DesignerSupport",
+      "version": "0.7.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "DD592FE60F5F753323E2CC509A16E339700FD494EA390A75D3F4D42035D98B0FA010052F516F3E57B95E21E45ABF2C9DC93A1B94B262A15EDAE0B0BCF3392958"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "lib/net10.0/Avalonia.DesignerSupport.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.Dialogs@12.1.0.0",
+      "name": "Avalonia.Dialogs",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "D692C08239AF3CB80160B6FB06F6AE5CDC1A80DB17E8AC66A7BB59894E5363A17A4DE068D4740F698C75CA355B4891A87C04FFB1A519E68F369988FDB6F7CFF5"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "lib/net10.0/Avalonia.Dialogs.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.Metal@12.1.0.0",
+      "name": "Avalonia.Metal",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "3B3A220852810E61C26F5EC8E2D8D4F4576335BDF2F1BD7D75DFEB3DD2FAEC0240F40D20FD224C17DFC55939FBFA49608E9AFF0927B834214A82CD2FB1C0CB7D"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "lib/net10.0/Avalonia.Metal.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.MicroCom@12.1.0.0",
+      "name": "Avalonia.MicroCom",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "76E4BBF18304074D7EEF77AB4C843C9AC4DF516B7FB6BD2A4F8CFBF90C703FE5F83FE2B3EDF3DC26C36BCBAB7010CDCF2F05F60CDCEBD406A47699D096AA8B1D"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "lib/net10.0/Avalonia.MicroCom.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.OpenGL@12.1.0.0",
+      "name": "Avalonia.OpenGL",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "86E13FE26C1EE3EE5CA5DD8548F00F17D2D0FEAF9201A19B1DAA6B507A8CA041BB2E8E5F17C8B81F1BDFA424AAD3025C3BFD4C4936C0B8AA5FE5229524E67B3E"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "lib/net10.0/Avalonia.OpenGL.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.Vulkan@12.1.0.0",
+      "name": "Avalonia.Vulkan",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "1007092CBD80F7D57710F6B060D27844C04E3D18E818BCA75C036BA0039422DFE8FBFA78322C47F9C82C368E88992E2FC6EFD710BC560F81FFE65AA0BE7F26D8"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "lib/net10.0/Avalonia.Vulkan.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.Markup.Xaml@12.1.0.0",
+      "name": "Avalonia.Markup.Xaml",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "E617913828123C2A665430C7EE309CC3897D177C9AE02000A1EBD59F3856559473056519149098D888CCFBBDD023F809E7AE7166324DABE25155B8A41BAAD386"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "lib/net10.0/Avalonia.Markup.Xaml.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.Markup@12.1.0.0",
+      "name": "Avalonia.Markup",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "58AD3CE2DD7964A09A9356593174202385D79437EB692280E6285B49019EE62F98E0F467518F64EE0A6339C30135B1E1C8D864B7CA7B39EE1CAF24CE018DEBF4"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "lib/net10.0/Avalonia.Markup.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "Avalonia@12.1.0",
+      "dependsOn": [
+        "pkg:nuget/Avalonia.BuildServices@11.3.2",
+        "pkg:nuget/MicroCom.Runtime@0.11.6",
+        "pkg:nuget/Mono.Cecil@0.11.6",
+        "pkg:nuget/Humanizer.Core@2.14.1",
+        "pkg:nuget/Microsoft.Bcl.AsyncInterfaces@9.0.0",
+        "pkg:nuget/Microsoft.CodeAnalysis.Common@4.14.0",
+        "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+        "pkg:nuget/System.Composition@9.0.0",
+        "pkg:nuget/System.IO.Pipelines@9.0.0",
+        "pkg:nuget/System.Threading.Channels@7.0.0",
+        "pkg:nuget/System.Collections@4.0.11",
+        "pkg:nuget/System.Diagnostics.Debug@4.0.11",
+        "pkg:nuget/System.Globalization@4.0.11",
+        "pkg:nuget/System.Numerics.Vectors@4.6.1",
+        "pkg:nuget/System.Runtime.InteropServices@4.1.0",
+        "pkg:nuget/System.Threading@4.0.11",
+        "pkg:nuget/System.Threading.Thread@4.0.0",
+        "pkg:npm/mobx@6.15.0",
+        "pkg:npm/mobx-react@7.6.0",
+        "pkg:npm/react@17.0.2",
+        "pkg:npm/react-dom@17.0.2"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/Mono.Cecil@0.11.6",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/Humanizer.Core@2.14.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/Microsoft.Bcl.AsyncInterfaces@9.0.0",
+      "dependsOn": [
+        "pkg:nuget/System.Threading.Tasks.Extensions@4.5.4"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/Microsoft.CodeAnalysis.Common@4.14.0",
+      "dependsOn": [
+        "pkg:nuget/System.Buffers@4.5.1",
+        "pkg:nuget/System.Collections.Immutable@9.0.0",
+        "pkg:nuget/System.Memory@4.5.5",
+        "pkg:nuget/System.Numerics.Vectors@4.5.0",
+        "pkg:nuget/System.Reflection.Metadata@9.0.0",
+        "pkg:nuget/System.Runtime.CompilerServices.Unsafe@6.0.0",
+        "pkg:nuget/System.Text.Encoding.CodePages@7.0.0",
+        "pkg:nuget/System.Threading.Tasks.Extensions@4.5.4"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/System.Buffers@4.5.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/System.Collections.Immutable@9.0.0",
+      "dependsOn": [
+        "pkg:nuget/System.Memory@4.5.5",
+        "pkg:nuget/System.Runtime.CompilerServices.Unsafe@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Composition.AttributedModel@9.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/System.Composition.Convention@9.0.0",
+      "dependsOn": [
+        "pkg:nuget/System.Composition.AttributedModel@9.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Composition.Hosting@9.0.0",
+      "dependsOn": [
+        "pkg:nuget/System.Composition.Runtime@9.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Composition.Runtime@9.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/System.Composition.TypedParts@9.0.0",
+      "dependsOn": [
+        "pkg:nuget/System.Composition.AttributedModel@9.0.0",
+        "pkg:nuget/System.Composition.Hosting@9.0.0",
+        "pkg:nuget/System.Composition.Runtime@9.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Composition@9.0.0",
+      "dependsOn": [
+        "pkg:nuget/System.Composition.AttributedModel@9.0.0",
+        "pkg:nuget/System.Composition.Convention@9.0.0",
+        "pkg:nuget/System.Composition.Hosting@9.0.0",
+        "pkg:nuget/System.Composition.Runtime@9.0.0",
+        "pkg:nuget/System.Composition.TypedParts@9.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.IO.Pipelines@9.0.0",
+      "dependsOn": [
+        "pkg:nuget/System.Buffers@4.5.1",
+        "pkg:nuget/System.Memory@4.5.5",
+        "pkg:nuget/System.Threading.Tasks.Extensions@4.5.4"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Memory@4.5.5",
+      "dependsOn": [
+        "pkg:nuget/System.Buffers@4.5.1",
+        "pkg:nuget/System.Numerics.Vectors@4.5.0",
+        "pkg:nuget/System.Runtime.CompilerServices.Unsafe@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Numerics.Vectors@4.5.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/System.Reflection.Metadata@9.0.0",
+      "dependsOn": [
+        "pkg:nuget/System.Collections.Immutable@9.0.0",
+        "pkg:nuget/System.Memory@4.5.5"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Runtime.CompilerServices.Unsafe@6.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/System.Text.Encoding.CodePages@7.0.0",
+      "dependsOn": [
+        "pkg:nuget/System.Memory@4.5.5",
+        "pkg:nuget/System.Runtime.CompilerServices.Unsafe@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Threading.Channels@7.0.0",
+      "dependsOn": [
+        "pkg:nuget/System.Threading.Tasks.Extensions@4.5.4"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Threading.Tasks.Extensions@4.5.4",
+      "dependsOn": [
+        "pkg:nuget/System.Runtime.CompilerServices.Unsafe@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/Microsoft.NETCore.Targets@1.0.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/System.Collections@4.0.11",
+      "dependsOn": [
+        "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+        "pkg:nuget/Microsoft.NETCore.Targets@1.0.1",
+        "pkg:nuget/System.Runtime@4.1.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Diagnostics.Debug@4.0.11",
+      "dependsOn": [
+        "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+        "pkg:nuget/Microsoft.NETCore.Targets@1.0.1",
+        "pkg:nuget/System.Runtime@4.1.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Globalization@4.0.11",
+      "dependsOn": [
+        "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+        "pkg:nuget/Microsoft.NETCore.Targets@1.0.1",
+        "pkg:nuget/System.Runtime@4.1.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.IO@4.1.0",
+      "dependsOn": [
+        "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+        "pkg:nuget/Microsoft.NETCore.Targets@1.0.1",
+        "pkg:nuget/System.Runtime@4.1.0",
+        "pkg:nuget/System.Text.Encoding@4.0.11",
+        "pkg:nuget/System.Threading.Tasks@4.0.11"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Numerics.Vectors@4.6.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/System.Reflection.Primitives@4.0.1",
+      "dependsOn": [
+        "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+        "pkg:nuget/Microsoft.NETCore.Targets@1.0.1",
+        "pkg:nuget/System.Runtime@4.1.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Reflection@4.1.0",
+      "dependsOn": [
+        "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+        "pkg:nuget/Microsoft.NETCore.Targets@1.0.1",
+        "pkg:nuget/System.IO@4.1.0",
+        "pkg:nuget/System.Reflection.Primitives@4.0.1",
+        "pkg:nuget/System.Runtime@4.1.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Runtime.Handles@4.0.1",
+      "dependsOn": [
+        "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+        "pkg:nuget/Microsoft.NETCore.Targets@1.0.1",
+        "pkg:nuget/System.Runtime@4.1.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Runtime.InteropServices@4.1.0",
+      "dependsOn": [
+        "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+        "pkg:nuget/Microsoft.NETCore.Targets@1.0.1",
+        "pkg:nuget/System.Reflection@4.1.0",
+        "pkg:nuget/System.Reflection.Primitives@4.0.1",
+        "pkg:nuget/System.Runtime@4.1.0",
+        "pkg:nuget/System.Runtime.Handles@4.0.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Runtime@4.1.0",
+      "dependsOn": [
+        "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+        "pkg:nuget/Microsoft.NETCore.Targets@1.0.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Text.Encoding@4.0.11",
+      "dependsOn": [
+        "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+        "pkg:nuget/Microsoft.NETCore.Targets@1.0.1",
+        "pkg:nuget/System.Runtime@4.1.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Threading.Tasks@4.0.11",
+      "dependsOn": [
+        "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+        "pkg:nuget/Microsoft.NETCore.Targets@1.0.1",
+        "pkg:nuget/System.Runtime@4.1.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Threading.Thread@4.0.0",
+      "dependsOn": [
+        "pkg:nuget/System.Runtime@4.1.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.Threading@4.0.11",
+      "dependsOn": [
+        "pkg:nuget/System.Runtime@4.1.0",
+        "pkg:nuget/System.Threading.Tasks@4.0.11"
+      ]
+    },
+    {
+      "ref": "pkg:npm/mobx@6.15.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:npm/mobx-react@7.6.0",
+      "dependsOn": [
+        "pkg:npm/mobx-react-lite@3.4.3"
+      ]
+    },
+    {
+      "ref": "pkg:npm/mobx-react-lite@3.4.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:npm/react@17.0.2",
+      "dependsOn": [
+        "pkg:npm/loose-envify@1.4.0",
+        "pkg:npm/object-assign@4.1.1"
+      ]
+    },
+    {
+      "ref": "pkg:npm/loose-envify@1.4.0",
+      "dependsOn": [
+        "pkg:npm/js-tokens@4.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:npm/js-tokens@4.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:npm/object-assign@4.1.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:npm/react-dom@17.0.2",
+      "dependsOn": [
+        "pkg:npm/loose-envify@1.4.0",
+        "pkg:npm/object-assign@4.1.1",
+        "pkg:npm/scheduler@0.20.2"
+      ]
+    },
+    {
+      "ref": "pkg:npm/scheduler@0.20.2",
+      "dependsOn": [
+        "pkg:npm/loose-envify@1.4.0",
+        "pkg:npm/object-assign@4.1.1"
+      ]
+    }
+  ],
+  "compositions": [
+    {
+      "aggregate": "complete",
+      "assemblies": [
+        "Avalonia@12.1.0",
+        "binary:Avalonia.Generators@12.1.0.0",
+        "binary:Avalonia.Designer.HostApp@12.1.0.0",
+        "binary:Avalonia.Build.Tasks.36f14a32e02e41d1953b149ddbf3306d@0.0.0.0",
+        "binary:Avalonia.Analyzers.CSharp@12.1.0.0",
+        "binary:Avalonia.Analyzers.VisualBasic@12.1.0.0",
+        "binary:Avalonia.Analyzers.CodeFixes.CSharp@12.1.0.0",
+        "binary:Avalonia.Base@12.1.0.0",
+        "binary:Avalonia.Controls@12.1.0.0",
+        "binary:Avalonia.DesignerSupport@0.7.0.0",
+        "binary:Avalonia.Dialogs@12.1.0.0",
+        "binary:Avalonia.Metal@12.1.0.0",
+        "binary:Avalonia.MicroCom@12.1.0.0",
+        "binary:Avalonia.OpenGL@12.1.0.0",
+        "binary:Avalonia.Vulkan@12.1.0.0",
+        "binary:Avalonia.Markup.Xaml@12.1.0.0",
+        "binary:Avalonia.Markup@12.1.0.0"
+      ]
+    }
+  ]
+}

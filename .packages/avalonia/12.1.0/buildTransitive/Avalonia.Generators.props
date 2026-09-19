@@ -1,0 +1,28 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <AvaloniaNameGeneratorIsEnabled Condition="'$(AvaloniaNameGeneratorIsEnabled)' == ''">true</AvaloniaNameGeneratorIsEnabled>
+    <AvaloniaNameGeneratorBehavior Condition="'$(AvaloniaNameGeneratorBehavior)' == ''">InitializeComponent</AvaloniaNameGeneratorBehavior>
+    <AvaloniaNameGeneratorDefaultFieldModifier Condition="'$(AvaloniaNameGeneratorDefaultFieldModifier)' == ''">internal</AvaloniaNameGeneratorDefaultFieldModifier>
+    <AvaloniaNameGeneratorFilterByPath Condition="'$(AvaloniaNameGeneratorFilterByPath)' == ''">*</AvaloniaNameGeneratorFilterByPath>
+    <AvaloniaNameGeneratorFilterByNamespace Condition="'$(AvaloniaNameGeneratorFilterByNamespace)' == ''">*</AvaloniaNameGeneratorFilterByNamespace>
+    <AvaloniaNameGeneratorViewFileNamingStrategy Condition="'$(AvaloniaNameGeneratorViewFileNamingStrategy)' == ''">NamespaceAndClassName</AvaloniaNameGeneratorViewFileNamingStrategy>
+    <AvaloniaNameGeneratorAttachDevTools Condition="'$(AvaloniaNameGeneratorAttachDevTools)' == ''">true</AvaloniaNameGeneratorAttachDevTools>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Mark AvaloniaXaml/AvaloniaResource metadata visible for the Roslyn-compiler -->
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="SourceItemGroup"/>
+    <!-- Mark Avalonia.Generators config properties visible for the Roslyn-compiler  -->
+    <CompilerVisibleProperty Include="AvaloniaNameGeneratorIsEnabled" />
+    <CompilerVisibleProperty Include="AvaloniaNameGeneratorBehavior" />
+    <CompilerVisibleProperty Include="AvaloniaNameGeneratorDefaultFieldModifier" />
+    <CompilerVisibleProperty Include="AvaloniaNameGeneratorFilterByPath" />
+    <CompilerVisibleProperty Include="AvaloniaNameGeneratorFilterByNamespace" />
+    <CompilerVisibleProperty Include="AvaloniaNameGeneratorViewFileNamingStrategy" />
+    <CompilerVisibleProperty Include="AvaloniaNameGeneratorAttachDevTools"/>
+    <!-- Mark additional Avalonia properties that might be useful for the Roslyn-compiler -->
+    <CompilerVisibleProperty Include="AvaloniaUseCompiledBindingsByDefault" />
+    <CompilerVisibleProperty Include="AvaloniaMainPackageVersion" />
+    <CompilerVisibleProperty Include="AvaloniaPreviewerNetCoreToolPath" />
+    <CompilerVisibleProperty Include="AvaloniaResourcePaths" />
+  </ItemGroup>
+</Project>

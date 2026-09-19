@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Avalonia.FreeDesktop</name>
+    </assembly>
+    <members>
+        <member name="M:Avalonia.FreeDesktop.DBusSystemDialog.TryCreateAsync(System.Func{System.Threading.Tasks.Task{Avalonia.FreeDesktop.IPortalParentLease}})">
+            <summary>
+            Creates a portal-backed storage provider if xdg-desktop-portal FileChooser is available.
+            </summary>
+            <param name="parentLeaseProvider">
+            Callback invoked once per picker call to obtain the parent-window handle to pass to the
+            portal. The returned <see cref="T:Avalonia.FreeDesktop.IPortalParentLease"/> is held until the picker call
+            completes and then disposed. May return <c>null</c> to call the portal with an empty
+            parent_window string (per portal spec: "no parent").
+            </param>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.StatusNotifierItemDbusObj">
+            <summary>
+            DBus Object used for setting system tray icons.
+            </summary>
+            <remarks>
+            Useful guide: https://web.archive.org/web/20210818173850/https://www.notmart.org/misc/statusnotifieritem/statusnotifieritem.html
+            </remarks>
+        </member>
+        <member name="T:Avalonia.FreeDesktop.IPortalParentLease">
+            <summary>
+            Backend-provided lease on a <c>parent_window</c> handle string suitable for passing
+            to <c>org.freedesktop.portal.FileChooser</c> et al.
+            </summary>
+            <remarks>
+            <para>The handle string is in the platform-prefixed format defined by xdg-desktop-portal:
+            <c>x11:HEX</c> for X11, <c>wayland:HANDLE</c> for wayland.</para>
+            <para>Disposal frees any platform resources backing the handle. For wayland this destroys
+            the <c>zxdg_exported_v2</c> object that provided the handle string; the imported handle
+            on the portal side becomes invalid afterwards, so the lease MUST be held until the
+            portal call completes.</para>
+            </remarks>
+        </member>
+        <member name="P:Avalonia.FreeDesktop.IPortalParentLease.Handle">
+            <summary>Prefixed parent-window handle string (e.g. <c>"x11:1A2B"</c>).</summary>
+        </member>
+        <member name="T:System.Runtime.CompilerServices.IsExternalInit">
+            <summary>
+                Reserved to be used by the compiler for tracking metadata.
+                This class should not be used by developers in source code.
+            </summary>
+        </member>
+    </members>
+</doc>

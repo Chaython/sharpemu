@@ -1,0 +1,345 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:071f5806-e818-47ee-bcd6-ca900c9ce67f",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-07-09T10:57:48Z",
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "authors": [
+            {
+              "name": "CycloneDX"
+            }
+          ],
+          "name": "CycloneDX module for .NET",
+          "version": "6.2.0.0",
+          "externalReferences": [
+            {
+              "url": "https://github.com/CycloneDX/cyclonedx-dotnet",
+              "type": "website"
+            }
+          ]
+        }
+      ]
+    },
+    "component": {
+      "type": "library",
+      "bom-ref": "Avalonia.Win32@12.1.0",
+      "name": "Avalonia.Win32",
+      "version": "12.1.0",
+      "purl": "pkg:nuget/Avalonia.Win32@12.1.0",
+      "description": "Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.",
+      "copyright": "Copyright 2013-2026 \u00A9 The AvaloniaUI Project",
+      "publisher": "Avalonia Team",
+      "author": "Avalonia Team",
+      "supplier": {
+        "name": "Avalonia Team",
+        "url": [
+          "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link"
+        ]
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "url": "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/AvaloniaUI/Avalonia/",
+          "type": "vcs"
+        }
+      ]
+    },
+    "supplier": {
+      "name": "Avalonia Team",
+      "url": [
+        "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link"
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Avalonia.Angle.Windows.Natives@2.1.27548.20260419",
+      "authors": [
+        {
+          "name": "Avalonia Team"
+        }
+      ],
+      "name": "Avalonia.Angle.Windows.Natives",
+      "version": "2.1.27548.20260419",
+      "description": "Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8F74325403C40E4238FE3A77AC4A5BBE2E50E02C014492D5D233BF42546E0D4F2DEF8D7985EAD670DC5C8E1ED567AC53A53C78819BF3FAE9E705EE21F3A3DDC8"
+        }
+      ],
+      "copyright": "Copyright 2013-2026 \u00A9 The AvaloniaUI Project",
+      "purl": "pkg:nuget/Avalonia.Angle.Windows.Natives@2.1.27548.20260419",
+      "externalReferences": [
+        {
+          "url": "https://avaloniaui.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/AvaloniaUI/angle/",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "authors": [
+        {
+          "name": "Avalonia Team"
+        }
+      ],
+      "name": "Avalonia.BuildServices",
+      "version": "11.3.2",
+      "description": "Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "233F868E74AB91E56818004AD0AA7D0BB6E978044DDCF0061E373ADA06A1846B17A82E94C777AB907BA484C1873D2212B47D3539D2694E89A415F1AF047C3045"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "Copyright 2023-2025 \u00A9 The AvaloniaUI Project",
+      "purl": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "externalReferences": [
+        {
+          "url": "https://avaloniaui.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/AvaloniaUI/Avalonia.BuildServices",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "authors": [
+        {
+          "name": "MicroCom.Runtime"
+        }
+      ],
+      "name": "MicroCom.Runtime",
+      "version": "0.11.6",
+      "description": "IDL-based COM interop codegen. Consumes MIDL-like IDL file, generates efficient cross-platform C# interop and C\u002B\u002B header files.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6357E26E35BDCC31A1ADB458F1EBA1273026E138865B7F7098CE0CDF29135C317F58AFA0A8C015B64C5B6315CE02C496413BC178BFD726935D8D32AF63F732C1"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "Copyright 2021 \u00A9 Nikita Tsukanov",
+      "purl": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "externalReferences": [
+        {
+          "url": "https://github.com/kekekeks/MicroCom",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Microsoft.Windows.SDK.Win32Docs@0.1.42-alpha",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "Microsoft.Windows.SDK.Win32Docs",
+      "version": "0.1.42-alpha",
+      "description": "Microsoft Windows API documentation",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "FE79B368D7CF63708B3FF884B1BD9E8039D7E4C9F460A1781E6D753E107FEA81FD928F7347FB38F37BF03FB9C369B1C3CD9E192B3ADCC8520C46FC9EA3B12BB2"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unknown - See URL",
+            "url": "https://aka.ms/WinSDKLicenseURL"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/Microsoft.Windows.SDK.Win32Docs@0.1.42-alpha",
+      "externalReferences": [
+        {
+          "url": "https://github.com/microsoft/win32metadata",
+          "type": "website"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Microsoft.Windows.SDK.Win32Metadata@65.0.8-preview",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "Microsoft.Windows.SDK.Win32Metadata",
+      "version": "65.0.8-preview",
+      "description": "This packages provides the Win32 API surface as a winmd (Windows metadata) file.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8D254C091B9C8AE96C0F670228572C28A53B3A729227D8D471ABC8BF532126A7CF4515ED6D6D0552BFEA1EA03242F9F3B6C0300547334D7A60C82E1BE54F3920"
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/Microsoft.Windows.SDK.Win32Metadata@65.0.8-preview",
+      "externalReferences": [
+        {
+          "url": "https://github.com/microsoft/win32metadata",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/microsoft/win32metadata.git",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Microsoft.Windows.WDK.Win32Metadata@0.13.25-experimental",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "Microsoft.Windows.WDK.Win32Metadata",
+      "version": "0.13.25-experimental",
+      "description": "This packages provides metadata (.winmd) for the Windows Driver Kit (WDK).",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6BE7243B8213F0B6CF5F552B945D91F722ABEFFB8D16EFECB4387A4EEA72037036BFF4760906CD6A15B5BB50C2327FAE78CD997F73800DCD9EB5E9776205D07F"
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/Microsoft.Windows.WDK.Win32Metadata@0.13.25-experimental",
+      "externalReferences": [
+        {
+          "url": "https://github.com/microsoft/wdkmetadata",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/microsoft/wdkmetadata.git",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "binary:Avalonia.Win32.Automation@12.1.0.0",
+      "name": "Avalonia.Win32.Automation",
+      "version": "12.1.0.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "461883CFD28B6F01261B3147787E0CAA084EEA906C9C029ADDF824D8272A6F5B2A32AB6471226508183CC6EFEED7FE5B8263EDD2EAF699A8533309F0135E67AA"
+        }
+      ],
+      "properties": [
+        {
+          "name": "avalonia:packagePath",
+          "value": "lib/net10.0/Avalonia.Win32.Automation.dll"
+        }
+      ],
+      "supplier": {
+        "name": "Avalonia Team"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "Avalonia.Win32@12.1.0",
+      "dependsOn": [
+        "pkg:nuget/Avalonia.Angle.Windows.Natives@2.1.27548.20260419",
+        "pkg:nuget/Avalonia.BuildServices@11.3.2",
+        "pkg:nuget/MicroCom.Runtime@0.11.6"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/Avalonia.Angle.Windows.Natives@2.1.27548.20260419",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/Microsoft.Windows.SDK.Win32Docs@0.1.42-alpha",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/Microsoft.Windows.SDK.Win32Metadata@65.0.8-preview",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/Microsoft.Windows.WDK.Win32Metadata@0.13.25-experimental",
+      "dependsOn": [
+        "pkg:nuget/Microsoft.Windows.SDK.Win32Metadata@65.0.8-preview"
+      ]
+    }
+  ],
+  "compositions": [
+    {
+      "aggregate": "complete",
+      "assemblies": [
+        "Avalonia.Win32@12.1.0",
+        "binary:Avalonia.Win32.Automation@12.1.0.0"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\SharpEmu.Debugger.deps.json
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\bin\Release\net10.0\SharpEmu.Debugger.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Debugger\Release\net10.0\SharpEmu.Debugger.csproj.AssemblyReference.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Debugger\Release\net10.0\SharpEmu.Debugger.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Debugger\Release\net10.0\SharpEmu.Debugger.AssemblyInfoInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Debugger\Release\net10.0\SharpEmu.Debugger.AssemblyInfo.cs
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Debugger\Release\net10.0\SharpEmu.Debugger.csproj.CoreCompileInputs.cache
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Debugger\Release\net10.0\SharpEmu.66B65BFD.Up2Date
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Debugger\Release\net10.0\SharpEmu.Debugger.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Debugger\Release\net10.0\refint\SharpEmu.Debugger.dll
+C:\Users\chayt\Downloads\SharpEmu-Source\artifacts\obj\SharpEmu.Debugger\Release\net10.0\ref\SharpEmu.Debugger.dll

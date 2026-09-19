@@ -1,0 +1,4 @@
+key=value
+language-code=en
+use-software-cursor=False
+invert-zoom=False

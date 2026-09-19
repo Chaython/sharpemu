@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>ppy.SDL3-CS</id>
+    <version>2026.629.0</version>
+    <authors>ppy Pty Ltd</authors>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <readme>README_nuget.md</readme>
+    <projectUrl>https://github.com/ppy/SDL3-CS</projectUrl>
+    <description>Package Description</description>
+    <releaseNotes>Automated release.</releaseNotes>
+    <copyright>Copyright (c) 2024 ppy Pty Ltd</copyright>
+    <tags>SDL SDL3 SDL3-CS</tags>
+    <repository type="git" url="https://github.com/ppy/SDL3-CS" commit="a0a5276a874c0c48db705696ab7e2adc8b5db0a1" />
+    <dependencies>
+      <group targetFramework="net8.0" />
+      <group targetFramework="net8.0-android34.0" />
+    </dependencies>
+  </metadata>
+</package>

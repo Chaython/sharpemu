@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>Microsoft.AspNetCore.App.Runtime.win-x64</id>
+    <version>10.0.11</version>
+    <authors>Microsoft</authors>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <icon>Icon.png</icon>
+    <projectUrl>https://asp.net/</projectUrl>
+    <description>Shared Framework for hosting of Microsoft ASP.NET Core applications. It is open source, cross-platform and is supported by Microsoft. We hope you enjoy using it! If you do, please consider joining the active community of developers that are contributing to the project on GitHub (https://github.com/dotnet/dotnet). We happily accept issues and PRs.</description>
+    <copyright>© Microsoft Corporation. All rights reserved.</copyright>
+    <tags>aspnetcore shared-framework</tags>
+    <serviceable>true</serviceable>
+    <packageTypes>
+      <packageType name="DotnetPlatform" />
+    </packageTypes>
+    <repository type="git" url="https://github.com/dotnet/dotnet" commit="e2f47b0110ed922f21a1522da67279133ce28f32" />
+  </metadata>
+</package>

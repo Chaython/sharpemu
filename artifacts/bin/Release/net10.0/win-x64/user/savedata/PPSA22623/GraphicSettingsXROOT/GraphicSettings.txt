@@ -1,0 +1,6 @@
+key=value
+ambient-occlusion=True
+bloom-and-color-grading=True
+post-processing-anti-aliasing=True
+show-grass=True
+show-fog=True

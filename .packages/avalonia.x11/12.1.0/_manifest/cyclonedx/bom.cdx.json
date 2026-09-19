@@ -1,0 +1,673 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "serialNumber": "urn:uuid:7093d395-f107-4fbb-911b-6ad0c373550d",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-07-09T10:57:55Z",
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "authors": [
+            {
+              "name": "CycloneDX"
+            }
+          ],
+          "name": "CycloneDX module for .NET",
+          "version": "6.2.0.0",
+          "externalReferences": [
+            {
+              "url": "https://github.com/CycloneDX/cyclonedx-dotnet",
+              "type": "website"
+            }
+          ]
+        }
+      ]
+    },
+    "component": {
+      "type": "library",
+      "bom-ref": "Avalonia.X11@12.1.0",
+      "name": "Avalonia.X11",
+      "version": "12.1.0",
+      "purl": "pkg:nuget/Avalonia.X11@12.1.0",
+      "description": "Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.",
+      "copyright": "Copyright 2013-2026 \u00A9 The AvaloniaUI Project",
+      "publisher": "Avalonia Team",
+      "author": "Avalonia Team",
+      "supplier": {
+        "name": "Avalonia Team",
+        "url": [
+          "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link"
+        ]
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "url": "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/AvaloniaUI/Avalonia/",
+          "type": "vcs"
+        }
+      ]
+    },
+    "supplier": {
+      "name": "Avalonia Team",
+      "url": [
+        "https://avaloniaui.net/?utm_source=nuget\u0026utm_medium=referral\u0026utm_content=project_homepage_link"
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "authors": [
+        {
+          "name": "Avalonia Team"
+        }
+      ],
+      "name": "Avalonia.BuildServices",
+      "version": "11.3.2",
+      "description": "Avalonia is a cross-platform UI framework for .NET providing a flexible styling system and supporting a wide range of Operating Systems such as Windows, Linux, macOS and with experimental support for Android, iOS and WebAssembly.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "233F868E74AB91E56818004AD0AA7D0BB6E978044DDCF0061E373ADA06A1846B17A82E94C777AB907BA484C1873D2212B47D3539D2694E89A415F1AF047C3045"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "Copyright 2023-2025 \u00A9 The AvaloniaUI Project",
+      "purl": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "externalReferences": [
+        {
+          "url": "https://avaloniaui.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/AvaloniaUI/Avalonia.BuildServices",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/HarfBuzzSharp@8.3.1.3",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "HarfBuzzSharp",
+      "version": "8.3.1.3",
+      "description": "HarfBuzzSharp is a cross-platform OpenType text shaping engine for .NET platforms.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8493B36E88BEEDFC80E12F13E3B986FB1E5560C4C8DF86E672C1CAD24A623FA36ADC9A1A82F566FDA3784F7A2D58975D10273EA65B7BCB119AFC126B11A452C8"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/HarfBuzzSharp@8.3.1.3",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.Linux@8.3.1.3",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "HarfBuzzSharp.NativeAssets.Linux",
+      "version": "8.3.1.3",
+      "description": "HarfBuzzSharp is a cross-platform OpenType text shaping engine for .NET platforms.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "C413A4244F1FCF0CADDD8E039F7E96324CEE45EC0970AAE23FC324BF40A8808C5FCF9E2B386BE5A920F95E37CC2EE03A68D3DD7092FB9091C155E52A729AC8D7"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/HarfBuzzSharp.NativeAssets.Linux@8.3.1.3",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.macOS@8.3.1.3",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "HarfBuzzSharp.NativeAssets.macOS",
+      "version": "8.3.1.3",
+      "description": "HarfBuzzSharp is a cross-platform OpenType text shaping engine for .NET platforms.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "64222E104F945CC284C08FD98FEAA4DBB355B92990EB77858D4179AB6EA112D1E6A127198075E9274745044FD41E99F691C4C68A138DDFD438C5EBDBB0571602"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/HarfBuzzSharp.NativeAssets.macOS@8.3.1.3",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.WebAssembly@8.3.1.3",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "HarfBuzzSharp.NativeAssets.WebAssembly",
+      "version": "8.3.1.3",
+      "description": "HarfBuzzSharp is a cross-platform OpenType text shaping engine for .NET platforms.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "A7991DC993E42EF2E10785D41193CDD731C03C135E8DB4C09CB493A3D364A634A07F47AB035CB63ADA41E643FF089CD461F1AB5844402F4CD30EECD3AD68B200"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/HarfBuzzSharp.NativeAssets.WebAssembly@8.3.1.3",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.Win32@8.3.1.3",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "HarfBuzzSharp.NativeAssets.Win32",
+      "version": "8.3.1.3",
+      "description": "HarfBuzzSharp is a cross-platform OpenType text shaping engine for .NET platforms.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "156AB246A79AEB509672B10C109A1FA29E59B3AD1EB9713AC331E2F11B6BAC4B7A96BCB765A8E2DA4D3F59BB54D5B648E870AEAE4D22543BACA28B17CB046FCF"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/HarfBuzzSharp.NativeAssets.Win32@8.3.1.3",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "authors": [
+        {
+          "name": "MicroCom.Runtime"
+        }
+      ],
+      "name": "MicroCom.Runtime",
+      "version": "0.11.6",
+      "description": "IDL-based COM interop codegen. Consumes MIDL-like IDL file, generates efficient cross-platform C# interop and C\u002B\u002B header files.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6357E26E35BDCC31A1ADB458F1EBA1273026E138865B7F7098CE0CDF29135C317F58AFA0A8C015B64C5B6315CE02C496413BC178BFD726935D8D32AF63F732C1"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "Copyright 2021 \u00A9 Nikita Tsukanov",
+      "purl": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "externalReferences": [
+        {
+          "url": "https://github.com/kekekeks/MicroCom",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/SkiaSharp@3.119.4",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "SkiaSharp",
+      "version": "3.119.4",
+      "description": "SkiaSharp is a cross-platform 2D graphics API for .NET platforms based on Google\u0027s Skia Graphics Library.\nIt provides a comprehensive 2D API that can be used across mobile, server and desktop models to render images.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "712925FBACDFBD34C5D7C06BCE5B2AE19C5062DCF4000AA57EC2C446B4B6CD6827C58153027E1C6090EC264F0997B347F4459995C88C21DB094C4D9240CA95A5"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/SkiaSharp@3.119.4",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/SkiaSharp.NativeAssets.Linux@3.119.4",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "SkiaSharp.NativeAssets.Linux",
+      "version": "3.119.4",
+      "description": "SkiaSharp is a cross-platform 2D graphics API for .NET platforms based on Google\u0027s Skia Graphics Library.\nIt provides a comprehensive 2D API that can be used across mobile, server and desktop models to render images.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "F839CC35826B865AD45180427A16E2D7797BE838192335AAFCF3DCFDA8B110CA04D7CF1AEBF5F300C4ADBF875454638D476FE8C44E9B32B388562BDE0D558F72"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/SkiaSharp.NativeAssets.Linux@3.119.4",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/SkiaSharp.NativeAssets.macOS@3.119.4",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "SkiaSharp.NativeAssets.macOS",
+      "version": "3.119.4",
+      "description": "SkiaSharp is a cross-platform 2D graphics API for .NET platforms based on Google\u0027s Skia Graphics Library.\nIt provides a comprehensive 2D API that can be used across mobile, server and desktop models to render images.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "518871337537A3FA204530D70265B8FDCC81BE29DE8C8871B6A20526982372CC4F56E218E552E0C6CF3778FB8E05F341BBBB7F59E85317EC3810BE6C7620640E"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/SkiaSharp.NativeAssets.macOS@3.119.4",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/SkiaSharp.NativeAssets.WebAssembly@3.119.4",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "SkiaSharp.NativeAssets.WebAssembly",
+      "version": "3.119.4",
+      "description": "SkiaSharp is a cross-platform 2D graphics API for .NET platforms based on Google\u0027s Skia Graphics Library.\nIt provides a comprehensive 2D API that can be used across mobile, server and desktop models to render images.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "7290A28EDD9634635AD098CF839498D1AD5D437EF3AB66B22B6F4CB2616403D2E3D057BF0DC3D9653BCE4133B49A3396F493DB4DA350FF8B8C1C115DD56E2851"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/SkiaSharp.NativeAssets.WebAssembly@3.119.4",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/SkiaSharp.NativeAssets.Win32@3.119.4",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "SkiaSharp.NativeAssets.Win32",
+      "version": "3.119.4",
+      "description": "SkiaSharp is a cross-platform 2D graphics API for .NET platforms based on Google\u0027s Skia Graphics Library.\nIt provides a comprehensive 2D API that can be used across mobile, server and desktop models to render images.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "445BFD7C9305522E385110A672A43F15ACBFB36B5C985C5AF540DB534F99CEB3A7DDF933A20587EE0527B14EDF1B19CB9B167E781BEA275CA2B3B77D9A0259CF"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/SkiaSharp.NativeAssets.Win32@3.119.4",
+      "externalReferences": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "website"
+        },
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=868515",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/System.IO.Pipelines@8.0.0",
+      "authors": [
+        {
+          "name": "Microsoft"
+        }
+      ],
+      "name": "System.IO.Pipelines",
+      "version": "8.0.0",
+      "description": "Single producer single consumer byte buffer management.\n\nCommonly Used Types:\nSystem.IO.Pipelines.Pipe\nSystem.IO.Pipelines.PipeWriter\nSystem.IO.Pipelines.PipeReader",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "57EB6A11E84F40A48B57B1DC5786A01AA9852122B7D15363490D8A12C9A458BF99A8DDF4C0C0247BE98559C2B42E769A10BDA2C5A9817735484D960DC652EB12"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "\u00A9 Microsoft Corporation. All rights reserved.",
+      "purl": "pkg:nuget/System.IO.Pipelines@8.0.0",
+      "externalReferences": [
+        {
+          "url": "https://dot.net/",
+          "type": "website"
+        },
+        {
+          "url": "https://github.com/dotnet/runtime",
+          "type": "vcs"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Tmds.DBus.Protocol@0.94.1",
+      "authors": [
+        {
+          "name": "Tom Deseyn"
+        }
+      ],
+      "name": "Tmds.DBus.Protocol",
+      "version": "0.94.1",
+      "description": "Modern, low-level, high-performance D-Bus library for .NET that is NativeAOT compatible.",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "97A1D09BF372E13CA01FB7715294E3F46F56A22206090B9C788DF337681706B2A14B3D92A5BE499716FDA40449AD23DBC72496EB9848CBD92AEAED576465398C"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "copyright": "Tom Deseyn",
+      "purl": "pkg:nuget/Tmds.DBus.Protocol@0.94.1",
+      "externalReferences": [
+        {
+          "url": "https://github.com/tmds/Tmds.DBus.git",
+          "type": "vcs"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "Avalonia.X11@12.1.0",
+      "dependsOn": [
+        "pkg:nuget/Avalonia.BuildServices@11.3.2",
+        "pkg:nuget/HarfBuzzSharp@8.3.1.3",
+        "pkg:nuget/HarfBuzzSharp.NativeAssets.Linux@8.3.1.3",
+        "pkg:nuget/HarfBuzzSharp.NativeAssets.WebAssembly@8.3.1.3",
+        "pkg:nuget/MicroCom.Runtime@0.11.6",
+        "pkg:nuget/SkiaSharp@3.119.4",
+        "pkg:nuget/SkiaSharp.NativeAssets.Linux@3.119.4",
+        "pkg:nuget/SkiaSharp.NativeAssets.WebAssembly@3.119.4",
+        "pkg:nuget/Tmds.DBus.Protocol@0.94.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/Avalonia.BuildServices@11.3.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.Linux@8.3.1.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.macOS@8.3.1.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.WebAssembly@8.3.1.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/HarfBuzzSharp.NativeAssets.Win32@8.3.1.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/HarfBuzzSharp@8.3.1.3",
+      "dependsOn": [
+        "pkg:nuget/HarfBuzzSharp.NativeAssets.Win32@8.3.1.3",
+        "pkg:nuget/HarfBuzzSharp.NativeAssets.macOS@8.3.1.3"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/MicroCom.Runtime@0.11.6",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/SkiaSharp.NativeAssets.Linux@3.119.4",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/SkiaSharp.NativeAssets.macOS@3.119.4",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/SkiaSharp.NativeAssets.WebAssembly@3.119.4",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/SkiaSharp.NativeAssets.Win32@3.119.4",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/SkiaSharp@3.119.4",
+      "dependsOn": [
+        "pkg:nuget/SkiaSharp.NativeAssets.Win32@3.119.4",
+        "pkg:nuget/SkiaSharp.NativeAssets.macOS@3.119.4"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/System.IO.Pipelines@8.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/Tmds.DBus.Protocol@0.94.1",
+      "dependsOn": []
+    }
+  ]
+}

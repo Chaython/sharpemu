@@ -1,0 +1,13 @@
+﻿<Project InitialTargets="_Silk_NET_Vulkan_ConfigureSilkTouchRuntime">
+<Target Name="_Silk_NET_Vulkan_ConfigureSilkTouchRuntime">
+<PropertyGroup>
+<_Silk_NET_Vulkan_ExternalPInvokes>@(SilkExternalPInvoke)</_Silk_NET_Vulkan_ExternalPInvokes>
+<_Silk_NET_Vulkan_InternalPInvokes>@(SilkInternalPInvoke)</_Silk_NET_Vulkan_InternalPInvokes>
+<_Silk_NET_Vulkan_Opts>@(RuntimeHostConfigurationOption)</_Silk_NET_Vulkan_Opts>
+</PropertyGroup>
+<ItemGroup>
+<RuntimeHostConfigurationOption Condition="(!$([System.String]::Copy('$(_Silk_NET_Vulkan_ExternalPInvokes)').Contains('Silk.NET.Vulkan.Vk')) and !$([System.String]::Copy('$(_Silk_NET_Vulkan_Opts)').Contains('SILK_NET_VULKAN_VK_ENABLE_PINVOKE_OVERRIDE_0'))) and (('$(SilkEnableStaticLinking)' == 'true') or $([System.String]::Copy('$(_Silk_NET_Vulkan_InternalPInvokes)').ToLower().Contains('Silk.NET.Vulkan.Vk')) or $(TargetFramework.Contains('ios')) or $(TargetFramework.Contains('mac')) or $(TargetFramework.Contains('tvos')))" Include="SILK_NET_VULKAN_VK_ENABLE_PINVOKE_OVERRIDE_0" Value="true" Trim="true" />
+<RuntimeHostConfigurationOption Condition="(!$([System.String]::Copy('$(_Silk_NET_Vulkan_Opts)').Contains('SILK_NET_VULKAN_VK_ENABLE_PINVOKE_OVERRIDE_0'))) and (!(('$(SilkEnableStaticLinking)' == 'true') or $([System.String]::Copy('$(_Silk_NET_Vulkan_InternalPInvokes)').ToLower().Contains('Silk.NET.Vulkan.Vk')) or $(TargetFramework.Contains('ios')) or $(TargetFramework.Contains('mac')) or $(TargetFramework.Contains('tvos'))))" Include="SILK_NET_VULKAN_VK_ENABLE_PINVOKE_OVERRIDE_0" Value="false" Trim="true" />
+</ItemGroup>
+</Target>
+</Project>
