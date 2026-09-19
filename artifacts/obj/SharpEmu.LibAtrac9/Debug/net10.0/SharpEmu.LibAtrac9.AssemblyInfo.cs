@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SharpEmu.LibAtrac9")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.0.3.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.0.3-release.4+6ae8cb76c27881ac9d6119d2314fd6a7c349f5a2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.0.3-release.4+336230d19359f436f088328216c1840daf997f4a")]
 [assembly: System.Reflection.AssemblyProductAttribute("SharpEmu.LibAtrac9")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SharpEmu.LibAtrac9")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.0.3.0")]
