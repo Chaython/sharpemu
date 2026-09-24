@@ -1428,6 +1428,7 @@ internal static unsafe class VulkanVideoPresenter
     private static long _mrtSkipTraceCount;
     private static long _offscreenDropTraceCount;
     private static long _blendFallbackTraceCount;
+    private static long _storageFeedbackFallbackTraceCount;
     private static long _perfDrawCount;
     private static long _perfDrawTicks;
     private static long _perfPipelineCreations;
@@ -7812,7 +7813,10 @@ internal static unsafe class VulkanVideoPresenter
                     // called ResolveStorageGuestImage directly, which throws on
                     // address 0 and dropped the whole draw (Demon's Souls G-buffer
                     // normals/IDs passes -> lighting had no input -> black).
-                    if (texture.IsStorage && texture.Address != 0)
+                    if (texture.IsStorage &&
+                        texture.Address != 0 &&
+                        feedbackTargets?.Any(
+                            target => target.Address == texture.Address) != true)
                     {
                         _ = ResolveStorageGuestImage(texture);
                     }
@@ -7822,6 +7826,25 @@ internal static unsafe class VulkanVideoPresenter
                 for (var index = 0; index < draw.Textures.Count; index++)
                 {
                     var texture = draw.Textures[index];
+                    var storageFeedbackTarget =
+                        texture.IsStorage && texture.Address != 0
+                            ? feedbackTargets?.FirstOrDefault(
+                                target => target.Address == texture.Address)
+                            : null;
+                    if (storageFeedbackTarget is not null)
+                    {
+                        // Core Vulkan cannot bind the same subresource as a
+                        // color attachment and storage image without a feedback
+                        // loop extension. Snapshot the pre-draw value instead:
+                        // color output remains live while UAV reads/writes are
+                        // isolated to this draw-local image.
+                        resources.Textures[index] =
+                            CreateRenderTargetFeedbackSnapshot(
+                                texture,
+                                storageFeedbackTarget);
+                        continue;
+                    }
+
                     var resolved = index == hostMovieTextures.Luma
                         ? CreateHostMovieTextureResource(texture, plane: 0)
                         : index == hostMovieTextures.Chroma
@@ -7843,7 +7866,6 @@ internal static unsafe class VulkanVideoPresenter
                             ? CreateDepthFeedbackSnapshot(texture, feedbackDepth)
                             :
                         feedbackTarget is not null &&
-                        !texture.IsStorage &&
                         ReferenceEquals(resolved.GuestImage, feedbackTarget)
                             ? CreateRenderTargetFeedbackSnapshot(texture, feedbackTarget)
                             : resolved;
@@ -10491,7 +10513,10 @@ internal static unsafe class VulkanVideoPresenter
                     Tiling = ImageTiling.Optimal,
                     Usage =
                         ImageUsageFlags.TransferDstBit |
-                        ImageUsageFlags.SampledBit,
+                        ImageUsageFlags.SampledBit |
+                        (texture.IsStorage
+                            ? ImageUsageFlags.StorageBit
+                            : (ImageUsageFlags)0),
                     SharingMode = SharingMode.Exclusive,
                     InitialLayout = ImageLayout.Undefined,
                 };
@@ -10515,6 +10540,21 @@ internal static unsafe class VulkanVideoPresenter
                     "vkBindImageMemory(render-target feedback snapshot)");
 
                 var viewFormat = GetTextureFormat(texture.Format, texture.NumberType);
+                var selectedMipLevel = 0u;
+                if (texture.IsStorage)
+                {
+                    viewFormat = GetStorageImageFormat(viewFormat);
+                    if (!SupportsStorageImage(viewFormat))
+                    {
+                        throw new InvalidOperationException(
+                            $"Feedback storage format {viewFormat} is unsupported.");
+                    }
+
+                    selectedMipLevel = Math.Min(
+                        GetStorageMipLevel(texture),
+                        source.MipLevels - 1);
+                }
+
                 if (!IsCompatibleViewFormat(source.Format, viewFormat))
                 {
                     throw new InvalidOperationException(
@@ -10528,8 +10568,16 @@ internal static unsafe class VulkanVideoPresenter
                     Image = image,
                     ViewType = ImageViewType.Type2D,
                     Format = viewFormat,
-                    Components = ToVkComponentMapping(texture.DstSelect),
-                    SubresourceRange = ColorSubresourceRange(0, source.MipLevels),
+                    Components = texture.IsStorage
+                        ? new ComponentMapping(
+                            ComponentSwizzle.Identity,
+                            ComponentSwizzle.Identity,
+                            ComponentSwizzle.Identity,
+                            ComponentSwizzle.Identity)
+                        : ToVkComponentMapping(texture.DstSelect),
+                    SubresourceRange = texture.IsStorage
+                        ? ColorSubresourceRange(selectedMipLevel, 1)
+                        : ColorSubresourceRange(0, source.MipLevels),
                 };
                 Check(
                     _vk.CreateImageView(_device, &viewInfo, null, out view),
@@ -10557,6 +10605,8 @@ internal static unsafe class VulkanVideoPresenter
                     RowLength = source.Width,
                     DstSelect = texture.DstSelect,
                     OwnsStorage = true,
+                    IsStorage = texture.IsStorage,
+                    MipLevel = selectedMipLevel,
                     SamplerState = texture.Sampler,
                     FeedbackSource = source,
                 };
@@ -13188,13 +13238,16 @@ internal static unsafe class VulkanVideoPresenter
 
             if (hasStorageFeedback)
             {
-                Console.Error.WriteLine(
-                    $"[LOADER][WARN] Vulkan skipped storage render-target feedback loop " +
-                    $"vs=0x{work.ShaderAddress:X16} " +
-                    $"targets={string.Join(',', work.Targets.Where(target => target.Address != 0).Select(target => $"0x{target.Address:X16}"))}; " +
-                    "sampled aliases use ordered snapshots");
-                ReturnPooledGuestData(work.Draw);
-                return;
+                var fallbackCount =
+                    Interlocked.Increment(ref _storageFeedbackFallbackTraceCount);
+                if (fallbackCount <= 16 || fallbackCount % 200 == 0)
+                {
+                    Console.Error.WriteLine(
+                        $"[LOADER][WARN] vk.storage_feedback_snapshot#{fallbackCount} " +
+                        $"vs=0x{work.ShaderAddress:X16} " +
+                        $"targets={string.Join(',', work.Targets.Where(target => target.Address != 0).Select(target => $"0x{target.Address:X16}"))}; " +
+                        "binding pre-draw storage snapshot instead of dropping the color pass");
+                }
             }
 
             var targets = new GuestImageResource[work.Targets.Count];
@@ -17495,9 +17548,13 @@ internal static unsafe class VulkanVideoPresenter
                 {
                     SType = StructureType.ImageMemoryBarrier,
                     SrcAccessMask = AccessFlags.TransferWriteBit,
-                    DstAccessMask = AccessFlags.ShaderReadBit,
+                    DstAccessMask = texture.IsStorage
+                        ? AccessFlags.ShaderReadBit | AccessFlags.ShaderWriteBit
+                        : AccessFlags.ShaderReadBit,
                     OldLayout = ImageLayout.TransferDstOptimal,
-                    NewLayout = ImageLayout.ShaderReadOnlyOptimal,
+                    NewLayout = texture.IsStorage
+                        ? ImageLayout.General
+                        : ImageLayout.ShaderReadOnlyOptimal,
                     SrcQueueFamilyIndex = Vk.QueueFamilyIgnored,
                     DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
                     Image = texture.Image,
