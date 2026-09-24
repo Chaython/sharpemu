@@ -3,6 +3,7 @@
 
 using System.Globalization;
 using System.Text;
+using SharpEmu.ShaderCompiler;
 
 namespace SharpEmu.ShaderCompiler.Metal;
 
@@ -59,6 +60,52 @@ public static class MslFixedShaders
             ("green", Format(green)),
             ("blue", Format(blue)),
             ("alpha", Format(alpha)));
+
+    public static string CreateFallbackColorFragment(
+        IReadOnlyList<Gen5PixelOutputKind> outputKinds)
+    {
+        var count = Math.Clamp(outputKinds.Count, 1, 8);
+        var fields = new StringBuilder();
+        var writes = new StringBuilder();
+        for (var index = 0; index < count; index++)
+        {
+            var kind = outputKinds.Count == 0
+                ? Gen5PixelOutputKind.Float
+                : outputKinds[index];
+            var (type, value) = kind switch
+            {
+                Gen5PixelOutputKind.Uint =>
+                    ("uint4", "uint4(0xffffffffu, 0u, 0xffffffffu, 0xffffffffu)"),
+                Gen5PixelOutputKind.Sint =>
+                    ("int4", "int4(2147483647, 0, 2147483647, 2147483647)"),
+                _ => ("float4", "float4(1.0, 0.0, 1.0, 1.0)"),
+            };
+            fields.Append("    ")
+                .Append(type)
+                .Append(" color")
+                .Append(index)
+                .Append(" [[color(")
+                .Append(index)
+                .AppendLine(")]];");
+            writes.Append("    output.color")
+                .Append(index)
+                .Append(" = ")
+                .Append(value)
+                .AppendLine(";");
+        }
+
+        return
+            "#include <metal_stdlib>\n\n" +
+            "using namespace metal;\n\n" +
+            "struct SharpEmuFallbackColorOut\n{\n" +
+            fields +
+            "};\n\n" +
+            "fragment SharpEmuFallbackColorOut fallback_color_fs()\n{\n" +
+            "    SharpEmuFallbackColorOut output;\n" +
+            writes +
+            "    return output;\n" +
+            "}\n";
+    }
 
     /// <summary>
     /// Diagnostic fragment stage exposing one interpolated vertex output

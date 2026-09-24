@@ -9250,22 +9250,7 @@ var renderTargets = GetRenderTargets(state.CxRegisters);
                         renderTargetOutputKinds[location]);
                 }
 
-                if (!GuestGpu.Current.TryCompilePixelShader(
-                        pixelState,
-                        pixelEvaluation,
-                        pixelOutputs,
-                        out var pixelShader,
-                        out error,
-                        globalBufferBase: 0,
-                        totalGlobalBufferCount: totalGlobalBuffers,
-                        imageBindingBase: 0,
-                        scalarRegisterBufferIndex: _bakeScalars ? -1 : guestGlobalBuffers,
-                        pixelInputEnable: psInputEna,
-                        pixelInputAddress: psInputAddr,
-                        pixelInputCntl: psInputCntl,
-                        storageBufferOffsetAlignment:
-                            _storageBufferOffsetAlignment) ||
-                    !GuestGpu.Current.TryCompileVertexShader(
+                if (!GuestGpu.Current.TryCompileVertexShader(
                         exportState,
                         exportEvaluation,
                         out var vertexShader,
@@ -9283,6 +9268,33 @@ var renderTargets = GetRenderTargets(state.CxRegisters);
                     return false;
                 }
 
+                var usedFallbackPixelShader = false;
+                if (!GuestGpu.Current.TryCompilePixelShader(
+                        pixelState,
+                        pixelEvaluation,
+                        pixelOutputs,
+                        out var pixelShader,
+                        out var pixelCompileError,
+                        globalBufferBase: 0,
+                        totalGlobalBufferCount: totalGlobalBuffers,
+                        imageBindingBase: 0,
+                        scalarRegisterBufferIndex: _bakeScalars ? -1 : guestGlobalBuffers,
+                        pixelInputEnable: psInputEna,
+                        pixelInputAddress: psInputAddr,
+                        pixelInputCntl: psInputCntl,
+                        storageBufferOffsetAlignment:
+                            _storageBufferOffsetAlignment))
+                {
+                    usedFallbackPixelShader = true;
+                    pixelShader = GuestGpu.Current.GetFallbackColorFragmentShader(
+                        renderTargetOutputKinds);
+                    Console.Error.WriteLine(
+                        $"[LOADER][WARN] agc.pixel_shader_fallback " +
+                        $"es=0x{exportShaderAddress:X16} ps=0x{pixelShaderAddress:X16} " +
+                        $"targets={renderTargets.Length}: {pixelCompileError}");
+                    error = string.Empty;
+                }
+
                 compiled = (vertexShader!, pixelShader!);
                 DumpCompiledShader(
                     "vs",
@@ -9290,12 +9302,15 @@ var renderTargets = GetRenderTargets(state.CxRegisters);
                     exportStateFingerprint,
                     compiled.Vertex,
                     exportState.Program);
-                DumpCompiledShader(
-                    "ps",
-                    pixelShaderAddress,
-                    pixelStateFingerprint,
-                    compiled.Pixel,
-                    pixelState.Program);
+                if (!usedFallbackPixelShader)
+                {
+                    DumpCompiledShader(
+                        "ps",
+                        pixelShaderAddress,
+                        pixelStateFingerprint,
+                        compiled.Pixel,
+                        pixelState.Program);
+                }
                 GuestGpu.Current.CountShaderCompilation();
                 _graphicsShaderCache.TryAdd(shaderKey, compiled);
             }

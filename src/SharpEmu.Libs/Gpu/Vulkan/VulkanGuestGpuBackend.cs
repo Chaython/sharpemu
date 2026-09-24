@@ -127,6 +127,11 @@ internal sealed class VulkanGuestGpuBackend : IGuestGpuBackend
     public IGuestCompiledShader GetDepthOnlyFragmentShader() =>
         DepthOnlyFragmentShader;
 
+    public IGuestCompiledShader GetFallbackColorFragmentShader(
+        IReadOnlyList<Gen5PixelOutputKind> outputKinds) =>
+        new VulkanCompiledGuestShader(
+            SpirvFixedShaders.CreateSolidFragment(1f, 0f, 1f, 1f, outputKinds));
+
     public void EnsureStarted(uint width, uint height) =>
         VulkanVideoPresenter.EnsureStarted(width, height);
 

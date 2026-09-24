@@ -1,6 +1,8 @@
 // Copyright (C) 2026 SharpEmu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+using SharpEmu.ShaderCompiler;
+
 namespace SharpEmu.ShaderCompiler.Vulkan;
 
 public static class SpirvFixedShaders
@@ -354,34 +356,89 @@ public static class SpirvFixedShaders
         return module.Build();
     }
 
-    public static byte[] CreateSolidFragment(float red, float green, float blue, float alpha)
+    public static byte[] CreateSolidFragment(float red, float green, float blue, float alpha) =>
+        CreateSolidFragment(red, green, blue, alpha, [Gen5PixelOutputKind.Float]);
+
+    public static byte[] CreateSolidFragment(
+        float red,
+        float green,
+        float blue,
+        float alpha,
+        IReadOnlyList<Gen5PixelOutputKind> outputKinds)
     {
+        var outputCount = Math.Clamp(outputKinds.Count, 1, 8);
         var module = new SpirvModuleBuilder();
         module.AddCapability(SpirvCapability.Shader);
 
         var voidType = module.TypeVoid();
         var floatType = module.TypeFloat(32);
+        var uintType = module.TypeInt(32, signed: false);
+        var intType = module.TypeInt(32, signed: true);
         var vec4Type = module.TypeVector(floatType, 4);
-        var outputVec4Pointer = module.TypePointer(SpirvStorageClass.Output, vec4Type);
-        var output = module.AddGlobalVariable(outputVec4Pointer, SpirvStorageClass.Output);
-        module.AddName(output, "outColor");
-        module.AddDecoration(output, SpirvDecoration.Location, 0);
+        var uvec4Type = module.TypeVector(uintType, 4);
+        var ivec4Type = module.TypeVector(intType, 4);
+        var floatPointer = module.TypePointer(SpirvStorageClass.Output, vec4Type);
+        var uintPointer = module.TypePointer(SpirvStorageClass.Output, uvec4Type);
+        var intPointer = module.TypePointer(SpirvStorageClass.Output, ivec4Type);
 
-        var functionType = module.TypeFunction(voidType);
-        var main = module.BeginFunction(voidType, functionType);
-        module.AddName(main, "main");
-        module.AddLabel();
-        var color = module.ConstantComposite(
+        var outputs = new uint[outputCount];
+        var kinds = new Gen5PixelOutputKind[outputCount];
+        for (var index = 0; index < outputCount; index++)
+        {
+            var kind = outputKinds.Count == 0
+                ? Gen5PixelOutputKind.Float
+                : outputKinds[index];
+            kinds[index] = kind;
+            var pointerType = kind switch
+            {
+                Gen5PixelOutputKind.Uint => uintPointer,
+                Gen5PixelOutputKind.Sint => intPointer,
+                _ => floatPointer,
+            };
+            outputs[index] = module.AddGlobalVariable(pointerType, SpirvStorageClass.Output);
+            module.AddName(outputs[index], $"outColor{index}");
+            module.AddDecoration(outputs[index], SpirvDecoration.Location, (uint)index);
+        }
+
+        var floatColor = module.ConstantComposite(
             vec4Type,
             module.ConstantFloat(floatType, red),
             module.ConstantFloat(floatType, green),
             module.ConstantFloat(floatType, blue),
             module.ConstantFloat(floatType, alpha));
-        module.AddStatement(SpirvOp.Store, output, color);
+        var uintColor = module.ConstantComposite(
+            uvec4Type,
+            module.Constant(uintType, uint.MaxValue),
+            module.Constant(uintType, 0),
+            module.Constant(uintType, uint.MaxValue),
+            module.Constant(uintType, uint.MaxValue));
+        var intMax = unchecked((uint)int.MaxValue);
+        var sintColor = module.ConstantComposite(
+            ivec4Type,
+            module.Constant(intType, intMax),
+            module.Constant(intType, 0),
+            module.Constant(intType, intMax),
+            module.Constant(intType, intMax));
+
+        var functionType = module.TypeFunction(voidType);
+        var main = module.BeginFunction(voidType, functionType);
+        module.AddName(main, "main");
+        module.AddLabel();
+        for (var index = 0; index < outputCount; index++)
+        {
+            var color = kinds[index] switch
+            {
+                Gen5PixelOutputKind.Uint => uintColor,
+                Gen5PixelOutputKind.Sint => sintColor,
+                _ => floatColor,
+            };
+            module.AddStatement(SpirvOp.Store, outputs[index], color);
+        }
+
         module.AddStatement(SpirvOp.Return);
         module.EndFunction();
 
-        module.AddEntryPoint(SpirvExecutionModel.Fragment, main, "main", [output]);
+        module.AddEntryPoint(SpirvExecutionModel.Fragment, main, "main", outputs);
         module.AddExecutionMode(main, SpirvExecutionMode.OriginUpperLeft);
         return module.Build();
     }

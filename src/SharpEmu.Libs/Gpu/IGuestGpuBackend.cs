@@ -73,6 +73,13 @@ internal interface IGuestGpuBackend
     /// <summary>Returns the backend's no-color-output fragment shader.</summary>
     IGuestCompiledShader GetDepthOnlyFragmentShader();
 
+    /// <summary>
+    /// Returns a diagnostic fragment shader used when guest pixel translation
+    /// fails. The output scalar type must match each bound color attachment.
+    /// </summary>
+    IGuestCompiledShader GetFallbackColorFragmentShader(
+        IReadOnlyList<Gen5PixelOutputKind> outputKinds);
+
     void HideSplashScreen();
 
     /// <summary>Presents one CPU-produced BGRA frame.</summary>

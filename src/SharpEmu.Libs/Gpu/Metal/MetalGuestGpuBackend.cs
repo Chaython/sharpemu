@@ -136,6 +136,17 @@ internal sealed class MetalGuestGpuBackend : IGuestGpuBackend
     public IGuestCompiledShader GetDepthOnlyFragmentShader() =>
         DepthOnlyFragmentShader;
 
+    public IGuestCompiledShader GetFallbackColorFragmentShader(
+        IReadOnlyList<Gen5PixelOutputKind> outputKinds) =>
+        new MetalCompiledGuestShader(new Gen5MslShader(
+            MslFixedShaders.CreateFallbackColorFragment(outputKinds),
+            "fallback_color_fs",
+            Gen5MslStage.Pixel,
+            [],
+            [],
+            AttributeCount: 0,
+            []));
+
     public bool TryGetRenderTargetOutputKind(uint dataFormat, uint numberType, out Gen5PixelOutputKind outputKind)
     {
         if (MetalGuestFormats.TryDecodeRenderTargetFormat(dataFormat, numberType, out var format))
