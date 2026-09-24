@@ -98,7 +98,6 @@ public sealed class KernelUmtxCompatExportsTests
         WriteUInt64(memory, WaitAddress, 0);
         SetUmtxArguments(ctx, WaitAddress, OpWait, expected: 0, timeoutAddress: 0);
 
-        var changed = new ManualResetEventSlim();
         var changer = Task.Run(() =>
         {
             Thread.Sleep(100);
@@ -106,14 +105,13 @@ public sealed class KernelUmtxCompatExportsTests
             // The wake arrives through the shared address-wait key space.
             SetUmtxArguments(ctx, WaitAddress, OpWake, val: 1, timeoutAddress: 0);
             _ = KernelUmtxCompatExports.UmtxOp(ctx);
-            changed.Set();
         });
 
         var stopwatch = Stopwatch.StartNew();
         var result = KernelUmtxCompatExports.UmtxOp(ctx);
         stopwatch.Stop();
 
-        Assert.True(changed.IsSet, "wait returned before the value changed");
+        Assert.Equal(0x1234UL, ReadUInt64(memory, WaitAddress));
         Assert.Equal(ErrnoOk, result);
         Assert.True(stopwatch.ElapsedMilliseconds >= 90, $"wait returned early: {stopwatch.ElapsedMilliseconds} ms");
         Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(10));
@@ -292,6 +290,13 @@ public sealed class KernelUmtxCompatExportsTests
         Span<byte> bytes = stackalloc byte[sizeof(uint)];
         Assert.True(memory.TryRead(address, bytes));
         return BinaryPrimitives.ReadUInt32LittleEndian(bytes);
+    }
+
+    private static ulong ReadUInt64(FakeCpuMemory memory, ulong address)
+    {
+        Span<byte> bytes = stackalloc byte[sizeof(ulong)];
+        Assert.True(memory.TryRead(address, bytes));
+        return BinaryPrimitives.ReadUInt64LittleEndian(bytes);
     }
 
     private static void WriteUInt64(FakeCpuMemory memory, ulong address, ulong value)
