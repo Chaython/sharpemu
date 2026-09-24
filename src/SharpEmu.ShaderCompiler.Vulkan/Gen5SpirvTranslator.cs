@@ -219,6 +219,19 @@ public static partial class Gen5SpirvTranslator
                 "1",
                 StringComparison.Ordinal);
 
+        // Compatibility path for incomplete graphics ISA coverage. Compute
+        // remains fail-fast because dropping a compute side effect can corrupt
+        // later guest-visible state. Set this environment variable while
+        // diagnosing translator coverage to restore strict graphics behavior.
+        private static readonly bool _strictGraphicsShaderTranslation =
+            string.Equals(
+                Environment.GetEnvironmentVariable(
+                    "SHARPEMU_STRICT_GRAPHICS_SHADER_TRANSLATION"),
+                "1",
+                StringComparison.Ordinal);
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<
+            (Gen5SpirvStage Stage, string Opcode), byte> _graphicsFailSoftOpcodes = new();
+
         // Which pixel-shader MRT export target (EXP_MRT0..7 == render-target
         // slot) is routed to the single fragment output. The offscreen draw
         // path renders one bound color target per pass, so a multi-render-target
@@ -1670,8 +1683,18 @@ public static partial class Gen5SpirvTranslator
 
                 if (!TryEmitInstruction(instruction, out error))
                 {
-                    error = $"pc=0x{instruction.Pc:X} {instruction.Opcode}: {error}";
-                    return false;
+                    var instructionError = error;
+                    if (!TryEmitGraphicsFallbackInstruction(
+                            instruction,
+                            instructionError))
+                    {
+                        error =
+                            $"pc=0x{instruction.Pc:X} {instruction.Opcode}: " +
+                            instructionError;
+                        return false;
+                    }
+
+                    error = string.Empty;
                 }
 
                 CapturePixelVgprs(instruction);
@@ -1752,6 +1775,48 @@ public static partial class Gen5SpirvTranslator
             else
             {
                 Store(_programCounter, UInt(fallthrough));
+            }
+
+            return true;
+        }
+
+        private bool TryEmitGraphicsFallbackInstruction(
+            Gen5ShaderInstruction instruction,
+            string reason)
+        {
+            if (_stage == Gen5SpirvStage.Compute ||
+                _strictGraphicsShaderTranslation ||
+                instruction.Control is Gen5ExportControl ||
+                instruction.Destinations.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (var destination in instruction.Destinations)
+            {
+                switch (destination.Kind)
+                {
+                    case Gen5OperandKind.ScalarRegister:
+                        StoreS(destination.Value, UInt(0));
+                        break;
+                    case Gen5OperandKind.VectorRegister:
+                        StoreV(destination.Value, UInt(0));
+                        break;
+                    default:
+                        // Unknown/non-register destinations can have hidden
+                        // side effects; keep those fail-fast.
+                        return false;
+                }
+            }
+
+            if (_graphicsFailSoftOpcodes.TryAdd(
+                    (_stage, instruction.Opcode),
+                    0))
+            {
+                Console.Error.WriteLine(
+                    $"[LOADER][WARN] shader.fail_soft stage={_stage} " +
+                    $"opcode={instruction.Opcode} pc=0x{instruction.Pc:X} " +
+                    $"shader=0x{_state.Program.Address:X16}: {reason}");
             }
 
             return true;
