@@ -192,6 +192,7 @@ public static partial class Gen5SpirvTranslator
         private readonly IReadOnlyList<Gen5PixelOutputBinding> _pixelOutputBindings;
         private readonly uint _waveLaneCount;
         private readonly bool _emulateWave64;
+        private readonly bool _usesPixelValidMask;
 
         // Safety valve for the PC-dispatcher loop. Each iteration executes one
         // GCN basic block; a correctly-translated shader always reaches its
@@ -288,6 +289,7 @@ public static partial class Gen5SpirvTranslator
         private uint _vcc;
         private uint _exec;
         private uint _reachedPixelExport;
+        private uint _pixelValidMaskActive;
         private uint _programCounter;
         private uint _programActive;
         private uint _iterationGuard;
@@ -381,6 +383,10 @@ public static partial class Gen5SpirvTranslator
             _state = state;
             _evaluation = evaluation;
             _pixelOutputBindings = pixelOutputBindings;
+            _usesPixelValidMask =
+                stage == Gen5SpirvStage.Pixel &&
+                state.Program.Instructions.Any(static instruction =>
+                    instruction.Control is Gen5ExportControl { ValidMask: true });
             _waveLaneCount = waveLaneCount == 64 ? 64u : 32u;
             _emulateWave64 =
                 stage == Gen5SpirvStage.Compute &&
@@ -655,7 +661,11 @@ public static partial class Gen5SpirvTranslator
                     // Materialize the condition before SelectionMerge: SPIR-V
                     // requires the merge instruction to be immediately followed
                     // by its structured branch terminator.
-                    var laneActive = Load(_boolType, _exec);
+                    var laneActive = Load(
+                        _boolType,
+                        _usesPixelValidMask
+                            ? _pixelValidMaskActive
+                            : _exec);
                     _module.AddStatement(
                         SpirvOp.SelectionMerge,
                         returnLabel,
@@ -803,6 +813,13 @@ public static partial class Gen5SpirvTranslator
                 _privateBoolPointer,
                 SpirvStorageClass.Private,
                 _module.ConstantBool(false));
+            if (_usesPixelValidMask)
+            {
+                _pixelValidMaskActive = _module.AddGlobalVariable(
+                    _privateBoolPointer,
+                    SpirvStorageClass.Private,
+                    _module.ConstantBool(true));
+            }
             _programCounter = _module.AddGlobalVariable(
                 _privateUintPointer,
                 SpirvStorageClass.Private,
@@ -828,6 +845,13 @@ public static partial class Gen5SpirvTranslator
             _interfaces.Add(_vcc);
             _interfaces.Add(_exec);
             _interfaces.Add(_reachedPixelExport);
+            if (_pixelValidMaskActive != 0)
+            {
+                _interfaces.Add(_pixelValidMaskActive);
+                _module.AddName(
+                    _pixelValidMaskActive,
+                    "pixelValidMaskActive");
+            }
             _interfaces.Add(_programCounter);
             _interfaces.Add(_programActive);
             _module.AddName(_scalarRegisters, "sgpr");
@@ -1465,6 +1489,12 @@ public static partial class Gen5SpirvTranslator
 
             Store(_scc, _module.ConstantBool(false));
             Store(_reachedPixelExport, _module.ConstantBool(false));
+            if (_pixelValidMaskActive != 0)
+            {
+                Store(
+                    _pixelValidMaskActive,
+                    _module.ConstantBool(true));
+            }
             if (_subgroupInvocationIdInput != 0)
             {
                 StoreWaveMask(106, _module.ConstantBool(false));
@@ -4485,6 +4515,16 @@ public static partial class Gen5SpirvTranslator
 
             if (_stage == Gen5SpirvStage.Pixel)
             {
+                // EXP.VM snapshots the fragment-valid EXEC mask at export
+                // time. Guest shaders may restore EXEC afterward; final EXEC
+                // therefore cannot be used as the fragment kill decision.
+                if (export.ValidMask && _pixelValidMaskActive != 0)
+                {
+                    Store(
+                        _pixelValidMaskActive,
+                        Load(_boolType, _exec));
+                }
+
                 if (!_pixelOutputs.TryGetValue(export.Target, out var output))
                 {
                     return true;

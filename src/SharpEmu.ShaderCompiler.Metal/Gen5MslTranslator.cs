@@ -253,6 +253,7 @@ public static partial class Gen5MslTranslator
         private readonly int _initialScalarBufferIndex;
         private readonly uint _waveLaneCount;
         private readonly ulong _storageBufferOffsetAlignment;
+        private readonly bool _usesPixelValidMask;
         private readonly Dictionary<uint, long[]> _scalarDefinitionsBeforePc = [];
         private readonly IReadOnlyList<Gen5PixelOutputBinding> _pixelOutputBindings;
         private readonly int _imageBindingBase;
@@ -317,6 +318,10 @@ public static partial class Gen5MslTranslator
             _stage = stage;
             _state = state;
             _evaluation = evaluation;
+            _usesPixelValidMask =
+                stage == Gen5MslStage.Pixel &&
+                state.Program.Instructions.Any(static instruction =>
+                    instruction.Control is Gen5ExportControl { ValidMask: true });
             _localSizeX = localSizeX;
             _localSizeY = localSizeY;
             _localSizeZ = localSizeZ;
@@ -781,7 +786,10 @@ public static partial class Gen5MslTranslator
             {
                 // A lane still removed from EXEC when the guest shader exits is
                 // a killed fragment; it must not contribute color or blending.
-                source.AppendLine("    if (!exec)");
+                source.AppendLine(
+                    _usesPixelValidMask
+                        ? "    if (!pixel_valid_mask_active)"
+                        : "    if (!exec)");
                 source.AppendLine("    {");
                 source.AppendLine("        discard_fragment();");
                 source.AppendLine("    }");
@@ -920,6 +928,11 @@ public static partial class Gen5MslTranslator
             source.AppendLine($"    uint s[{ScalarRegisterFileCount}] = {{}};");
             source.AppendLine($"    uint v[{VectorRegisterFileCount}] = {{}};");
             source.AppendLine("    bool exec = true;");
+            if (_usesPixelValidMask)
+            {
+                source.AppendLine(
+                    "    bool pixel_valid_mask_active = true;");
+            }
             source.AppendLine("    bool vcc = false;");
             source.AppendLine("    bool scc = false;");
             source.AppendLine("    uint pc = 0u;");

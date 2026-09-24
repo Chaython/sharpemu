@@ -87,6 +87,18 @@ public sealed class MslTranslationTests
         // and inactive lanes discard at the end.
         Assert.Contains("as_type<uint>(sharpemu_in.attr0[0])", shader.Source, StringComparison.Ordinal);
         Assert.Contains("sharpemu_out.mrt0 = exec ?", shader.Source, StringComparison.Ordinal);
+        Assert.Contains(
+            "bool pixel_valid_mask_active = true;",
+            shader.Source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "pixel_valid_mask_active = exec;",
+            shader.Source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "if (!pixel_valid_mask_active)",
+            shader.Source,
+            StringComparison.Ordinal);
         Assert.Contains("discard_fragment();", shader.Source, StringComparison.Ordinal);
     }
 

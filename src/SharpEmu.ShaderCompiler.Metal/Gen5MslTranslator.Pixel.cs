@@ -692,6 +692,11 @@ public static partial class Gen5MslTranslator
                 return true;
             }
 
+            if (export.ValidMask && _usesPixelValidMask)
+            {
+                Line("pixel_valid_mask_active = exec;");
+            }
+
             Gen5PixelOutputBinding? binding = null;
             foreach (var candidate in _pixelOutputBindings)
             {
