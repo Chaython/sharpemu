@@ -1094,15 +1094,10 @@ internal static unsafe class VulkanVideoPresenter
         return false;
     }
 
-    private static bool RenderTargetsMismatchedOrAliased(IReadOnlyList<GuestRenderTarget> targets, GuestRenderTarget first)
+    private static bool RenderTargetsAliased(IReadOnlyList<GuestRenderTarget> targets)
     {
         for (var i = 0; i < targets.Count; i++)
         {
-            if (targets[i].Width != first.Width || targets[i].Height != first.Height)
-            {
-                return true;
-            }
-
             for (var j = i + 1; j < targets.Count; j++)
             {
                 if (targets[i].Address == targets[j].Address)
@@ -1154,31 +1149,18 @@ internal static unsafe class VulkanVideoPresenter
         }
 
         var firstTarget = targets[0];
-        if (RenderTargetsMismatchedOrAliased(targets, firstTarget))
+        if (RenderTargetsAliased(targets))
         {
             var skipCount = Interlocked.Increment(ref _mrtSkipTraceCount);
             if (skipCount <= 16 || skipCount % 200 == 0)
             {
-                var aliased = false;
-                for (var i = 0; i < targets.Count && !aliased; i++)
-                {
-                    for (var j = i + 1; j < targets.Count; j++)
-                    {
-                        if (targets[i].Address == targets[j].Address)
-                        {
-                            aliased = true;
-                            break;
-                        }
-                    }
-                }
-
                 var detail = string.Join(
                     " ",
                     targets.Select(t =>
                         $"0x{t.Address:X}:{t.Width}x{t.Height}:f{t.Format}/{t.NumberType}"));
                 Console.Error.WriteLine(
                     $"[LOADER][WARN] vk.mrt_skip#{skipCount} mrt={targets.Count} " +
-                    $"aliased={aliased} vs=0x{shaderAddress:X16} {detail}");
+                    $"aliased=true vs=0x{shaderAddress:X16} {detail}");
             }
 
             return;
@@ -1389,11 +1371,10 @@ internal static unsafe class VulkanVideoPresenter
             return;
         }
 
-        var firstTarget = targets[0];
-        if (RenderTargetsMismatchedOrAliased(targets, firstTarget))
+        if (RenderTargetsAliased(targets))
         {
             Console.Error.WriteLine(
-                "[LOADER][WARN] Vulkan skipped MRT color clear with mismatched dimensions or aliased targets.");
+                "[LOADER][WARN] Vulkan skipped MRT color clear with aliased targets.");
             return;
         }
 
@@ -1446,6 +1427,7 @@ internal static unsafe class VulkanVideoPresenter
 
     private static long _mrtSkipTraceCount;
     private static long _offscreenDropTraceCount;
+    private static long _blendFallbackTraceCount;
     private static long _perfDrawCount;
     private static long _perfDrawTicks;
     private static long _perfPipelineCreations;
@@ -11886,9 +11868,12 @@ internal static unsafe class VulkanVideoPresenter
             if (format is 9 or 10)
             {
                 var pixels = new byte[checked((int)expectedSize)];
-                for (var offset = 3; offset < pixels.Length; offset += 4)
+                for (var offset = 0; offset + 3 < pixels.Length; offset += 4)
                 {
-                    pixels[offset] = 0xFF;
+                    pixels[offset + 0] = 0xFF;
+                    pixels[offset + 1] = 0x00;
+                    pixels[offset + 2] = 0xFF;
+                    pixels[offset + 3] = 0xFF;
                 }
 
                 return pixels;
@@ -13105,36 +13090,69 @@ internal static unsafe class VulkanVideoPresenter
                 }
             }
 
-            if (work.Draw.RenderState.Blends.Count != targetFormats.Length)
+            var draw = work.Draw;
+            if (draw.RenderState.Blends.Count != targetFormats.Length)
             {
-                Console.Error.WriteLine(
-                    "[LOADER][WARN] Vulkan skipped MRT draw with mismatched attachment/blend counts.");
-                ReturnPooledGuestData(work.Draw);
-                return;
+                var repairedBlends = new GuestBlendState[targetFormats.Length];
+                for (var index = 0; index < repairedBlends.Length; index++)
+                {
+                    repairedBlends[index] = index < draw.RenderState.Blends.Count
+                        ? draw.RenderState.Blends[index]
+                        : GuestBlendState.Default;
+                }
+
+                draw = draw with
+                {
+                    RenderState = draw.RenderState with { Blends = repairedBlends },
+                };
+                var fallbackCount = Interlocked.Increment(ref _blendFallbackTraceCount);
+                if (fallbackCount <= 16 || fallbackCount % 200 == 0)
+                {
+                    Console.Error.WriteLine(
+                        $"[LOADER][WARN] vk.blend_count_fallback#{fallbackCount} " +
+                        $"attachments={targetFormats.Length} original={work.Draw.RenderState.Blends.Count}; " +
+                        "missing blend states use defaults and extras are ignored.");
+                }
             }
 
             var normalizedBlends = GuestBlendStateNormalizer.NormalizeIntegerAttachments(
-                work.Draw.RenderState.Blends,
+                draw.RenderState.Blends,
                 targetFormats.Select(static format => format.IsInteger).ToArray(),
                 out var normalizedBlendCount);
-            var draw = normalizedBlendCount == 0
-                ? work.Draw
-                : work.Draw with
+            if (normalizedBlendCount != 0)
+            {
+                draw = draw with
                 {
-                    RenderState = work.Draw.RenderState with { Blends = normalizedBlends },
+                    RenderState = draw.RenderState with { Blends = normalizedBlends },
                 };
+            }
 
             if (!_supportsIndependentBlend)
             {
+                var needsIndependentBlend = false;
                 for (var index = 1; index < draw.RenderState.Blends.Count; index++)
                 {
-                    if (draw.RenderState.Blends[index] !=
-                        draw.RenderState.Blends[0])
+                    if (draw.RenderState.Blends[index] != draw.RenderState.Blends[0])
+                    {
+                        needsIndependentBlend = true;
+                        break;
+                    }
+                }
+
+                if (needsIndependentBlend)
+                {
+                    var fallbackBlends = new GuestBlendState[draw.RenderState.Blends.Count];
+                    Array.Fill(fallbackBlends, draw.RenderState.Blends[0]);
+                    draw = draw with
+                    {
+                        RenderState = draw.RenderState with { Blends = fallbackBlends },
+                    };
+                    var fallbackCount = Interlocked.Increment(ref _blendFallbackTraceCount);
+                    if (fallbackCount <= 16 || fallbackCount % 200 == 0)
                     {
                         Console.Error.WriteLine(
-                            "[LOADER][WARN] Vulkan skipped MRT draw requiring unsupported independentBlend.");
-                        ReturnPooledGuestData(work.Draw);
-                        return;
+                            $"[LOADER][WARN] vk.independent_blend_fallback#{fallbackCount}; " +
+                            "device lacks independentBlend, reusing attachment 0 state instead of dropping the draw.");
                     }
                 }
             }
@@ -13240,7 +13258,15 @@ internal static unsafe class VulkanVideoPresenter
             Framebuffer transientFramebuffer = default;
             try
             {
-                var extent = new Extent2D(firstTarget.Width, firstTarget.Height);
+                var extentWidth = firstTarget.Width;
+                var extentHeight = firstTarget.Height;
+                for (var index = 1; index < targets.Length; index++)
+                {
+                    extentWidth = Math.Min(extentWidth, targets[index].Width);
+                    extentHeight = Math.Min(extentHeight, targets[index].Height);
+                }
+
+                var extent = new Extent2D(extentWidth, extentHeight);
                 var clearDepthForDraw = draw.RenderState.Depth.ClearEnable;
                 if (work.DepthTarget?.ReadOnly == true && draw.RenderState.Depth.WriteEnable)
                 {
@@ -13285,8 +13311,8 @@ internal static unsafe class VulkanVideoPresenter
                         depth.ClearDepth = effectiveDepthTarget.ClearDepth;
                     }
                     clearDepthSeparately = clearDepthForDraw &&
-                        (depth.Width < firstTarget.Width ||
-                         depth.Height < firstTarget.Height);
+                        (depth.Width < extent.Width ||
+                         depth.Height < extent.Height);
                     if (targets.Length == 1 && !clearDepthSeparately)
                     {
                         depthFramebuffer = GetOrCreateDepthFramebuffer(firstTarget, depth);
@@ -13300,8 +13326,8 @@ internal static unsafe class VulkanVideoPresenter
                     // a smaller dynamic-rendering extent. Vulkan requires the
                     // framebuffer extent to fit every attachment.
                     extent = new Extent2D(
-                        Math.Min(firstTarget.Width, depth.Width),
-                        Math.Min(firstTarget.Height, depth.Height));
+                        Math.Min(extent.Width, depth.Width),
+                        Math.Min(extent.Height, depth.Height));
                 }
 
                 if (clearDepthForDraw)
