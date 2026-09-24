@@ -1,0 +1,49 @@
+# Copyright (C) 2026 SharpEmu Emulator Project
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+name: Playability CI
+
+on:
+  push:
+    branches:
+      - playability-renderer
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playability-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Windows build, tests, shaders
+    runs-on: windows-latest
+    env:
+      DOTNET_NOLOGO: true
+      NUGET_PACKAGES: ${{ github.workspace }}\.nuget\packages
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.103
+          cache: true
+          cache-dependency-path: |
+            Directory.Packages.props
+            Directory.Build.props
+
+      - name: Restore solution
+        run: dotnet restore SharpEmu.slnx
+
+      - name: Build solution
+        run: dotnet build SharpEmu.slnx -c Release --no-restore
+
+      - name: Run tests
+        run: dotnet test SharpEmu.slnx -c Release --no-build --verbosity normal
+
+      - name: Validate synthetic shaders
+        run: dotnet run --project tools/SharpEmu.Tools.ShaderDump/SharpEmu.Tools.ShaderDump.csproj -c Release -- artifacts/shader-dump
